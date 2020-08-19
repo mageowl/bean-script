@@ -1,0 +1,25 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Hello F-Script</title>
+		<style>
+			script[type="text/f-script"] {
+				display: block;
+				font-family: "Courier New", Courier, monospace;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="src/main.js" type="module"></script>
+		<script type="text/f-script">
+			def(<helloWorld>) -> {
+				var(<name>) -> "Owen";
+				print("Hello, ");
+				print(name);
+			};
+
+			helloWorld();
+		</script>
+	</body>
+</html>
