@@ -6,20 +6,12 @@
 		<style>
 			script[type="text/f-script"] {
 				display: block;
-				font-family: "Courier New", Courier, monospace;
+				font-family: "Fira Code", Courier, monospace;
 			}
 		</style>
+		<script src="src/main.js" type="module"></script>
 	</head>
 	<body>
-		<script src="src/main.js" type="module"></script>
-		<script type="text/f-script">
-			def(<helloWorld>) -> {
-				var(<name>) -> "Owen";
-				print("Hello, ");
-				print(name);
-			};
-
-			helloWorld();
-		</script>
+		<script type="text/f-script" src="test/helloWorld.func"></script>
 	</body>
 </html>

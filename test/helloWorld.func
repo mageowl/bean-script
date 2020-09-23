@@ -1,0 +1,6 @@
+def(<greet>) -> {
+	def(<name>) -> param(0);
+	print("Hello, " + name);
+};
+
+greet("Owen");

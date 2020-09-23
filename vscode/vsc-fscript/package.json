@@ -1,0 +1,39 @@
+{
+	"name": "vsc-fscript",
+	"displayName": "FScript for VSCode",
+	"description": "",
+	"version": "0.0.1",
+	"publisher": "owl",
+	"engines": {
+		"vscode": "^1.49.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"contributes": {
+		"languages": [
+			{
+				"id": "fscript",
+				"aliases": [
+					"F-Script",
+					"fscript"
+				],
+				"extensions": [
+					".func",
+					".fs"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "fscript",
+				"scopeName": "source.fscript",
+				"path": "./syntaxes/fscript.tmLanguage.json",
+				"embeddedLanguages": {
+					"meta.embedded.block.javascript": "javascript"
+				}
+			}
+		]
+	}
+}
