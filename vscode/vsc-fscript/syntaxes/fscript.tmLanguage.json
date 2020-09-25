@@ -3,13 +3,13 @@
 	"name": "F-Script",
 	"patterns": [
 		{
-			"include": "#functions"
-		},
-		{
 			"include": "#literals"
 		},
 		{
 			"include": "#operators"
+		},
+		{
+			"include": "#functions"
 		}
 	],
 	"repository": {
@@ -53,7 +53,7 @@
 				},
 				{
 					"name": "constant.numeric.fscript",
-					"match": "[\\d.]+"
+					"match": "\\d[\\d.]*"
 				}
 			]
 		}

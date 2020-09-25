@@ -3,7 +3,7 @@ import { literal, operator } from "./enums.js";
 export function parser(tokens) {
 	let i = 0;
 	let ast = {
-		type: "Block",
+		type: "Program",
 		body: []
 	};
 
@@ -20,12 +20,21 @@ export function parser(tokens) {
 	}
 
 	function parse(token) {
+		if (
+			peek() &&
+			!(
+				peek().type != "operator" ||
+				!Object.values(operator.MATH).includes(peek().value)
+			)
+		) {
+			return;
+		}
 		if (token.type == literal.VALUE) {
 			let node = {
 				type: "FunctionCall",
 				name: token.value,
 				parameters: [],
-				yield: null
+				yieldFunction: null
 			};
 
 			if (peek().type == "operator" && peek().value == operator.PAREN.START) {
@@ -35,7 +44,7 @@ export function parser(tokens) {
 					peek() &&
 					!(peek().type == "operator" && peek().value == operator.PAREN.END)
 				) {
-					let parameter = { type: "Block", body: [] };
+					let parameter = { type: "ParameterBlock", body: [] };
 
 					while (
 						peek() &&
@@ -49,6 +58,7 @@ export function parser(tokens) {
 						if (paramNode) parameter.body.push(paramNode);
 					}
 
+					parameter.body.filter((x) => x != undefined);
 					node.parameters.push(parameter);
 				}
 
@@ -61,22 +71,15 @@ export function parser(tokens) {
 				peek().value == operator.ARROW
 			) {
 				next();
-				node.yield = parse(next());
+				node.yieldFunction = parse(next());
 			}
 
 			return node;
-		} else if (
-			token.type == literal.STRING &&
-			!(peek().type == "operator" && peek().value == operator.MATH.PLUS)
-		) {
+		} else if (token.type == literal.STRING) {
 			return { type: "StringLiteral", value: token.value };
 		} else if (token.type == literal.MEMORY) {
 			return { type: "MemoryLiteral", value: token.value };
-		} else if (
-			token.type == literal.NUMBER &&
-			peek().type != "operator" &&
-			Object.values(operator.MATH).includes(peek().value)
-		) {
+		} else if (token.type == literal.NUMBER) {
 			return { type: "NumberLiteral", value: token.value };
 		} else if (token.type == "operator") {
 			switch (token.value) {
@@ -90,6 +93,7 @@ export function parser(tokens) {
 					}
 					next();
 
+					body.filter((x) => x != undefined);
 					return { type: "Block", body };
 
 				case operator.MATH.PLUS:

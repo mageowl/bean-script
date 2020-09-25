@@ -1,4 +1,5 @@
 // import { Memory } from "./memory.js";
+import { executer } from "./executer.js";
 import { lexer } from "./lexer.js";
 import { parser } from "./parser.js";
 
@@ -14,7 +15,7 @@ window.addEventListener("load", () => {
 			fetch(scriptEl.src)
 				.then((res) => res.text())
 				.then((text) => {
-					let code = parser(lexer(text));
+					let code = executer(parser(lexer(text)));
 					console.log(JSON.stringify(code, null, 2));
 				});
 		}
