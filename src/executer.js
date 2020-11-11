@@ -33,7 +33,8 @@ function execute(node, data = { scope: runtime }) {
 					node.yieldFunction
 				);
 			} else if (fn.type == "custom") {
-				let params = node.parameters.length ? node.parameters : data.parameters;
+				let params =
+					(node.parameters.length ? node.parameters : data.parameters) || [];
 				return execute(fn.run, {
 					scope: data.scope,
 					parameters: params.map((node) => execute(node, data)),
@@ -73,9 +74,38 @@ runtime.localFunctions.set("def", {
 	run(memory, { scope }, yieldFunction) {
 		if (memory.type != "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
+		if (scope.localFunctions.has(memory.value))
+			error(`Value <${memory.value}> is already defined.`, "Memory");
 		scope.localFunctions.set(memory.value, {
 			type: "custom",
 			run: yieldFunction
+		});
+	}
+});
+
+runtime.localFunctions.set("set", {
+	type: "js",
+	run(memory, data, yieldFunction) {
+		if (memory.type != "MemoryLiteral")
+			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
+		if (!data.scope.localFunctions.has(memory.value))
+			error(`Value <${memory.value}> is not defined.`, "Memory");
+
+		function literal(node, data) {
+			if (
+				node.type == "StringLiteral" ||
+				node.type == "NumberLiteral" ||
+				node.type == "MemoryLiteral" ||
+				node.type == "BooleanLiteral"
+			)
+				return node;
+
+			return literal(execute(node, data));
+		}
+
+		data.scope.localFunctions.set(memory.value, {
+			type: "custom",
+			run: literal(yieldFunction, data)
 		});
 	}
 });

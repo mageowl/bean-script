@@ -9,13 +9,11 @@ window.addEventListener("load", () => {
 	scripts.forEach((scriptEl) => {
 		if (!scriptEl.src) {
 			let code = executer(parser(lexer(scriptEl.innerText)));
-			console.log(JSON.stringify(code, null, 2));
 		} else {
 			fetch(scriptEl.src)
 				.then((res) => res.text())
 				.then((text) => {
 					let code = executer(parser(lexer(text)));
-					console.log(JSON.stringify(code, null, 2));
 				});
 		}
 	});

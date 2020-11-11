@@ -32,9 +32,10 @@ function chunk(code) {
 			currentChunk += char;
 			split();
 		} else if (
-			Object.values(operator)
+			(Object.values(operator)
 				.flatMap((o) => (typeof o == "object" ? Object.values(o) : o))
-				.includes(char) &&
+				.includes(char) ||
+				char == ";") &&
 			!inString
 		) {
 			split();

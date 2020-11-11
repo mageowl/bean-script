@@ -22,3 +22,8 @@ greet("Owen");
 greet(add("Dad", " and ", "Reed"));
 print(solve.addition(10, 15));
 print(solve.multiplication(14, 83));
+
+def(<var>) -> 10;
+print(var);
+set(<var>) -> add(var, 10);
+print(var);
