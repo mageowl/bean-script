@@ -160,7 +160,8 @@ runtime.localFunctions.set("add", {
 		return {
 			type: nums[0].type == "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
 			value: nums.reduce(
-				(num1, num2) => (num1.value ? num1.value : num1) + num2.value
+				(num1, num2) =>
+					(num1.value != undefined ? num1.value : num1) + num2.value
 			)
 		};
 	}
@@ -232,10 +233,26 @@ runtime.localFunctions.set("if", {
 	run(condition, data, yieldFunction) {
 		let isTrue = execute(condition, data);
 		if (isTrue.value == undefined)
-			error(`Hmm... ${isTrue.type} is not a type castable to boolean.`, "Type");
+			error(`Hmm... ${isTrue.type} is not type castable to boolean.`, "Type");
 		if (isTrue?.value) {
 			execute(yieldFunction, data);
+			return { type: "BooleanLiteral", value: true };
 		}
+		return { type: "BooleanLiteral", value: false };
+	}
+});
+
+runtime.localFunctions.set("unless", {
+	type: "js",
+	run(condition, data, yieldFunction) {
+		let isTrue = execute(condition, data);
+		if (isTrue.value == undefined)
+			error(`Hmm... ${isTrue.type} is not type castable to boolean.`, "Type");
+		if (!isTrue?.value) {
+			execute(yieldFunction, data);
+			return { type: "BooleanLiteral", value: true };
+		}
+		return { type: "BooleanLiteral", value: false };
 	}
 });
 
