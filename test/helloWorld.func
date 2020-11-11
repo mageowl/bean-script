@@ -1,6 +1,6 @@
 def(<greet>) -> {
-	def(<greeting>) -> "Hello, ";
-	print(add(greeting, param(0), "."));
+	def(<greeting>) -> add("Hello, ", param(0), ".");
+	print(greeting);
 };
 
 scope(<solve>) -> {
@@ -27,3 +27,6 @@ def(<var>) -> 10;
 print(var);
 set(<var>) -> add(var, 10);
 print(var);
+
+if(is(str(mul(10, 20))) -> input("What is 10 * 20?")) -> 
+	print("Yo! You did the problem right!");

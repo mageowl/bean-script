@@ -71,6 +71,8 @@ export function parser(tokens) {
 			return { type: "MemoryLiteral", value: token.value };
 		} else if (token.type == literal.NUMBER) {
 			return { type: "NumberLiteral", value: token.value };
+		} else if (token.type == literal.BOOLEAN) {
+			return { type: "BooleanLiteral", value: token.value };
 		} else if (token.type == "operator") {
 			switch (token.value) {
 				case operator.BRACE.START:

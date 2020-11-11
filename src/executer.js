@@ -11,6 +11,9 @@ function stringify(node) {
 		case "StringLiteral":
 			return node.value;
 
+		case "BooleanLiteral":
+			return node.value.toString();
+
 		case "MemoryLiteral":
 			return `<${node.value}>`;
 
@@ -221,6 +224,36 @@ runtime.localFunctions.set("scope", {
 			memory.value,
 			execute(yieldFunction, { ...data, returnScope: true })
 		);
+	}
+});
+
+runtime.localFunctions.set("if", {
+	type: "js",
+	run(condition, data, yieldFunction) {
+		let isTrue = execute(condition, data);
+		if (isTrue.value == undefined)
+			error(`Hmm... ${isTrue.type} is not a type castable to boolean.`, "Type");
+		if (isTrue?.value) {
+			execute(yieldFunction, data);
+		}
+	}
+});
+
+runtime.localFunctions.set("is", {
+	type: "js",
+	run(node, data, yieldFunction) {
+		let obj = execute(node, data);
+		let match = execute(yieldFunction, data);
+		let value = obj.value == match.value && obj.type == match.type;
+
+		return { type: "BooleanLiteral", value };
+	}
+});
+
+runtime.localFunctions.set("input", {
+	type: "js",
+	run(text) {
+		return { type: "StringLiteral", value: prompt(text.value) };
 	}
 });
 

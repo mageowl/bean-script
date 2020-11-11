@@ -14,6 +14,7 @@ window.addEventListener("load", () => {
 				.then((res) => res.text())
 				.then((text) => {
 					let code = executer(parser(lexer(text)));
+					console.log(JSON.stringify(code, null, 2));
 				});
 		}
 	});
