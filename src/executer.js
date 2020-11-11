@@ -84,8 +84,9 @@ runtime.localFunctions.set("print", {
 	type: "js",
 	run(string, data) {
 		if (document.getElementById("fscript-logs")) {
-			document.getElementById("fscript-logs").innerHTML +=
-				stringify(execute(string, data)) + "<br>";
+			document.getElementById("fscript-logs").innerHTML += `<span>${stringify(
+				execute(string, data)
+			)}</span><br>`;
 		} else console.log(stringify(execute(string, data)));
 	}
 });

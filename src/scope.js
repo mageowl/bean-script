@@ -7,7 +7,6 @@ export class Scope {
 	}
 
 	getFunction(name) {
-		console.log(name);
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0]))
 			return this.childScopes.get(path[0]).getFunction(path.slice(1).join("."));
