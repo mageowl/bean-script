@@ -159,6 +159,18 @@ runtime.localFunctions.set("mul", {
 	}
 });
 
+runtime.localFunctions.set("div", {
+	type: "js",
+	run(num1, num2) {
+		if (num1.type != "NumberLiteral" || num2.type != "NumberLiteral")
+			error(`To divide, both objects must be numbers.`, "Type");
+		return {
+			type: "NumberLiteral",
+			value: num1.value / num2.value
+		};
+	}
+});
+
 runtime.localFunctions.set("str", {
 	type: "js",
 	run(node) {
