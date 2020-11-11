@@ -1,0 +1,62 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "F-Script",
+	"patterns": [
+		{
+			"include": "#literals"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#functions"
+		}
+	],
+	"repository": {
+		"functions": {
+			"patterns": [
+				{
+					"name": "entity.name.function.fscript",
+					"match": "[^\\s.()]+(?=\\([^)]*\\))"
+				},
+				{
+					"name": "entity.name.tag.fscript.module",
+					"match": "[^.]+(?=\\.)"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator.fscript.arrow",
+					"match": "->"
+				}
+			]
+		},
+		"literals": {
+			"patterns": [
+				{
+					"name": "string.quoted.double.fscript",
+					"begin": "\"",
+					"end": "\"",
+					"patterns": [
+						{
+							"name": "constant.character.escape.fscript",
+							"match": "\\\\."
+						}
+					]
+				},
+				{
+					"name": "entity.name.tag.fscript",
+					"begin": "<",
+					"end": ">"
+				},
+				{
+					"name": "constant.numeric.fscript",
+					"match": "\\d[\\d.]*"
+				}
+			]
+		}
+	},
+	"scopeName": "source.fscript"
+}

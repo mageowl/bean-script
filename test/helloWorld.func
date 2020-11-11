@@ -1,0 +1,29 @@
+def(<greet>) -> {
+	def(<greeting>) -> "Hello, ";
+	print(add(greeting, param(0), "."));
+};
+
+scope(<solve>) -> {
+	def(<addition>) -> {
+		def(<anwser>) -> add(param(0), param(1));
+		return(add(str(param(0)), " + ", str(param(1)), " is ", str(anwser), "."));
+	};
+	def(<subtraction>) -> {
+		def(<anwser>) -> sub(param(0), param(1));
+		return(add(str(param(0)), " - ", str(param(1)), " is ", str(anwser), "."));
+	};
+	def(<multiplication>) -> {
+		def(<anwser>) -> mul(param(0), param(1));
+		return(add(str(param(0)), " * ", str(param(1)), " is ", str(anwser), "."));
+	}
+}
+
+greet("Owen");
+greet(add("Dad", " and ", "Reed"));
+print(solve.addition(10, 15));
+print(solve.multiplication(14, 83));
+
+def(<var>) -> 10;
+print(var);
+set(<var>) -> add(var, 10);
+print(var);
