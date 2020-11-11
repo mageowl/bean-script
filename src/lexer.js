@@ -25,10 +25,10 @@ function chunk(code) {
 				inString = false;
 				split();
 			}
-		} else if (char == "-" && code[i + 1] == ">") {
+		} else if (char == "-" && code[i + 1] == ">" && !inString) {
 			split();
 			currentChunk += char;
-		} else if (char == ">" && code[i - 1] == "-") {
+		} else if (char == ">" && code[i - 1] == "-" && !inString) {
 			currentChunk += char;
 			split();
 		} else if (
@@ -40,10 +40,10 @@ function chunk(code) {
 			split();
 			currentChunk += char;
 			split();
-		} else if (char == "<") {
+		} else if (char == "<" && !inString) {
 			split();
 			currentChunk += char;
-		} else if (char == ">") {
+		} else if (char == ">" && !inString) {
 			currentChunk += char;
 			split();
 		} else currentChunk += char;

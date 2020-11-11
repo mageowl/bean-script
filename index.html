@@ -4,14 +4,41 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Hello F-Script</title>
 		<style>
-			script[type="text/f-script"] {
-				display: block;
-				font-family: "Fira Code", Courier, monospace;
+			code {
+				background-color: rgb(216, 216, 216);
+				padding: 1px;
+				border-radius: 3px;
+			}
+
+			hr {
+				border-top: 1px black solid;
+				border-bottom: none;
+				background-color: transparent;
+			}
+
+			#fscript-logs {
+				background-color: rgb(216, 216, 216);
+				padding: 3px 3px 6px 3px;
+				border-radius: 3px;
+				font-family: monospace;
 			}
 		</style>
 		<script src="src/main.js" type="module"></script>
+		<script type="text/f-script" src="test/helloWorld.func"></script>
 	</head>
 	<body>
-		<script type="text/f-script" src="test/helloWorld.func"></script>
+		<h1>F-Script Language</h1>
+		<hr />
+		<p>
+			The F-Script language is a scripting language made by Owen Leggett. Simply
+			add the JavaScript file to your page, and you can use it by adding <br />
+			<code
+				>&lt;script type="text/f-script" src="your/file.func"&gt;your
+				code&lt;/script&gt;</code
+			>
+			to your HTML file. A demo is available below.
+		</p>
+
+		<div id="fscript-logs"></div>
 	</body>
 </html>

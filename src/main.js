@@ -1,4 +1,3 @@
-// import { Memory } from "./memory.js";
 import { executer } from "./executer.js";
 import { lexer } from "./lexer.js";
 import { parser } from "./parser.js";
@@ -9,7 +8,7 @@ window.addEventListener("load", () => {
 	// Compile scripts
 	scripts.forEach((scriptEl) => {
 		if (!scriptEl.src) {
-			let code = parser(lexer(scriptEl.innerText));
+			let code = executer(parser(lexer(scriptEl.innerText)));
 			console.log(JSON.stringify(code, null, 2));
 		} else {
 			fetch(scriptEl.src)

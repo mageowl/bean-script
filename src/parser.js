@@ -15,20 +15,7 @@ export function parser(tokens) {
 		return tokens[i];
 	}
 
-	function prev() {
-		return tokens[i - 2];
-	}
-
 	function parse(token) {
-		if (
-			peek() &&
-			!(
-				peek().type != "operator" ||
-				!Object.values(operator.MATH).includes(peek().value)
-			)
-		) {
-			return;
-		}
 		if (token.type == literal.VALUE) {
 			let node = {
 				type: "FunctionCall",
@@ -45,6 +32,9 @@ export function parser(tokens) {
 					!(peek().type == "operator" && peek().value == operator.PAREN.END)
 				) {
 					let parameter = { type: "ParameterBlock", body: [] };
+
+					if (peek().type == "operator" && peek().value == operator.COMMA)
+						next();
 
 					while (
 						peek() &&
@@ -95,14 +85,6 @@ export function parser(tokens) {
 
 					body.filter((x) => x != undefined);
 					return { type: "Block", body };
-
-				case operator.MATH.PLUS:
-					let operands = [parse(prev()), parse(next())];
-
-					return {
-						type: "PlusOperator",
-						operands
-					};
 
 				default:
 					break;

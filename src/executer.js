@@ -1,8 +1,10 @@
 // import { operator } from "./enums.js";
+// import { literal } from "./enums.js";
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
 
 function stringify(node) {
+	if (!node) return;
 	switch (node.type) {
 		case "NumberLiteral":
 			return node.value.toString();
@@ -17,24 +19,8 @@ function stringify(node) {
 	}
 }
 
-function nodify(value) {
-	switch (typeof value) {
-		case "string":
-			return { type: "StringLiteral", value };
-
-		case "number":
-			return { type: "NumberLiteral", value };
-
-		default:
-			break;
-	}
-}
-
 function execute(node, data = { scope: runtime }) {
-	if (node == undefined) {
-		console.log("...");
-		return;
-	}
+	if (!node) return;
 	switch (node.type) {
 		case "FunctionCall":
 			let fn = data.scope.getFunction(node.name);
@@ -47,21 +33,25 @@ function execute(node, data = { scope: runtime }) {
 					node.yieldFunction
 				);
 			} else if (fn.type == "custom") {
+				let params = node.parameters.length ? node.parameters : data.parameters;
 				return execute(fn.run, {
 					scope: data.scope,
-					parameters: node.parameters.map((node) => execute(node, data)),
+					parameters: params.map((node) => execute(node, data)),
 					yieldFunctionFunction: node.yieldFunction
 				});
 			}
 			break;
 
 		case "Block":
-			let scope = new Scope(data.scope ?? runtime);
+			let scope = new Scope(data.scope);
 			node.body.forEach((node) => execute(node, { ...data, scope }));
+			if (scope.returnValue != null && !data.returnScope)
+				return scope.returnValue;
+			else if (data.returnScope) return scope;
 			break;
 
 		case "Program":
-			node.body.forEach((node, i) => {
+			node.body.forEach((node) => {
 				execute(node, data);
 			});
 			break;
@@ -69,19 +59,7 @@ function execute(node, data = { scope: runtime }) {
 		case "ParameterBlock":
 			let output = [];
 			node.body.forEach((node) => output.push(execute(node, data)));
-			return output[0];
-
-		case "PlusOperator":
-			let operands = node.operands
-				.map((node) => execute(node, data))
-				.map((node) =>
-					node && node.type != "NumberLiteral"
-						? stringify(node)
-						: node
-						? node.value
-						: NaN
-				);
-			return nodify(operands[0] + operands[1]);
+			return output.slice(-1)[0];
 
 		default:
 			return node;
@@ -92,10 +70,10 @@ const runtime = new Scope();
 
 runtime.localFunctions.set("def", {
 	type: "js",
-	run(memory, data, yieldFunction) {
+	run(memory, { scope }, yieldFunction) {
 		if (memory.type != "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		data.scope.localFunctions.set(memory.value, {
+		scope.localFunctions.set(memory.value, {
 			type: "custom",
 			run: yieldFunction
 		});
@@ -105,7 +83,10 @@ runtime.localFunctions.set("def", {
 runtime.localFunctions.set("print", {
 	type: "js",
 	run(string, data) {
-		console.log(stringify(execute(string, data)));
+		if (document.getElementById("fscript-logs")) {
+			document.getElementById("fscript-logs").innerHTML +=
+				stringify(execute(string, data)) + "<br>";
+		} else console.log(stringify(execute(string, data)));
 	}
 });
 
@@ -120,6 +101,83 @@ runtime.localFunctions.set("yield", {
 	type: "js",
 	run(data) {
 		execute(data.yieldFunction, data);
+	}
+});
+
+runtime.localFunctions.set("return", {
+	type: "js",
+	run(value, data) {
+		data.scope.return(value);
+		return value;
+	}
+});
+
+runtime.localFunctions.set("add", {
+	type: "js",
+	run(...params) {
+		let nums = params.slice(0, -2);
+		let noTypeMatch = nums.find((num) => num.type != nums[0].type);
+
+		if (noTypeMatch)
+			error(
+				`Cannot add a ${noTypeMatch.type} to a ${nums[0].type}. Please type cast using str()`,
+				"Type"
+			);
+		return {
+			type: nums[0].type == "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
+			value: nums.reduce(
+				(num1, num2) => (num1.value ? num1.value : num1) + num2.value
+			)
+		};
+	}
+});
+
+runtime.localFunctions.set("sub", {
+	type: "js",
+	run(num1, num2) {
+		if (num1.type != "NumberLiteral" || num2.type != "NumberLiteral")
+			error(`To subtract, both objects must be numbers.`, "Type");
+		return {
+			type: "NumberLiteral",
+			value: num1.value - num2.value
+		};
+	}
+});
+
+runtime.localFunctions.set("mul", {
+	type: "js",
+	run(num1, num2) {
+		if (num2.type != "NumberLiteral")
+			error(`To multiply, the second object must be a number.`, "Type");
+		return {
+			type: num1.type == "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
+			value:
+				num1.type == "NumberLiteral"
+					? num1.value * num2.value
+					: "".padStart(num1.value.length * num2.value, num1.value)
+		};
+	}
+});
+
+runtime.localFunctions.set("str", {
+	type: "js",
+	run(node) {
+		return { type: "StringLiteral", value: stringify(node) };
+	}
+});
+
+runtime.localFunctions.set("scope", {
+	type: "js",
+	run(memory, data, yieldFunction) {
+		if (yieldFunction.type != "Block")
+			error(
+				`Yield to scope must be a block. Instead, I got a ${yieldFunction.type}`
+			);
+
+		data.scope.childScopes.set(
+			memory.value,
+			execute(yieldFunction, { ...data, returnScope: true })
+		);
 	}
 });
 

@@ -8,13 +8,7 @@ export const operator = {
 		END: "}"
 	},
 	ARROW: "->",
-	COMMA: ",",
-	MATH: {
-		PLUS: "+",
-		MINUS: "-",
-		MULTIPLY: "*",
-		DIVIDE: "/"
-	}
+	COMMA: ","
 };
 
 export const literal = {

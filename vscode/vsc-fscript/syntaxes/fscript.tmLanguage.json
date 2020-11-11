@@ -17,7 +17,11 @@
 			"patterns": [
 				{
 					"name": "entity.name.function.fscript",
-					"match": "[^\\s()]+(?=\\([^)]*\\))"
+					"match": "[^\\s.()]+(?=\\([^)]*\\))"
+				},
+				{
+					"name": "entity.name.tag.fscript.module",
+					"match": "[^.]+(?=\\.)"
 				}
 			]
 		},
@@ -26,10 +30,6 @@
 				{
 					"name": "keyword.operator.fscript.arrow",
 					"match": "->"
-				},
-				{
-					"name": "keyword.operator.arithmetic.fscript",
-					"match": "[+-/*]"
 				}
 			]
 		},

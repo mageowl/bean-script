@@ -2,7 +2,7 @@
 	"name": "vsc-fscript",
 	"displayName": "FScript for VSCode",
 	"description": "FScript language support",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"publisher": "OwL",
 	"engines": {
 		"vscode": "^1.49.0"
