@@ -6,6 +6,9 @@
 			"include": "#literals"
 		},
 		{
+			"include": "#comments"
+		},
+		{
 			"include": "#operators"
 		},
 		{
@@ -13,6 +16,10 @@
 		}
 	],
 	"repository": {
+		"comments": {
+			"name": "comment.fscript",
+			"match": "\\*.*"
+		},
 		"functions": {
 			"patterns": [
 				{
@@ -53,7 +60,11 @@
 				},
 				{
 					"name": "constant.numeric.fscript",
-					"match": "\\d[\\d.]*"
+					"match": "-?\\d[\\d.]*"
+				},
+				{
+					"name": "constant.other.bool.fscript",
+					"match": "true|false"
 				}
 			]
 		}

@@ -3,6 +3,7 @@ import { operator, literal } from "./enums.js";
 function chunk(code) {
 	let chunks = [];
 	let currentChunk = "";
+	let comment = false;
 	let i = 0;
 
 	let inString = false;
@@ -15,6 +16,13 @@ function chunk(code) {
 	for (const char of code) {
 		if ((char == " " || char == "	" || char == "\n") && !inString) {
 			split();
+			if (char == "\n") {
+				comment = false;
+			}
+		} else if (comment) {
+			continue;
+		} else if (char == "*") {
+			comment = true;
 		} else if (char == '"') {
 			if (!inString) {
 				split();

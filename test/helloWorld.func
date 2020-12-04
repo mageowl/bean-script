@@ -1,34 +1,7 @@
-def(<greet>) -> {
-	def(<greeting>) -> add("Hello, ", param(0), ".");
-	print(greeting);
-};
-
-scope(<solve>) -> {
-	def(<addition>) -> {
-		def(<anwser>) -> add(param(0), param(1));
-		return(add(str(param(0)), " + ", str(param(1)), " is ", str(anwser), "."));
-	};
-	def(<subtraction>) -> {
-		def(<anwser>) -> sub(param(0), param(1));
-		return(add(str(param(0)), " - ", str(param(1)), " is ", str(anwser), "."));
-	};
-	def(<multiplication>) -> {
-		def(<anwser>) -> mul(param(0), param(1));
-		return(add(str(param(0)), " * ", str(param(1)), " is ", str(anwser), "."));
-	}
+def(<lessThan>) -> {
+	def(<num>) -> sub(param(1), param(0));
+	print(num);
+	return(is(num) -> 0);
 }
 
-greet("Owen");
-greet("Nathaniel");
-print(solve.addition(10, 15));
-print(solve.multiplication(14, 83));
-
-def(<var>) -> add(0, 10);
-print(var);
-set(<var>) -> add(var, 10);
-print(add(var, 10));
-
-unless(if(is(str(mul(10, 20))) -> input("What is 10 * 20?")) -> {
-	print("Yo! You did the problem right!");
-}) ->
-	print("Whoops. Wrong number.");
+print(lessThan(30, 20));
