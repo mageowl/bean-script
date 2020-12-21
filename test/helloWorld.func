@@ -13,3 +13,12 @@ def(<lessThan>) -> {
 if(lessThan(10, 30)) -> {
 	print("10 is less than 30.");
 };
+
+def(<mem>) -> <value>;
+
+def(<func>) -> {
+ def(mem) -> "Wow!"
+}
+
+func;
+print(value);
