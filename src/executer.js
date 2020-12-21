@@ -2,6 +2,7 @@
 // import { literal } from "./enums.js";
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
+import { isWeb, getConsoleEl } from "./web.js";
 
 function stringify(node) {
 	if (!node) return;
@@ -71,13 +72,13 @@ function execute(node, data = { scope: runtime }) {
 			if (!modules.has(node.moduleName))
 				error(`Unkown module '${node.moduleName}'.`, "Reference");
 			scope = modules.get(node.moduleName);
-			runtime.localFunctions.set(node.moduleName, scope);
+			runtime.childScopes.set(node.moduleName, scope);
 			return scope;
 
 		case "MemoryLiteral":
 			return {
-				...node,
-				slot: data.scope.createSlot(node.value)
+				slot: data.scope.createSlot(node.value),
+				...node
 			};
 
 		default:
@@ -90,14 +91,37 @@ const runtime = new Scope();
 
 runtime.localFunctions.set("def", {
 	type: "js",
-	run(memory, { scope }, yieldFunction) {
+	run(memoryRaw, data, yieldFunction) {
+		let memory = execute(memoryRaw, data);
 		if (memory.type != "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (scope.hasFunction(memory.value))
+		if (memory.slot.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 		memory.slot.set({
 			type: "custom",
 			run: yieldFunction
+		});
+	}
+});
+
+runtime.localFunctions.set("defI", {
+	type: "js",
+	run(memoryRaw, data, yieldFunction) {
+		let memory = execute(memoryRaw, data);
+		if (memory.type != "MemoryLiteral")
+			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
+		if (data.scope.hasFunction(memory.value))
+			error(`Value <${memory.value}> is already defined.`, "Memory");
+
+		function literal(node, data) {
+			if (node.type.endsWith("Literal")) return execute(node, data);
+
+			return literal(execute(node, data), data);
+		}
+
+		memory.slot.set({
+			type: "custom",
+			run: literal(yieldFunction, data)
 		});
 	}
 });
@@ -126,8 +150,8 @@ runtime.localFunctions.set("set", {
 runtime.localFunctions.set("print", {
 	type: "js",
 	run(string, data) {
-		if (document.getElementById("fscript-logs")) {
-			document.getElementById("fscript-logs").innerHTML += `<span>${stringify(
+		if (isWeb && getConsoleEl()) {
+			getConsoleEl().innerHTML += `<span>${stringify(
 				execute(string, data)
 			)}</span><br>`;
 		} else console.log(stringify(execute(string, data)));
@@ -308,17 +332,10 @@ runtime.localFunctions.set("abs", {
 	}
 });
 
-runtime.localFunctions.set("input", {
-	type: "js",
-	run(text) {
-		return { type: "StringLiteral", value: prompt(text.value) };
-	}
-});
-
 export function executer(ast, defaultModules = {}) {
 	for (const mod in defaultModules) {
 		if (Object.hasOwnProperty.call(defaultModules, mod)) {
-			const scope = modules[mod];
+			const scope = defaultModules[mod];
 			modules.set(mod, scope);
 		}
 	}
