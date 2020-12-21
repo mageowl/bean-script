@@ -77,7 +77,7 @@ runtime.localFunctions.set("def", {
 	run(memory, { scope }, yieldFunction) {
 		if (memory.type != "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (scope.localFunctions.has(memory.value))
+		if (scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 		scope.localFunctions.set(memory.value, {
 			type: "custom",
@@ -91,7 +91,7 @@ runtime.localFunctions.set("set", {
 	run(memory, data, yieldFunction) {
 		if (memory.type != "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (!data.scope.localFunctions.has(memory.value))
+		if (!data.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is not defined.`, "Memory");
 
 		function literal(node, data) {
@@ -106,7 +106,7 @@ runtime.localFunctions.set("set", {
 			return literal(execute(node, data));
 		}
 
-		data.scope.localFunctions.set(memory.value, {
+		data.scope.setFunction(memory.value, {
 			type: "custom",
 			run: literal(yieldFunction, data)
 		});
@@ -213,6 +213,13 @@ runtime.localFunctions.set("str", {
 	}
 });
 
+runtime.localFunctions.set("num", {
+	type: "js",
+	run(node) {
+		return { type: "NumberLiteral", value: parseInt(node.value) };
+	}
+});
+
 runtime.localFunctions.set("scope", {
 	type: "js",
 	run(memory, data, yieldFunction) {
@@ -247,12 +254,22 @@ runtime.localFunctions.set("unless", {
 	run(condition, data, yieldFunction) {
 		let isTrue = execute(condition, data);
 		if (isTrue.value == undefined)
-			error(`Hmm... ${isTrue.type} is not type castable to boolean.`, "Type");
+			error(`${isTrue.type} is not type castable to boolean.`, "Type");
 		if (!isTrue?.value) {
 			execute(yieldFunction, data);
 			return { type: "BooleanLiteral", value: true };
 		}
 		return { type: "BooleanLiteral", value: false };
+	}
+});
+
+runtime.localFunctions.set("not", {
+	type: "js",
+	run(bool, data) {
+		let isTrue = execute(bool, data);
+		if (isTrue.value == undefined)
+			error(`${isTrue.type} is not type castable to boolean.`, "Type");
+		return { type: "BooleanLiteral", value: !isTrue?.value };
 	}
 });
 
@@ -264,6 +281,20 @@ runtime.localFunctions.set("is", {
 		let value = obj.value == match.value && obj.type == match.type;
 
 		return { type: "BooleanLiteral", value };
+	}
+});
+
+runtime.localFunctions.set("abs", {
+	type: "js",
+	run(number) {
+		if (number.type != "NumberLiteral") {
+			error(
+				`I need a number to get the absolute value. I got a ${number.type}.`,
+				"Type"
+			);
+		}
+
+		return { type: "NumberLiteral", value: Math.abs(number.value) };
 	}
 });
 

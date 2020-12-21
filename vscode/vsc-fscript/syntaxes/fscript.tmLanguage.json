@@ -17,8 +17,17 @@
 	],
 	"repository": {
 		"comments": {
-			"name": "comment.fscript",
-			"match": "\\*.*"
+			"patterns": [
+				{
+					"name": "comment.block.fscript",
+					"begin": "\\*\\*",
+					"end": "\\*\\*"
+				},
+				{
+					"name": "comment.fscript",
+					"match": "\\*.*"
+				}
+			]
 		},
 		"functions": {
 			"patterns": [
@@ -27,8 +36,8 @@
 					"match": "[^\\s.()]+(?=\\([^)]*\\))"
 				},
 				{
-					"name": "entity.name.tag.fscript.module",
-					"match": "[^.]+(?=\\.)"
+					"name": "entity.name.other.module.fscript",
+					"match": "[^.\\s()]+(?=\\.)"
 				}
 			]
 		},
@@ -49,7 +58,7 @@
 					"patterns": [
 						{
 							"name": "constant.character.escape.fscript",
-							"match": "\\\\."
+							"match": "\\\\.*"
 						}
 					]
 				},
@@ -60,7 +69,7 @@
 				},
 				{
 					"name": "constant.numeric.fscript",
-					"match": "-?\\d[\\d.]*"
+					"match": "\\d[\\d.]*"
 				},
 				{
 					"name": "constant.other.bool.fscript",

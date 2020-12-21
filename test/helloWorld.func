@@ -1,7 +1,19 @@
 def(<lessThan>) -> {
-	def(<num>) -> sub(param(1), param(0));
-	print(num);
-	return(is(num) -> 0);
+	def(<diff>) -> sub(param(0), param(1));
+	def(<less>) -> false;
+
+	set(<less>) -> is(diff) -> 0;
+	unless(is(sub(abs(diff), diff)) -> 0) -> {
+		set(<less>) -> true;
+	}
+
+	return(less);
 }
 
-print(lessThan(30, 20));
+** MEGA
+ every thing = awesome.
+**
+
+if(lessThan(10, 30)) -> {
+	print("10 is less than 30.");
+};

@@ -4,6 +4,7 @@ function chunk(code) {
 	let chunks = [];
 	let currentChunk = "";
 	let comment = false;
+	let blockComment = false;
 	let i = 0;
 
 	let inString = false;
@@ -19,10 +20,12 @@ function chunk(code) {
 			if (char == "\n") {
 				comment = false;
 			}
-		} else if (comment) {
-			continue;
 		} else if (char == "*") {
-			comment = true;
+			if (code[i + 1] == "*") {
+				blockComment = !blockComment;
+			} else comment = true;
+		} else if (comment || blockComment) {
+			// nothing
 		} else if (char == '"') {
 			if (!inString) {
 				split();
