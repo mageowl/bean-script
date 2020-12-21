@@ -318,20 +318,6 @@ runtime.localFunctions.set("is", {
 	}
 });
 
-runtime.localFunctions.set("abs", {
-	type: "js",
-	run(number) {
-		if (number.type != "NumberLiteral") {
-			error(
-				`I need a number to get the absolute value. I got a ${number.type}.`,
-				"Type"
-			);
-		}
-
-		return { type: "NumberLiteral", value: Math.abs(number.value) };
-	}
-});
-
 export function executer(ast, defaultModules = {}) {
 	for (const mod in defaultModules) {
 		if (Object.hasOwnProperty.call(defaultModules, mod)) {

@@ -2,19 +2,21 @@
 web.useElementAsConsole("fscript-logs");
 
 def(<lessThan>) -> {
+	<!math>
 	def(<diff>) -> sub(param(0), param(1));
 	def(<less>) -> false;
 
-	unless(is(sub(abs(diff), diff)) -> 0) -> {
+	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
 		set(<less>) -> true;
 	}
 
 	return(less);
 }
 
+def(<numA>) -> 12.45;
 
-if(lessThan(10, 30)) -> {
-	print("10 is less than 30.");
+if(lessThan(numA, 30)) -> {
+	print(add(str(numA), " is less than 30."));
 };
 
 defI(<mem>) -> <value>;

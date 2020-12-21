@@ -20,12 +20,10 @@ function chunk(code) {
 			if (char == "\n") {
 				comment = false;
 			}
-		} else if (char == "*") {
-			if (code[i - 1] != "*") {
-				if (code[i + 1] == "*") {
-					blockComment = !blockComment;
-				} else comment = true;
-			}
+		} else if (char == "*" && code[i - 1] != "*") {
+			if (code[i + 1] == "*") {
+				blockComment = !blockComment;
+			} else comment = true;
 		} else if (comment || blockComment) {
 			// nothing.
 		} else if (char == '"') {
@@ -77,7 +75,7 @@ export function lexer(code) {
 	chunks.forEach((chunk) => {
 		switch (true) {
 			case /^[\d.]+$/g.test(chunk):
-				tokens.push({ type: literal.NUMBER, value: parseInt(chunk) });
+				tokens.push({ type: literal.NUMBER, value: parseFloat(chunk) });
 				break;
 
 			case /^"[^"]*"$/g.test(chunk):

@@ -72,7 +72,7 @@
 					"match": "\\d[\\d.]*"
 				},
 				{
-					"name": "constant.other.bool.fscript",
+					"name": "constant.language.boolean.fscript",
 					"match": "true|false"
 				}
 			]
