@@ -74,6 +74,12 @@ function execute(node, data = { scope: runtime }) {
 			runtime.localFunctions.set(node.moduleName, scope);
 			return scope;
 
+		case "MemoryLiteral":
+			return {
+				...node,
+				slot: data.scope.createSlot(node.value)
+			};
+
 		default:
 			return node;
 	}
@@ -89,7 +95,7 @@ runtime.localFunctions.set("def", {
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
-		scope.localFunctions.set(memory.value, {
+		memory.slot.set({
 			type: "custom",
 			run: yieldFunction
 		});
@@ -105,13 +111,7 @@ runtime.localFunctions.set("set", {
 			error(`Value <${memory.value}> is not defined.`, "Memory");
 
 		function literal(node, data) {
-			if (
-				node.type == "StringLiteral" ||
-				node.type == "NumberLiteral" ||
-				node.type == "MemoryLiteral" ||
-				node.type == "BooleanLiteral"
-			)
-				return node;
+			if (node.type.endsWith("Literal")) return node;
 
 			return literal(execute(node, data));
 		}

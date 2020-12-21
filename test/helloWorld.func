@@ -1,10 +1,7 @@
-<!dom>
-
 def(<lessThan>) -> {
 	def(<diff>) -> sub(param(0), param(1));
 	def(<less>) -> false;
 
-	set(<less>) -> is(diff) -> 0;
 	unless(is(sub(abs(diff), diff)) -> 0) -> {
 		set(<less>) -> true;
 	}
@@ -12,16 +9,7 @@ def(<lessThan>) -> {
 	return(less);
 }
 
-** MEGA
- every thing = awesome.
-**
 
 if(lessThan(10, 30)) -> {
 	print("10 is less than 30.");
 };
-
-def(<myFunc>) -> {
-	print(yield());
-}
-
-myFunc -> "omg"

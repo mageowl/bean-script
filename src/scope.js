@@ -41,7 +41,23 @@ export class Scope {
 		else if (this.parent) return this.parent.setFunction(name, value);
 	}
 
+	createSlot(name) {
+		return new Slot(this, name);
+	}
+
 	return(value) {
 		this.returnValue = value;
+	}
+}
+
+class Slot {
+	constructor(scope, name) {
+		this.scope = scope;
+		this.name = name;
+	}
+
+	set(value) {
+		if (this.used) return;
+		this.scope.localFunctions.set(this.name, value);
 	}
 }
