@@ -23,6 +23,8 @@ function stringify(node) {
 }
 
 function execute(node, data = { scope: runtime }) {
+	let scope;
+
 	if (!node) return;
 	switch (node.type) {
 		case "FunctionCall":
@@ -47,7 +49,7 @@ function execute(node, data = { scope: runtime }) {
 			break;
 
 		case "Block":
-			let scope = new Scope(data.scope);
+			scope = new Scope(data.scope);
 			node.body.forEach((node) => execute(node, { ...data, scope }));
 			if (scope.returnValue != null && !data.returnScope)
 				return scope.returnValue;
@@ -65,11 +67,19 @@ function execute(node, data = { scope: runtime }) {
 			node.body.forEach((node) => output.push(execute(node, data)));
 			return output.slice(-1)[0];
 
+		case "NeedOperator":
+			if (!modules.has(node.moduleName))
+				error(`Unkown module '${node.moduleName}'.`, "Reference");
+			scope = modules.get(node.moduleName);
+			runtime.localFunctions.set(node.moduleName, scope);
+			return scope;
+
 		default:
 			return node;
 	}
 }
 
+const modules = new Map();
 const runtime = new Scope();
 
 runtime.localFunctions.set("def", {
@@ -305,6 +315,13 @@ runtime.localFunctions.set("input", {
 	}
 });
 
-export function executer(ast) {
+export function executer(ast, defaultModules = {}) {
+	for (const mod in defaultModules) {
+		if (Object.hasOwnProperty.call(defaultModules, mod)) {
+			const scope = modules[mod];
+			modules.set(mod, scope);
+		}
+	}
+
 	return execute(ast);
 }

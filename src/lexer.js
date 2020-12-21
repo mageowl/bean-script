@@ -21,11 +21,13 @@ function chunk(code) {
 				comment = false;
 			}
 		} else if (char == "*") {
-			if (code[i + 1] == "*") {
-				blockComment = !blockComment;
-			} else comment = true;
+			if (code[i - 1] != "*") {
+				if (code[i + 1] == "*") {
+					blockComment = !blockComment;
+				} else comment = true;
+			}
 		} else if (comment || blockComment) {
-			// nothing
+			// nothing.
 		} else if (char == '"') {
 			if (!inString) {
 				split();

@@ -67,6 +67,8 @@ export function parser(tokens) {
 			return node;
 		} else if (token.type == literal.STRING) {
 			return { type: "StringLiteral", value: token.value };
+		} else if (token.type == literal.MEMORY && token.value.startsWith("!")) {
+			return { type: "NeedOperator", moduleName: token.value.slice(1) };
 		} else if (token.type == literal.MEMORY) {
 			return { type: "MemoryLiteral", value: token.value };
 		} else if (token.type == literal.NUMBER) {

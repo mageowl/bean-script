@@ -1,7 +1,7 @@
 import { executer } from "./executer.js";
 import { lexer } from "./lexer.js";
 import { parser } from "./parser.js";
-import { isWeb } from "./web.js";
+import { isWeb, dom } from "./web.js";
 
 if (isWeb) {
 	console.log("FScript Web detected. Searching for script tags.");
@@ -11,13 +11,13 @@ if (isWeb) {
 		// Compile scripts
 		scripts.forEach((scriptEl) => {
 			if (!scriptEl.src) {
-				let code = executer(parser(lexer(scriptEl.innerText)));
+				executer(parser(lexer(scriptEl.innerText)));
 			} else {
 				fetch(scriptEl.src)
 					.then((res) => res.text())
 					.then((text) => {
-						let code = executer(parser(lexer(text)));
-						console.log(JSON.stringify(code, null, 2));
+						executer(parser(lexer(text)), { dom });
+						// console.log(lexer(text));
 					});
 			}
 		});

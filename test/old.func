@@ -1,5 +1,5 @@
 def(<greet>) -> {
-def(<greeting>) -> add("Hello, ", param(0), ".");
+	def(<greeting>) -> add("Hello, ", param(0), ".");
 	print(greeting);
 };
 

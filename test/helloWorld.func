@@ -1,3 +1,5 @@
+<!dom>
+
 def(<lessThan>) -> {
 	def(<diff>) -> sub(param(0), param(1));
 	def(<less>) -> false;
