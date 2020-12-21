@@ -43,7 +43,7 @@ function execute(node, data = { scope: runtime }) {
 				return execute(fn.run, {
 					scope: data.scope,
 					parameters: params.map((node) => execute(node, data)),
-					yieldFunctionFunction: node.yieldFunction
+					yieldFunction: node.yieldFunction
 				});
 			}
 			break;
@@ -144,7 +144,7 @@ runtime.localFunctions.set("param", {
 runtime.localFunctions.set("yield", {
 	type: "js",
 	run(data) {
-		execute(data.yieldFunction, data);
+		return execute(data.yieldFunction, data);
 	}
 });
 

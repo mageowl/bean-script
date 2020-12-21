@@ -19,3 +19,9 @@ def(<lessThan>) -> {
 if(lessThan(10, 30)) -> {
 	print("10 is less than 30.");
 };
+
+def(<myFunc>) -> {
+	print(yield());
+}
+
+myFunc -> "omg"
