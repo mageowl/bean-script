@@ -150,7 +150,7 @@ runtime.localFunctions.set("yield", {
 
 runtime.localFunctions.set("return", {
 	type: "js",
-	run(value, data) {
+	run(value) {
 		data.scope.return(value);
 		return value;
 	}
