@@ -74,7 +74,7 @@ export function lexer(code) {
 
 	chunks.forEach((chunk) => {
 		switch (true) {
-			case /^[\d.]+$/g.test(chunk):
+			case /^[\d.]*\d$/g.test(chunk):
 				tokens.push({ type: literal.NUMBER, value: parseFloat(chunk) });
 				break;
 
