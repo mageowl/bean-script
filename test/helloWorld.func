@@ -19,21 +19,11 @@ if(lessThan(numA, 30)) -> {
 	print(add(str(numA), " is less than 30."));
 };
 
-* defI(<mem>) -> <value>;
+defI(<mem>) -> <value>;
 
-* def(<func>) -> {
-* 	def(mem) -> "Wow!"
-* }
-
-* func;
-* print(value);
-
-scope(<myObj>) -> {
-	def(<valA>) -> "from myObj";
-	def(<func>) -> {
-		print(add("Hello ", myObj.valA));
-	}
-	print("running code...")
+def(<func>) -> {
+	def(mem) -> "Wow!"
 }
 
-myObj.func;
+func;
+print(value);
