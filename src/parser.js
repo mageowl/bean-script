@@ -24,7 +24,11 @@ export function parser(tokens) {
 				yieldFunction: null
 			};
 
-			if (peek().type == "operator" && peek().value == operator.PAREN.START) {
+			if (
+				peek() &&
+				peek().type == "operator" &&
+				peek().value == operator.PAREN.START
+			) {
 				next();
 
 				while (
