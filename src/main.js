@@ -17,8 +17,8 @@ if (isWeb) {
 				fetch(scriptEl.src)
 					.then((res) => res.text())
 					.then((text) => {
-						// executer(parser(lexer(text)), { web: webModule, math });
-						console.log(parser(lexer(text)));
+						executer(parser(lexer(text)), { web: webModule, math });
+						// console.log(parser(lexer(text)));
 					});
 			}
 		});
