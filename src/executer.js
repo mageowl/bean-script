@@ -258,14 +258,24 @@ runtime.localFunctions.set("num", {
 runtime.localFunctions.set("obj", {
 	type: "js",
 	run(memory, data, yieldFunction) {
-		if (yieldFunction.type != "Block")
-			error(
-				`Yield to obj must be a block. Instead, I got a ${yieldFunction.type}`
-			);
+		let block = yieldFunction;
+
+		function check() {
+			if (block.type != "Block" && block.type != "FunctionCall")
+				error(
+					`Yield to obj must be a block. Instead, I got a ${yieldFunction.type}`
+				);
+			else if (block.type == "FunctionCall") {
+				block = execute(yieldFunction, data);
+				check();
+			}
+		}
+
+		check();
 
 		data.scope.childScopes.set(
 			memory.value,
-			execute(yieldFunction, { ...data, returnScope: true })
+			execute(block, { ...data, returnScope: true })
 		);
 	}
 });
