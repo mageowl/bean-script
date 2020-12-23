@@ -51,7 +51,7 @@ function execute(node, data = { scope: runtime }) {
 			break;
 
 		case "Block":
-			scope = new Scope(data.scope);
+			scope = node.scope ?? new Scope(data.scope);
 			node.body.forEach((node) => execute(node, { ...data, scope }));
 			if (scope.returnValue != null && !data.returnScope)
 				return scope.returnValue;
@@ -255,12 +255,12 @@ runtime.localFunctions.set("num", {
 	}
 });
 
-runtime.localFunctions.set("scope", {
+runtime.localFunctions.set("obj", {
 	type: "js",
 	run(memory, data, yieldFunction) {
 		if (yieldFunction.type != "Block")
 			error(
-				`Yield to scope must be a block. Instead, I got a ${yieldFunction.type}`
+				`Yield to obj must be a block. Instead, I got a ${yieldFunction.type}`
 			);
 
 		data.scope.childScopes.set(
