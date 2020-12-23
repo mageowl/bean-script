@@ -32,9 +32,19 @@ function activate(context) {
 
 			if (path.extname(ENVPath) == ".env") {
 				fs.readFile(ENVPath, "utf8").then((data) => {
-					const env = dotenv.parse(data);
+					const env = Object.fromEntries(
+						Object.entries(dotenv.parse(data)).map(([key, value]) => [
+							key.toLowerCase(),
+							value
+						])
+					);
+					const { version } = env;
+					delete env.version;
+					delete env.export;
+
 					const json = {
-						name: path.basename(ENVPath).split(".")[0],
+						name: path.dirname(ENVPath),
+						version,
 						env,
 						files: []
 					};

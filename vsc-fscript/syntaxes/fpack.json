@@ -1,0 +1,30 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "F-Script package JSON schema.",
+	"type": "object",
+	"required": ["name", "files"],
+	"properties": {
+		"name": {
+			"description": "The name of the package.",
+			"type": "string",
+			"minLength": 1,
+			"pattern": "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
+		},
+		"version": {
+			"description": "Version number of the package.",
+			"type": "string"
+		},
+		"env": {
+			"description": "The enviroment varibles stored in 'fscript.env'.",
+			"type": "object",
+			"properties": {
+				"process": { "type": "string" },
+				"dependencies": { "type": "string" }
+			}
+		},
+		"files": {
+			"description": "BASE-64 encoded files.",
+			"type": "array"
+		}
+	}
+}

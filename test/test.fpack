@@ -1,9 +1,9 @@
 {
-	"name": "fscript",
+	"name": "test",
+	"version": "1.0.0",
 	"env": {
 		"PROCESS": "web",
-		"DEPENDENCIES": "gh:seattleowl/f-script-plus",
-		"EXPORT": "./test.fpack"
+		"DEPENDENCIES": "gh:seattleowl/f-script-plus"
 	},
 	"files": [
 		"PCF3ZWI+Cjwhc3lzdGVtPgp3ZWIudXNlRWxlbWVudEFzQ29uc29sZSgiZnNjcmlwdC1sb2dzIik7CgpkZWYoPGxlc3NUaGFuPikgLT4gewoJPCFtYXRoPgoJZGVmKDxkaWZmPikgLT4gc3ViKHBhcmFtKDApLCBwYXJhbSgxKSk7CglkZWYoPGxlc3M+KSAtPiBmYWxzZTsKCgl1bmxlc3MoaXMoc3ViKG1hdGguYWJzKGRpZmYpLCBkaWZmKSkgLT4gMCkgLT4gewoJCXNldCg8bGVzcz4pIC0+IHRydWU7Cgl9CgoJcmV0dXJuKGxlc3MpOwp9CgpkZWYoPG51bUE+KSAtPiAxMi40NTsKCmlmKGxlc3NUaGFuKG51bUEsIDMwKSkgLT4gewoJcHJpbnQoYWRkKHN0cihudW1BKSwgIiBpcyBsZXNzIHRoYW4gMzAuIikpOwp9OwoKZGVmSSg8bWVtPikgLT4gPHZhbHVlPjsKCmRlZig8ZnVuYz4pIC0+IHsKCWRlZihtZW0pIC0+ICJXb3chIjsKfTsKCmZ1bmM7CnByaW50KHZhbHVlKTs=",

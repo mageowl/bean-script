@@ -54,7 +54,13 @@
 					"group": "2_workspace"
 				}
 			]
-		}
+		},
+		"jsonValidation": [
+			{
+				"fileMatch": "*.fpack",
+				"url": "./syntaxes/fpack.json"
+			}
+		]
 	},
 	"dependencies": {
 		"dotenv": "^8.2.0",
