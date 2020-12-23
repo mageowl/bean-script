@@ -41,7 +41,6 @@ class HTMLElementScope extends Scope {
 				el.innerText += text;
 			}
 		});
-
 		this.localFunctions.set("self", {
 			type: "js",
 			run(text) {
@@ -66,9 +65,9 @@ export function getConsoleEl() {
 	return consoleEl;
 }
 
-if (isWeb) {
-	const scope = new Scope();
+const scope = new Scope();
 
+if (isWeb) {
 	scope.localFunctions.set("useElementAsConsole", {
 		type: "js",
 		run(id) {
