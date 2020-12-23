@@ -1,8 +1,8 @@
 import { executer } from "./executer.js";
 import { lexer } from "./lexer.js";
 import { parser } from "./parser.js";
-import { isWeb, webModule } from "./web.js";
-import math from "./defaultModules/math.js";
+import { isWeb } from "./process.js";
+import * as modules from "./defaultModules/main.js";
 
 if (isWeb) {
 	console.log("FScript Web detected. Searching for script tags.");
@@ -17,7 +17,7 @@ if (isWeb) {
 				fetch(scriptEl.src)
 					.then((res) => res.text())
 					.then((text) => {
-						executer(parser(lexer(text)), { web: webModule, math });
+						executer(parser(lexer(text)), modules);
 						// console.log(parser(lexer(text)));
 					});
 			}

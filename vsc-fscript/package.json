@@ -2,8 +2,12 @@
 	"name": "vsc-fscript",
 	"displayName": "FScript for VSCode",
 	"description": "FScript language support",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"publisher": "OwL",
+	"main": "extension.js",
+	"activationEvents": [
+		"onCommand:fscript.packageENV"
+	],
 	"engines": {
 		"vscode": "^1.49.0"
 	},
@@ -34,6 +38,26 @@
 					"meta.embedded.block.javascript": "javascript"
 				}
 			}
-		]
+		],
+		"commands": [
+			{
+				"command": "fscript.packageENV",
+				"title": "Package ENV file",
+				"category": "F-Script"
+			}
+		],
+		"menus": {
+			"explorer/context": [
+				{
+					"command": "fscript.packageENV",
+					"when": "!explorerResourceIsFolder",
+					"group": "2_workspace"
+				}
+			]
+		}
+	},
+	"dependencies": {
+		"dotenv": "^8.2.0",
+		"fs-extra": "^9.0.1"
 	}
 }

@@ -2,7 +2,8 @@
 // import { literal } from "./enums.js";
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
-import { isWeb, getConsoleEl } from "./web.js";
+import { isWeb } from "./process.js";
+import { getConsoleEl } from "./defaultModules/web.js";
 
 function stringify(node) {
 	if (!node) return;
