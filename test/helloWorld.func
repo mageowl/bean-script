@@ -1,18 +1,17 @@
 <!web>
 web.useElementAsConsole("fscript-logs");
 
-def(<lessThan>) -> {
-<!math>
-def(<diff>) -> sub(param(0), param(1));
-def(<less>) -> false;
+** def(<lessThan>) -> {
+	<!math>
+	def(<diff>) -> sub(param(0), param(1));
+	def(<less>) -> false;
 
-unless(is(sub(math.abs(diff), diff)) -> 0) -> {
-	set(<less>) -> true;
+	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
+		set(<less>) -> true;
+	}
+
+	return(less);
 }
-
-return(less);
-}
-
 def(<numA>) -> 12.45;
 
 if(lessThan(numA, 30)) -> {
@@ -26,4 +25,15 @@ def(mem) -> "Wow!";
 };
 
 func;
-print(value);
+print(value); **
+
+obj(<xyz>) -> {
+	def(<a>) -> ;
+	def(<b>) -> {
+		print(a);
+		set(<a>) -> "10";
+		print(a);
+	};
+}
+
+xyz.b;

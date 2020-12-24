@@ -80,7 +80,7 @@ export function parser(tokens) {
 		} else if (token.type == literal.BOOLEAN) {
 			return { type: "BooleanLiteral", value: token.value };
 		} else if (token.type == literal.NULL) {
-			return { type: "Null" };
+			return { type: "NullLiteral" };
 		} else if (token.type == "operator") {
 			switch (token.value) {
 				case operator.BRACE.START:

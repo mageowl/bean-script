@@ -86,7 +86,7 @@ export function lexer(code) {
 				tokens.push({ type: literal.BOOLEAN, value: chunk == "true" });
 				break;
 
-			case /^\[null\]$/g.test(chunk):
+			case /^null$/g.test(chunk):
 				tokens.push({ type: literal.NULL });
 				break;
 

@@ -6,6 +6,7 @@ class HTMLElementScope extends Scope {
 		super(parent);
 
 		this.htmlEl = element;
+		this.type = "HTMLElement";
 		this._setup();
 	}
 
