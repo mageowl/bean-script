@@ -1,3 +1,5 @@
+import { error } from "../error.js";
+import { execute } from "../executer.js";
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 
@@ -9,17 +11,20 @@ class HTMLElementScope extends Scope {
 		this.type = "BlockLiteral";
 		this.body = [];
 		this.scope = this;
+		this.destroyed = false;
 		this._setup();
 	}
 
 	_setup() {
-		/**@type {HTMLElement} */
+		/** @type {HTMLElement} */
 		let el = this.htmlEl;
 		let self = this;
 
 		this.localFunctions.set("id", {
 			type: "js",
 			run() {
+				if (self.destroyed)
+					error("Tring to access a destroyed element.", "Web");
 				return { type: "StringLiteral", value: el.id };
 			}
 		});
@@ -27,6 +32,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("setAttr", {
 			type: "js",
 			run(name, value) {
+				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
 				el.setAttribute(name.value, value.value);
 			}
 		});
@@ -34,6 +40,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("text", {
 			type: "js",
 			run(text) {
+				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
 				el.innerText = text.value;
 			}
 		});
@@ -41,12 +48,15 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("appendText", {
 			type: "js",
 			run(text) {
+				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
 				el.innerText += text.value;
 			}
 		});
 		this.localFunctions.set("self", {
 			type: "js",
 			run(text) {
+				if (self.destroyed)
+					error("Tring to access a destroyed element.", "Web");
 				return self;
 			}
 		});
@@ -54,7 +64,27 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("add", {
 			type: "js",
 			run(element) {
+				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
 				el.appendChild(element.htmlEl);
+			}
+		});
+
+		this.localFunctions.set("on", {
+			type: "js",
+			run(event, data, yieldFunction) {
+				if (self.destroyed)
+					error("Tring to access a destroyed element.", "Web");
+				el.addEventListener(event, () => {
+					execute(yieldFunction, data);
+				});
+			}
+		});
+
+		this.localFunctions.set("destroy", {
+			type: "js",
+			run() {
+				el.remove();
+				self.destroyed = true;
 			}
 		});
 	}

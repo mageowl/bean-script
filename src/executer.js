@@ -24,7 +24,7 @@ function stringify(node) {
 	}
 }
 
-function execute(node, data = { scope: runtime }) {
+export function execute(node, data = { scope: runtime }) {
 	let scope;
 
 	if (!node) return;
