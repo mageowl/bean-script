@@ -21,10 +21,11 @@ if (isWeb) {
 				fetch(scriptEl.src)
 					.then((res) => res.text())
 					.then((text) => {
-						executer(parser(lexer(text)), {
-							...defaultModules,
-							...customModules
-						});
+						// executer(parser(lexer(text)), {
+						// 	...defaultModules,
+						// 	...customModules
+						// });
+						console.log(lexer(text));
 					});
 			}
 		}

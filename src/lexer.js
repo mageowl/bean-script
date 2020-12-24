@@ -23,7 +23,7 @@ function chunk(code) {
 		} else if (char == "*") {
 			if (code[i + 1] == "*" && code[i - 1] != "*") {
 				blockComment = !blockComment;
-			} else if (code[i + 1] == "*") comment = true;
+			} else if (code[i - 1] != "*") comment = true;
 		} else if (comment || blockComment) {
 			// nothing.
 		} else if (char == '"') {
