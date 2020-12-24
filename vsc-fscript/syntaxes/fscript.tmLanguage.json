@@ -74,6 +74,10 @@
 				{
 					"name": "constant.language.boolean.fscript",
 					"match": "true|false"
+				},
+				{
+					"name": "constant.language.null.fscript",
+					"match": "[null]"
 				}
 			]
 		}
