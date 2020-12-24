@@ -1,4 +1,4 @@
-** <!web>
+<!web>
 web.useElementAsConsole("fscript-logs");
 
 def(<lessThan>) -> {
@@ -26,8 +26,4 @@ def(mem) -> "Wow!";
 };
 
 func;
-print(value); **
-
-print("Hello!");
-* print("WTH");
-print("Goodbye!");
+print(value);

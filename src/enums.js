@@ -16,5 +16,6 @@ export const literal = {
 	NUMBER: "lit.number",
 	BOOLEAN: "lit.bool",
 	MEMORY: "lit.memory",
-	VALUE: "lit.value"
+	VALUE: "lit.value",
+	NULL: "lit.null"
 };

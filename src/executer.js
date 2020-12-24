@@ -319,6 +319,16 @@ runtime.localFunctions.set("not", {
 	}
 });
 
+runtime.localFunctions.set("exists", {
+	type: "js",
+	run(memory, data) {
+		return {
+			type: "BooleanLiteral",
+			value: data.scope.hasFunction(memory.value)
+		};
+	}
+});
+
 runtime.localFunctions.set("is", {
 	type: "js",
 	run(node, data, yieldFunction) {

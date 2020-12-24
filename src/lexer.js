@@ -86,6 +86,10 @@ export function lexer(code) {
 				tokens.push({ type: literal.BOOLEAN, value: chunk == "true" });
 				break;
 
+			case /^\[null\]$/g.test(chunk):
+				tokens.push({ type: literal.NULL });
+				break;
+
 			case /^<[^>]+>$/g.test(chunk):
 				tokens.push({ type: literal.MEMORY, value: chunk.slice(1, -1) });
 				break;
