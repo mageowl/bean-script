@@ -10,6 +10,7 @@ function chunk(code) {
 	let inString = false;
 
 	function split() {
+		console.log(currentChunk);
 		chunks.push(currentChunk);
 		currentChunk = "";
 	}
@@ -20,10 +21,10 @@ function chunk(code) {
 			if (char == "\n") {
 				comment = false;
 			}
-		} else if (char == "*" && code[i - 1] != "*") {
-			if (code[i + 1] == "*") {
+		} else if (char == "*") {
+			if (code[i + 1] == "*" && code[i - 1] != "*") {
 				blockComment = !blockComment;
-			} else comment = true;
+			} else if (code[i + 1] == "*") comment = true;
 		} else if (comment || blockComment) {
 			// nothing.
 		} else if (char == '"') {
