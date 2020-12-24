@@ -6,7 +6,9 @@ class HTMLElementScope extends Scope {
 		super(parent);
 
 		this.htmlEl = element;
-		this.type = "HTMLElementLiteral";
+		this.type = "Block";
+		this.body = [];
+		this.scope = this;
 		this._setup();
 	}
 
@@ -84,7 +86,7 @@ if (isWeb) {
 				document.querySelector(selector.value)
 			);
 			trackedElements.push(el);
-			return { type: "Block", scope: el, body: [] };
+			return el;
 		}
 	});
 
@@ -94,7 +96,7 @@ if (isWeb) {
 			let htmlEl = document.createElement(type.value);
 			let el = new HTMLElementScope(scope, htmlEl);
 			trackedElements.push(el);
-			return { type: "Block", scope: el, body: [] };
+			return el;
 		}
 	});
 
