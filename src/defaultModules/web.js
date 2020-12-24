@@ -6,7 +6,7 @@ class HTMLElementScope extends Scope {
 		super(parent);
 
 		this.htmlEl = element;
-		this.type = "Block";
+		this.type = "BlockLiteral";
 		this.body = [];
 		this.scope = this;
 		this._setup();
