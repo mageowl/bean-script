@@ -77,7 +77,7 @@
 				},
 				{
 					"name": "constant.language.null.fscript",
-					"match": "[null]"
+					"match": "\\[null\\]"
 				}
 			]
 		}
