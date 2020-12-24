@@ -1,7 +1,7 @@
 <!web>
-* web.useElementAsConsole("fscript-logs");
+web.useElementAsConsole("fscript-logs");
 
-** def(<lessThan>) -> {
+def(<lessThan>) -> {
  	<!math>
  	def(<diff>) -> sub(param(0), param(1));
  	def(<less>) -> false;
@@ -26,7 +26,4 @@
  };
 
  func;
- print(value); **
-
-obj(<el>) -> web.getElement("fscript-logs");
-el.appendText("500!")
+ print(value);

@@ -31,14 +31,14 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("text", {
 			type: "js",
 			run(text) {
-				el.innerText = text;
+				el.innerText = text.value;
 			}
 		});
 
 		this.localFunctions.set("appendText", {
 			type: "js",
 			run(text) {
-				el.innerText += text;
+				el.innerText += text.value;
 			}
 		});
 		this.localFunctions.set("self", {
@@ -78,7 +78,10 @@ if (isWeb) {
 	scope.localFunctions.set("getElement", {
 		type: "js",
 		run(selector, { scope }) {
-			let el = new HTMLElementScope(scope, document.querySelector(selector));
+			let el = new HTMLElementScope(
+				scope,
+				document.querySelector(selector.value)
+			);
 			trackedElements.push(el);
 			return { type: "Block", scope: el, body: [] };
 		}
@@ -87,7 +90,7 @@ if (isWeb) {
 	scope.localFunctions.set("createElement", {
 		type: "js",
 		run(type, { scope }) {
-			let htmlEl = document.createElement(type);
+			let htmlEl = document.createElement(type.value);
 			let el = new HTMLElementScope(scope, htmlEl);
 			trackedElements.push(el);
 			return { type: "Block", scope: el, body: [] };

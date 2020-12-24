@@ -10,7 +10,6 @@ function chunk(code) {
 	let inString = false;
 
 	function split() {
-		console.log(currentChunk);
 		chunks.push(currentChunk);
 		currentChunk = "";
 	}
