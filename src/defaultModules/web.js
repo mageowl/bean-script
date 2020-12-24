@@ -74,7 +74,7 @@ class HTMLElementScope extends Scope {
 			run(event, data, yieldFunction) {
 				if (self.destroyed)
 					error("Tring to access a destroyed element.", "Web");
-				el.addEventListener(event, () => {
+				el.addEventListener(event.value, () => {
 					execute(yieldFunction, data);
 				});
 			}

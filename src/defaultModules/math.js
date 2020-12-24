@@ -20,7 +20,7 @@ scope.localFunctions.set("sin", {
 	type: "js",
 	run(number) {
 		if (number.type != "NumberLiteral") {
-			error(`I need a number to get the sin. I got a ${number.type}.`, "Type");
+			error(`I need a number to get the sine. I got a ${number.type}.`, "Type");
 		}
 
 		return { type: "NumberLiteral", value: Math.sin(number.value) };
@@ -32,7 +32,7 @@ scope.localFunctions.set("cos", {
 	run(number) {
 		if (number.type != "NumberLiteral") {
 			error(
-				`I need a number to get the cosin. I got a ${number.type}.`,
+				`I need a number to get the cosine. I got a ${number.type}.`,
 				"Type"
 			);
 		}
@@ -60,7 +60,7 @@ scope.localFunctions.set("atan", {
 	run(number) {
 		if (number.type != "NumberLiteral") {
 			error(
-				`I need a number to get the a-tangent. I got a ${number.type}.`,
+				`I need a number to get the arc tangent. I got a ${number.type}.`,
 				"Type"
 			);
 		}

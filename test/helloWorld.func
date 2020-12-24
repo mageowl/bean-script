@@ -1,7 +1,7 @@
 <!web>
 web.useElementAsConsole("fscript-logs");
 
-** def(<lessThan>) -> {
+def(<lessThan>) -> {
 	<!math>
 	def(<diff>) -> sub(param(0), param(1));
 	def(<less>) -> false;
@@ -25,15 +25,4 @@ def(mem) -> "Wow!";
 };
 
 func;
-print(value); **
-
-obj(<xyz>) -> {
-	def(<a>) -> ;
-	def(<b>) -> {
-		print(a);
-		set(<a>) -> "10";
-		print(a);
-	};
-}
-
-xyz.b;
+print(value);
