@@ -43,7 +43,7 @@ function execute(node, data = { scope: runtime }) {
 				let params =
 					(node.parameters.length ? node.parameters : data.parameters) || [];
 				return execute(fn.run, {
-					scope: data.scope,
+					scope: fn.scope,
 					parameters: params.map((node) => execute(node, data)),
 					yieldFunction: node.yieldFunction
 				});
@@ -100,6 +100,7 @@ runtime.localFunctions.set("def", {
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 		memory.slot.set({
 			type: "custom",
+			scope: data.scope,
 			run: yieldFunction
 		});
 	}
