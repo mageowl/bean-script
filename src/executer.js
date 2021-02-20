@@ -1,5 +1,3 @@
-// import { operator } from "./enums.js";
-// import { literal } from "./enums.js";
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
 import { isWeb } from "./process.js";
@@ -24,7 +22,8 @@ function stringify(node) {
 	}
 }
 
-export function execute(node, data = { scope: runtime }) {
+export function execute(node, dataRaw = {}) {
+	const data = { scope: runtime, ...dataRaw };
 	let scope;
 
 	if (!node) return;
@@ -123,6 +122,7 @@ runtime.localFunctions.set("defI", {
 
 		memory.slot.set({
 			type: "custom",
+			scope: data.scope,
 			run: literal(yieldFunction, data)
 		});
 	}

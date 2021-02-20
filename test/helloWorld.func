@@ -15,13 +15,13 @@ def(<lessThan>) -> {
 def(<numA>) -> 12.45;
 
 if(lessThan(numA, 30)) -> {
-print(add(str(numA), " is less than 30."));
+	print(add(str(numA), " is less than 30."));
 };
 
 defI(<mem>) -> <value>;
 
 def(<func>) -> {
-def(mem) -> "Wow!";
+	def(mem) -> "Wow!";
 };
 
 func;
