@@ -262,15 +262,17 @@ runtime.localFunctions.set("obj", {
 		let block = yieldFunction;
 
 		function check() {
-			if (!block.type.startsWith("Block") && block.type != "FunctionCall")
+			if (block.type == "FunctionCall") {
+				block = execute(yieldFunction, data);
+				check();
+			} else if (
+				!block.type.startsWith("Block") &&
+				block.type != "FunctionCall"
+			)
 				error(
 					`Yield to obj must be a block. Instead, I got a ${block.type}`,
 					"Type"
 				);
-			else if (block.type == "FunctionCall") {
-				block = execute(yieldFunction, data);
-				check();
-			}
 		}
 
 		check();

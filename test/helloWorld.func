@@ -12,7 +12,8 @@ def(<lessThan>) -> {
 
 	return(less);
 }
-def(<numA>) -> 12.45;
+
+defI(<numA>) -> num(web.input("Enter a number:"));
 
 if(lessThan(numA, 30)) -> {
 	print(add(str(numA), " is less than 30."));

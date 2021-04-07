@@ -31,7 +31,12 @@ if (isWeb) {
 		}
 	});
 } else {
-	console.warn(
-		"FScript could not detect web.\nNode.JS and other server-side javascript runtimes are currently not supported. (see https://github.com/seattleowl/f-script/issues/1.)"
-	);
+	console.log(`NodeJS detected.`);
+}
+
+export default function compile(code, options) {
+	return executer(parser(lexer(code)), {
+		...defaultModules,
+		...options.modules
+	});
 }
