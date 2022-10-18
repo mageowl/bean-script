@@ -1,21 +1,23 @@
 export const operator = {
-	PAREN: {
-		START: "(",
-		END: ")"
-	},
-	BRACE: {
-		START: "{",
-		END: "}"
-	},
-	ARROW: "->",
-	COMMA: ","
+    PAREN: {
+        START: "(",
+        END: ")"
+    },
+    BRACE: {
+        START: "{",
+        END: "}"
+    },
+    ARROW: "->",
+    COMMA: ","
 };
-
-export const literal = {
-	STRING: "lit.string",
-	NUMBER: "lit.number",
-	BOOLEAN: "lit.bool",
-	MEMORY: "lit.memory",
-	VALUE: "lit.value",
-	NULL: "lit.null"
-};
+export var FTokenType;
+(function (FTokenType) {
+    FTokenType["STRING"] = "lit.string";
+    FTokenType["NUMBER"] = "lit.number";
+    FTokenType["BOOLEAN"] = "lit.bool";
+    FTokenType["MEMORY"] = "lit.memory";
+    FTokenType["VALUE"] = "lit.value";
+    FTokenType["NULL"] = "lit.null";
+    FTokenType["OPERATOR"] = "operator";
+    FTokenType["NEWLINE"] = "newline";
+})(FTokenType || (FTokenType = {}));
