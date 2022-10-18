@@ -16,7 +16,7 @@ function activate(context) {
 				} else directory = vscode.workspace.workspaceFolders[0].uri.fsPath;
 				let files = await fs.readdir(directory);
 				let foundPath = files.filter(
-					(f) => path.basename(f) == "fscript.env"
+					(f) => path.basename(f) === "fscript.env"
 				)[0];
 
 				if (foundPath) {
@@ -28,9 +28,9 @@ function activate(context) {
 				}
 			} else ENVPath = uri.fsPath;
 
-			if (ENVPath == undefined) return;
+			if (ENVPath === undefined) return;
 
-			if (path.extname(ENVPath) == ".env") {
+			if (path.extname(ENVPath) === ".env") {
 				fs.readFile(ENVPath, "utf8").then((data) => {
 					const env = Object.fromEntries(
 						Object.entries(dotenv.parse(data)).map(([key, value]) => [
@@ -52,7 +52,7 @@ function activate(context) {
 					fs.readdir(path.dirname(ENVPath)).then((files) => {
 						json.files = files
 							.map((v) =>
-								path.extname(v) == ".func"
+								path.extname(v) === ".func"
 									? Buffer.from(
 											fs.readFileSync(path.join(path.dirname(ENVPath), v))
 									  ).toString("base64")

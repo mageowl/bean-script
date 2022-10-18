@@ -24,7 +24,7 @@ class HTMLElementScope extends Scope {
 			type: "js",
 			run() {
 				if (self.destroyed)
-					error("Tring to access a destroyed element.", "Web");
+					error("Trying to access a destroyed element.", "Web");
 				return { type: "StringLiteral", value: el.id };
 			}
 		});
@@ -32,7 +32,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("setAttr", {
 			type: "js",
 			run(name, value) {
-				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
+				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.setAttribute(name.value, value.value);
 			}
 		});
@@ -40,7 +40,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("text", {
 			type: "js",
 			run(text) {
-				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
+				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.innerText = text.value;
 			}
 		});
@@ -48,7 +48,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("appendText", {
 			type: "js",
 			run(text) {
-				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
+				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.innerText += text.value;
 			}
 		});
@@ -56,7 +56,7 @@ class HTMLElementScope extends Scope {
 			type: "js",
 			run(text) {
 				if (self.destroyed)
-					error("Tring to access a destroyed element.", "Web");
+					error("Trying to access a destroyed element.", "Web");
 				return self;
 			}
 		});
@@ -64,7 +64,7 @@ class HTMLElementScope extends Scope {
 		this.localFunctions.set("add", {
 			type: "js",
 			run(element) {
-				if (self.destroyed) error("Tring to edit a destroyed element.", "Web");
+				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.appendChild(element.htmlEl);
 			}
 		});
@@ -73,7 +73,7 @@ class HTMLElementScope extends Scope {
 			type: "js",
 			run(event, data, yieldFunction) {
 				if (self.destroyed)
-					error("Tring to access a destroyed element.", "Web");
+					error("Trying to access a destroyed element.", "Web");
 				el.addEventListener(event.value, () => {
 					execute(yieldFunction, data);
 				});

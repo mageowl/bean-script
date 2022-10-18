@@ -26,19 +26,19 @@ export function execute(node, dataRaw = {}) {
 	const data = { scope: runtime, ...dataRaw };
 	let scope;
 
-	if (!node) return;
+	if (node == null) return;
 	switch (node.type) {
 		case "FunctionCall":
 			let fn = data.scope.getFunction(node.name);
 			if (!fn) error(`Unkown value or function "${node.name}".`, "Reference");
 
-			if (fn.type == "js") {
+			if (fn.type === "js") {
 				return fn.run(
 					...node.parameters.map((node) => execute(node, data)),
 					data,
 					node.yieldFunction
 				);
-			} else if (fn.type == "custom") {
+			} else if (fn.type === "custom") {
 				let params =
 					(node.parameters.length ? node.parameters : data.parameters) || [];
 				return execute(fn.run, {
@@ -93,7 +93,7 @@ runtime.localFunctions.set("def", {
 	type: "js",
 	run(memoryRaw, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
-		if (memory.type != "MemoryLiteral")
+		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (memory.slot.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
@@ -109,7 +109,7 @@ runtime.localFunctions.set("defI", {
 	type: "js",
 	run(memoryRaw, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
-		if (memory.type != "MemoryLiteral")
+		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (data.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
@@ -131,7 +131,7 @@ runtime.localFunctions.set("defI", {
 runtime.localFunctions.set("set", {
 	type: "js",
 	run(memory, data, yieldFunction) {
-		if (memory.type != "MemoryLiteral")
+		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (!data.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is not defined.`, "Memory");
@@ -185,17 +185,18 @@ runtime.localFunctions.set("return", {
 runtime.localFunctions.set("add", {
 	type: "js",
 	run(...params) {
-		let nums = params.slice(0, -2);
-		let noTypeMatch = nums.find((num) => num.type != nums[0].type);
+		let numbers = params.slice(0, -2);
+		let noTypeMatch = numbers.find((num) => num.type !== numbers[0].type);
 
 		if (noTypeMatch)
 			error(
-				`Cannot add a ${noTypeMatch.type} to a ${nums[0].type}. Please type cast using str()`,
+				`Cannot add a ${noTypeMatch.type} to a ${numbers[0].type}. Please type cast using str()`,
 				"Type"
 			);
 		return {
-			type: nums[0].type == "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
-			value: nums.reduce(
+			type:
+				numbers[0].type === "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
+			value: numbers.reduce(
 				(num1, num2) =>
 					(num1.value != undefined ? num1.value : num1) + num2.value
 			)
@@ -206,7 +207,7 @@ runtime.localFunctions.set("add", {
 runtime.localFunctions.set("sub", {
 	type: "js",
 	run(num1, num2) {
-		if (num1.type != "NumberLiteral" || num2.type != "NumberLiteral")
+		if (num1.type !== "NumberLiteral" || num2.type !== "NumberLiteral")
 			error(`To subtract, both objects must be numbers.`, "Type");
 		return {
 			type: "NumberLiteral",
@@ -218,12 +219,12 @@ runtime.localFunctions.set("sub", {
 runtime.localFunctions.set("mul", {
 	type: "js",
 	run(num1, num2) {
-		if (num2.type != "NumberLiteral")
+		if (num2.type !== "NumberLiteral")
 			error(`To multiply, the second object must be a number.`, "Type");
 		return {
-			type: num1.type == "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
+			type: num1.type === "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
 			value:
-				num1.type == "NumberLiteral"
+				num1.type === "NumberLiteral"
 					? num1.value * num2.value
 					: "".padStart(num1.value.length * num2.value, num1.value)
 		};
@@ -233,7 +234,7 @@ runtime.localFunctions.set("mul", {
 runtime.localFunctions.set("div", {
 	type: "js",
 	run(num1, num2) {
-		if (num1.type != "NumberLiteral" || num2.type != "NumberLiteral")
+		if (num1.type !== "NumberLiteral" || num2.type !== "NumberLiteral")
 			error(`To divide, both objects must be numbers.`, "Type");
 		return {
 			type: "NumberLiteral",
@@ -262,12 +263,12 @@ runtime.localFunctions.set("obj", {
 		let block = yieldFunction;
 
 		function check() {
-			if (block.type == "FunctionCall") {
+			if (block.type === "FunctionCall") {
 				block = execute(yieldFunction, data);
 				check();
 			} else if (
 				!block.type.startsWith("Block") &&
-				block.type != "FunctionCall"
+				block.type !== "FunctionCall"
 			)
 				error(
 					`Yield to obj must be a block. Instead, I got a ${block.type}`,
@@ -288,7 +289,7 @@ runtime.localFunctions.set("if", {
 	type: "js",
 	run(condition, data, yieldFunction) {
 		let isTrue = execute(condition, data);
-		if (isTrue.value == undefined)
+		if (isTrue.value === undefined)
 			error(`Hmm... ${isTrue.type} is not type castable to boolean.`, "Type");
 		if (isTrue?.value) {
 			execute(yieldFunction, data);
@@ -302,7 +303,7 @@ runtime.localFunctions.set("unless", {
 	type: "js",
 	run(condition, data, yieldFunction) {
 		let isTrue = execute(condition, data);
-		if (isTrue.value == undefined)
+		if (isTrue.value === undefined)
 			error(`${isTrue.type} is not type castable to boolean.`, "Type");
 		if (!isTrue?.value) {
 			execute(yieldFunction, data);
@@ -316,7 +317,7 @@ runtime.localFunctions.set("not", {
 	type: "js",
 	run(bool, data) {
 		let isTrue = execute(bool, data);
-		if (isTrue.value == undefined)
+		if (isTrue.value === undefined)
 			error(`${isTrue.type} is not type castable to boolean.`, "Type");
 		return { type: "BooleanLiteral", value: !isTrue?.value };
 	}
@@ -337,7 +338,7 @@ runtime.localFunctions.set("is", {
 	run(node, data, yieldFunction) {
 		let obj = execute(node, data);
 		let match = execute(yieldFunction, data);
-		let value = obj.value == match.value && obj.type == match.type;
+		let value = obj.value === match.value && obj.type === match.type;
 
 		return { type: "BooleanLiteral", value };
 	}

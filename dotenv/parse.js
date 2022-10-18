@@ -1,6 +1,6 @@
 /*
  THIS CODE WAS NOT MADE BY ME (@seattleowl).
- This is a excerpt from dotenv by @motdotla on GitHub, modified to use ES6 exports. (https://github.com/motdotla/dotenv/blob/master/LICENSE)
+ This is an excerpt from dotenv by @motdotla on GitHub, modified to use ES6 exports. (https://github.com/motdotla/dotenv/blob/master/LICENSE)
 
  (LICENSE: https://github.com/motdotla/dotenv/blob/master/LICENSE)
 */

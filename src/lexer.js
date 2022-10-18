@@ -15,18 +15,18 @@ function chunk(code) {
 	}
 
 	for (const char of code) {
-		if ((char == " " || char == "	" || char == "\n") && !inString) {
+		if ((char === " " || char === "	" || char === "\n") && !inString) {
 			split();
-			if (char == "\n") {
+			if (char === "\n") {
 				comment = false;
 			}
-		} else if (char == "*") {
-			if (code[i + 1] == "*" && code[i - 1] != "*") {
+		} else if (char === "*") {
+			if (code[i + 1] === "*" && code[i - 1] !== "*") {
 				blockComment = !blockComment;
-			} else if (code[i - 1] != "*") comment = true;
+			} else if (code[i - 1] !== "*") comment = true;
 		} else if (comment || blockComment) {
 			// nothing.
-		} else if (char == '"') {
+		} else if (char === '"') {
 			if (!inString) {
 				split();
 				currentChunk += char;
@@ -36,26 +36,26 @@ function chunk(code) {
 				inString = false;
 				split();
 			}
-		} else if (char == "-" && code[i + 1] == ">" && !inString) {
+		} else if (char === "-" && code[i + 1] === ">" && !inString) {
 			split();
 			currentChunk += char;
-		} else if (char == ">" && code[i - 1] == "-" && !inString) {
+		} else if (char === ">" && code[i - 1] === "-" && !inString) {
 			currentChunk += char;
 			split();
 		} else if (
 			(Object.values(operator)
-				.flatMap((o) => (typeof o == "object" ? Object.values(o) : o))
+				.flatMap((o) => (typeof o === "object" ? Object.values(o) : o))
 				.includes(char) ||
-				char == ";") &&
+				char === ";") &&
 			!inString
 		) {
 			split();
 			currentChunk += char;
 			split();
-		} else if (char == "<" && !inString) {
+		} else if (char === "<" && !inString) {
 			split();
 			currentChunk += char;
-		} else if (char == ">" && !inString) {
+		} else if (char === ">" && !inString) {
 			currentChunk += char;
 			split();
 		} else currentChunk += char;
@@ -83,7 +83,7 @@ export function lexer(code) {
 				break;
 
 			case /^true|false$/g.test(chunk):
-				tokens.push({ type: literal.BOOLEAN, value: chunk == "true" });
+				tokens.push({ type: literal.BOOLEAN, value: chunk === "true" });
 				break;
 
 			case /^null$/g.test(chunk):
@@ -95,12 +95,12 @@ export function lexer(code) {
 				break;
 
 			case Object.values(operator)
-				.flatMap((o) => (typeof o == "object" ? Object.values(o) : o))
+				.flatMap((o) => (typeof o === "object" ? Object.values(o) : o))
 				.includes(chunk):
 				tokens.push({ type: "operator", value: chunk.trim() });
 				break;
 
-			case chunk == ";":
+			case chunk === ";":
 				tokens.push({ type: "newline" });
 				break;
 
