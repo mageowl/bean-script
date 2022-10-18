@@ -52,7 +52,7 @@ export class Scope {
 	}
 }
 
-class Slot {
+export class Slot {
 	scope: Scope;
 	name: string;
 	used: boolean;

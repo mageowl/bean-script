@@ -218,8 +218,12 @@ runtime.localFunctions.set("num", {
 });
 runtime.localFunctions.set("obj", {
     type: "js",
-    run(memory, data, yieldFunction) {
+    run(memoryRaw, data, yieldFunction) {
+        let memory = execute(memoryRaw, data);
         let block = yieldFunction;
+        if (memory.type !== "MemoryLiteral") {
+            error(`The first parameter for obj must be a memory literal. Instead, I got a ${memory.type}`, "Type");
+        }
         function check() {
             if (block.type === "FunctionCall") {
                 block = execute(yieldFunction, data);
@@ -230,7 +234,14 @@ runtime.localFunctions.set("obj", {
                 error(`Yield to obj must be a block. Instead, I got a ${block.type}`, "Type");
         }
         check();
-        data.scope.childScopes.set(memory.value, execute(block, { ...data, returnScope: true }));
+        let scope = execute(block, { ...data, returnScope: true });
+        memory.slot.scope.childScopes.set(memory.slot.name, scope);
+        memory.slot.set({
+            type: "js",
+            run() {
+                return scope;
+            }
+        });
     }
 });
 runtime.localFunctions.set("if", {

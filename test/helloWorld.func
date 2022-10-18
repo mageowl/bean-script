@@ -3,6 +3,7 @@ web.useElementAsConsole("fscript-logs");
 
 def(<lessThan>) -> {
 	<!math>
+
 	def(<diff>) -> sub(param(0), param(1));
 	def(<less>) -> false;
 

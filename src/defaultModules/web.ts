@@ -12,7 +12,7 @@ import { Scope } from "../scope.js";
 
 class HTMLElementScope extends Scope {
 	htmlEl: HTMLElement;
-	type: FNodeType;
+	type: FNodeType = "Block";
 	body: FNode[] = [];
 	scope = this;
 	destroyed = false;
@@ -45,6 +45,19 @@ class HTMLElementScope extends Scope {
 			}
 		});
 
+		this.localFunctions.set("get", {
+			type: "js",
+			run(property: FNodeValue): FNodeValue {
+				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
+
+				let value = el[property.value];
+				return {
+					type: typeof value === "number" ? "NumberLiteral" : "StringLiteral",
+					value
+				};
+			}
+		});
+
 		this.localFunctions.set("text", {
 			type: "js",
 			run(text: FNodeValue) {
@@ -58,14 +71,6 @@ class HTMLElementScope extends Scope {
 			run(text: FNodeValue) {
 				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.innerText += text.value;
-			}
-		});
-		this.localFunctions.set("self", {
-			type: "js",
-			run(text: FNodeValue) {
-				if (self.destroyed)
-					error("Trying to access a destroyed element.", "Web");
-				return self;
 			}
 		});
 

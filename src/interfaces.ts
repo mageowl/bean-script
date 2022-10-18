@@ -1,5 +1,5 @@
 import { FTokenType } from "./enums";
-import { Scope } from "./scope";
+import { Scope, Slot } from "./scope";
 
 export interface FToken {
 	type: FTokenType;
@@ -36,6 +36,11 @@ export interface FNodeValue extends FNode {
 	value: any;
 }
 
+export interface FNodeMemory extends FNode {
+	type: "MemoryLiteral";
+	slot: Slot;
+}
+
 export interface FNodeBlock extends FNode {
 	type: "Program" | "Block" | "ParameterBlock";
 	body: FNodeAny[];
@@ -46,6 +51,7 @@ export type FNodeAny =
 	| FNodeBlock
 	| FNodeFunctionCall
 	| FNodeValue
+	| FNodeMemory
 	| null;
 
 export interface FCallData {

@@ -1,8 +1,8 @@
 import { error } from "./error.js";
-import { Scope } from "./scope.js";
+import { Scope, Slot } from "./scope.js";
 import { isWeb } from "./process.js";
 import { getConsoleEl } from "./defaultModules/web.js";
-import { FCallData } from "./interfaces.js";
+import { FCallData, FNodeAny, FNodeMemory, FNodeValue } from "./interfaces.js";
 
 function stringify(node) {
 	if (!node) return;
@@ -260,8 +260,16 @@ runtime.localFunctions.set("num", {
 
 runtime.localFunctions.set("obj", {
 	type: "js",
-	run(memory, data, yieldFunction) {
+	run(memoryRaw: FNodeAny, data, yieldFunction) {
+		let memory: FNodeMemory = execute(memoryRaw, data);
 		let block = yieldFunction;
+
+		if (memory.type !== "MemoryLiteral") {
+			error(
+				`The first parameter for obj must be a memory literal. Instead, I got a ${memory.type}`,
+				"Type"
+			);
+		}
 
 		function check() {
 			if (block.type === "FunctionCall") {
@@ -279,10 +287,15 @@ runtime.localFunctions.set("obj", {
 
 		check();
 
-		data.scope.childScopes.set(
-			memory.value,
-			execute(block, { ...data, returnScope: true })
-		);
+		let scope = execute(block, { ...data, returnScope: true });
+		memory.slot.scope.childScopes.set(memory.slot.name, scope);
+
+		memory.slot.set({
+			type: "js",
+			run() {
+				return scope;
+			}
+		});
 	}
 });
 

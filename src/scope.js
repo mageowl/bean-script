@@ -52,7 +52,7 @@ export class Scope {
         this.returnValue = value;
     }
 }
-class Slot {
+export class Slot {
     scope;
     name;
     used;

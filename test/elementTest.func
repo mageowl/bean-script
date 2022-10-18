@@ -1,0 +1,8 @@
+<!web>
+web.useElementAsConsole("fscript-logs");
+
+obj(<console>) -> web.getElement("#fscript-logs");
+obj(<can>) -> web.createElement("span");
+can.text("OP POND");
+can.setAttr("style", "font-weight:bold;");
+console.add(can);

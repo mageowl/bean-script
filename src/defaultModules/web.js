@@ -4,7 +4,7 @@ import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 class HTMLElementScope extends Scope {
     htmlEl;
-    type;
+    type = "Block";
     body = [];
     scope = this;
     destroyed = false;
@@ -32,6 +32,18 @@ class HTMLElementScope extends Scope {
                 el.setAttribute(name.value, value.value);
             }
         });
+        this.localFunctions.set("get", {
+            type: "js",
+            run(property) {
+                if (self.destroyed)
+                    error("Trying to edit a destroyed element.", "Web");
+                let value = el[property.value];
+                return {
+                    type: typeof value === "number" ? "NumberLiteral" : "StringLiteral",
+                    value
+                };
+            }
+        });
         this.localFunctions.set("text", {
             type: "js",
             run(text) {
@@ -46,14 +58,6 @@ class HTMLElementScope extends Scope {
                 if (self.destroyed)
                     error("Trying to edit a destroyed element.", "Web");
                 el.innerText += text.value;
-            }
-        });
-        this.localFunctions.set("self", {
-            type: "js",
-            run(text) {
-                if (self.destroyed)
-                    error("Trying to access a destroyed element.", "Web");
-                return self;
             }
         });
         this.localFunctions.set("add", {
