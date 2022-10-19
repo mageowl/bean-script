@@ -1,14 +1,17 @@
+import { FCallableAny } from "./interfaces";
+
 export class Scope {
-	localFunctions = new Map();
+	localFunctions: Map<string, FCallableAny> = new Map();
 	parent: Scope;
 	returnValue = null;
 	childScopes = new Map();
+	returnSelf = false;
 
 	constructor(parent: Scope = null) {
 		this.parent = parent;
 	}
 
-	getFunction(name) {
+	getFunction(name: string) {
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0]))
 			return this.childScopes.get(path[0]).getFunction(path.slice(1).join("."));
@@ -18,7 +21,7 @@ export class Scope {
 		else return undefined;
 	}
 
-	hasFunction(name) {
+	hasFunction(name: string): boolean {
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0])) {
 			// console.log(`Child Scope: ${path[0]}`);
@@ -32,7 +35,7 @@ export class Scope {
 		} else return false;
 	}
 
-	setFunction(name, value) {
+	setFunction(name: string, value) {
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0]))
 			return this.childScopes
@@ -43,11 +46,11 @@ export class Scope {
 		else if (this.parent) return this.parent.setFunction(name, value);
 	}
 
-	createSlot(name) {
+	createSlot(name: string) {
 		return new Slot(this, name);
 	}
 
-	return(value) {
+	return(value: string) {
 		this.returnValue = value;
 	}
 }

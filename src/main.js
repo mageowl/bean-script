@@ -12,7 +12,10 @@ if (isWeb) {
         // Compile scripts
         for (let scriptEl of scripts) {
             if (!scriptEl.src) {
-                executer(parser(lexer(scriptEl.innerText)));
+                const lex = lexer(scriptEl.innerText);
+                console.log(lex);
+                // const parse = parser(lex);
+                // executer(parse);
             }
             else {
                 const ENV = await getENVData(scriptEl.src);
@@ -20,7 +23,9 @@ if (isWeb) {
                 fetch(scriptEl.src)
                     .then((res) => res.text())
                     .then((text) => {
-                    executer(parser(lexer(text)), {
+                    const lex = lexer(text);
+                    const parse = parser(lex);
+                    executer(parse, {
                         ...defaultModules,
                         ...customModules
                     });

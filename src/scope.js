@@ -3,6 +3,7 @@ export class Scope {
     parent;
     returnValue = null;
     childScopes = new Map();
+    returnSelf = false;
     constructor(parent = null) {
         this.parent = parent;
     }

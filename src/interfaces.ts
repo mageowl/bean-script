@@ -44,6 +44,7 @@ export interface FNodeMemory extends FNode {
 export interface FNodeBlock extends FNode {
 	type: "Program" | "Block" | "ParameterBlock";
 	body: FNodeAny[];
+	scope?: Scope;
 }
 
 export type FNodeAny =
@@ -60,3 +61,14 @@ export interface FCallData {
 	yieldFunction?: FNode | null;
 	returnScope?: Scope;
 }
+
+export interface FCallable {
+	type: "js" | "custom";
+}
+
+export interface FJSCallable extends FCallable {
+	type: "js";
+	run(...params): FNode | void;
+}
+
+export type FCallableAny = FCallable | FJSCallable;

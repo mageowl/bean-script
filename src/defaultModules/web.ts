@@ -10,21 +10,22 @@ import {
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 
-class HTMLElementScope extends Scope {
+class HTMLElementScope extends Scope implements FNodeBlock {
 	htmlEl: HTMLElement;
-	type: FNodeType = "Block";
+	type: "Block" = "Block";
 	body: FNode[] = [];
 	scope = this;
 	destroyed = false;
+	returnSelf = true;
 
 	constructor(parent = null, element) {
 		super(parent);
 
 		this.htmlEl = element;
-		this._setup();
+		this.applyFunctions();
 	}
 
-	_setup() {
+	private applyFunctions() {
 		let el: HTMLElement = this.htmlEl;
 		let self = this;
 
@@ -116,14 +117,14 @@ const scope = new Scope();
 if (isWeb) {
 	scope.localFunctions.set("useElementAsConsole", {
 		type: "js",
-		run(id) {
+		run(id: FNodeValue) {
 			consoleEl = document.getElementById(id.value);
 		}
 	});
 
 	scope.localFunctions.set("getElement", {
 		type: "js",
-		run(selector, { scope }) {
+		run(selector: FNodeValue, { scope }: FNodeBlock) {
 			let el = new HTMLElementScope(
 				scope,
 				document.querySelector(selector.value)
@@ -135,7 +136,7 @@ if (isWeb) {
 
 	scope.localFunctions.set("createElement", {
 		type: "js",
-		run(type, { scope }) {
+		run(type: FNodeValue, { scope }: FNodeBlock) {
 			let htmlEl = document.createElement(type.value);
 			let el = new HTMLElementScope(scope, htmlEl);
 			trackedElements.push(el);
@@ -152,7 +153,7 @@ if (isWeb) {
 
 	scope.localFunctions.set("input", {
 		type: "js",
-		run(text) {
+		run(text: FNodeValue) {
 			return { type: "StringLiteral", value: prompt(text.value) };
 		}
 	});

@@ -8,12 +8,13 @@ class HTMLElementScope extends Scope {
     body = [];
     scope = this;
     destroyed = false;
+    returnSelf = true;
     constructor(parent = null, element) {
         super(parent);
         this.htmlEl = element;
-        this._setup();
+        this.applyFunctions();
     }
-    _setup() {
+    applyFunctions() {
         let el = this.htmlEl;
         let self = this;
         this.localFunctions.set("id", {

@@ -1,22 +1,23 @@
 <!web>
 web.useElementAsConsole("fscript-logs");
 
-def(<lessThan>) -> {
-	<!math>
+* def(<lessThan>) -> {
+* 	<!math>
 
-	def(<diff>) -> sub(param(0), param(1));
-	def(<less>) -> false;
+* 	def(<diff>) -> sub(param(0), param(1));
+* 	def(<less>) -> false;
 
-	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
-		set(<less>) -> true;
-	}
+* 	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
+* 		set(<less>) -> true;
+* 	}
 
-	return(less);
-}
+* 	return(less);
+* }
 
-defI(<numA>) -> num(web.input("Enter a number:"));
+* defI(<numA>) -> num(web.input("Enter a number:"));
+defI(<numA>) -> 10;
 
-if(lessThan(numA, 30)) -> {
+if(less(numA) -> 30) -> {
 	print(add(str(numA), " is less than 30."));
 };
 
@@ -26,5 +27,11 @@ def(<func>) -> {
 	def(mem) -> "Wow!";
 };
 
+obj(<myList>) -> list("a", "b", "c")
+
 func;
 print(value);
+print(myList.1);
+myList.push("grep");
+myList.delete(2)
+print(myList);
