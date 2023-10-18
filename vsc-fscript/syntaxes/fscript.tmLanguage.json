@@ -58,7 +58,7 @@
 					"patterns": [
 						{
 							"name": "constant.character.escape.fscript",
-							"match": "\\\\.*"
+							"match": "\\\\."
 						}
 					]
 				},

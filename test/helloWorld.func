@@ -1,11 +1,11 @@
-<!web>
+use(<web>)
 web.useElementAsConsole("fscript-logs");
 
-* def(<lessThan>) -> {
+* fn(<lessThan>) -> {
 * 	<!math>
 
-* 	def(<diff>) -> sub(param(0), param(1));
-* 	def(<less>) -> false;
+* 	fn(<diff>) -> sub(param(0), param(1));
+* 	fn(<less>) -> false;
 
 * 	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
 * 		set(<less>) -> true;
@@ -14,17 +14,17 @@ web.useElementAsConsole("fscript-logs");
 * 	return(less);
 * }
 
-* defI(<numA>) -> num(web.input("Enter a number:"));
-defI(<numA>) -> 10;
+* let(<numA>) -> num(web.input("Enter a number:"));
+let(<numA>) -> 10;
 
 if(less(numA) -> 30) -> {
 	print(add(str(numA), " is less than 30."));
 };
 
-defI(<mem>) -> <value>;
+let(<mem>) -> <value>;
 
-def(<func>) -> {
-	def(mem) -> "Wow!";
+fn(<func>) -> {
+	let(mem) -> "Wow!";
 };
 
 obj(<myList>) -> list("a", "b", "c")

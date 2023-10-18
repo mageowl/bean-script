@@ -122,7 +122,7 @@ if (isWeb) {
 		}
 	});
 
-	scope.localFunctions.set("getElement", {
+	scope.localFunctions.set("get", {
 		type: "js",
 		run(selector: FNodeValue, { scope }: FNodeBlock) {
 			let el = new HTMLElementScope(
@@ -134,7 +134,7 @@ if (isWeb) {
 		}
 	});
 
-	scope.localFunctions.set("createElement", {
+	scope.localFunctions.set("make", {
 		type: "js",
 		run(type: FNodeValue, { scope }: FNodeBlock) {
 			let htmlEl = document.createElement(type.value);
