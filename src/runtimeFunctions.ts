@@ -29,7 +29,7 @@ export function applyRuntimeFunctions(runtime, execute) {
 		runtime.localFunctions.set(name, { type: "js", run });
 	}
 
-	addFunc("def", function (memoryRaw, data, yieldFunction) {
+	addFunc("fn", function (memoryRaw, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
@@ -42,7 +42,7 @@ export function applyRuntimeFunctions(runtime, execute) {
 		});
 	});
 
-	addFunc("defI", function (memoryRaw, data, yieldFunction) {
+	addFunc("let", function (memoryRaw, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");

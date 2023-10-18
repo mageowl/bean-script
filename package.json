@@ -1,0 +1,22 @@
+{
+	"name": "f-script",
+	"version": "1.0.0",
+	"description": "Function oriented language",
+	"main": "npm.js",
+	"directories": {
+		"test": "test"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mageowl/f-script.git"
+	},
+	"keywords": [
+		"language"
+	],
+	"author": "mageowl",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/mageowl/f-script/issues"
+	},
+	"homepage": "https://github.com/mageowl/f-script#readme"
+}
