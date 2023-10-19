@@ -100,8 +100,6 @@ class HTMLElementScope extends Scope implements FNodeBlock {
 }
 
 let consoleEl: HTMLElement | null = null;
-let bodyEl = new HTMLElementScope(null, document.body);
-let trackedElements = [bodyEl];
 
 export function getConsoleEl() {
 	return consoleEl;
@@ -110,6 +108,9 @@ export function getConsoleEl() {
 const scope = new Scope();
 
 if (isWeb) {
+	let bodyEl = new HTMLElementScope(null, document.body);
+	let trackedElements = [bodyEl];
+
 	scope.localFunctions.set("useElementAsConsole", {
 		type: "js",
 		run(id: FNodeValue) {

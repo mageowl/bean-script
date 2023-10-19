@@ -2,7 +2,7 @@ import { ListScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import { FNodeAny, FNodeMemory, FNodeValue } from "./interfaces.js";
-import { isWeb } from "./process.js";
+import { isDebug, isWeb } from "./process.js";
 
 export function toFString(node) {
 	if (!node) return;
@@ -271,7 +271,9 @@ export function applyRuntimeFunctions(runtime, execute) {
 		};
 	});
 
-	addFunc("_debug", function (data) {
-		console.log(data);
-	});
+	if (isDebug) {
+		addFunc("__debug", function (data) {
+			console.log(data);
+		});
+	}
 }

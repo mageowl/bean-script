@@ -90,13 +90,13 @@ class HTMLElementScope extends Scope {
     }
 }
 let consoleEl = null;
-let bodyEl = new HTMLElementScope(null, document.body);
-let trackedElements = [bodyEl];
 export function getConsoleEl() {
     return consoleEl;
 }
 const scope = new Scope();
 if (isWeb) {
+    let bodyEl = new HTMLElementScope(null, document.body);
+    let trackedElements = [bodyEl];
     scope.localFunctions.set("useElementAsConsole", {
         type: "js",
         run(id) {

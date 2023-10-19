@@ -133,10 +133,8 @@ export function fromJSON(
 					}
 				}
 			});
-		console.log(s);
 	}
 
 	storeObject(json, scope);
-	console.log(scope.localFunctions);
 	return scope;
 }

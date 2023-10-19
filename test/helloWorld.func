@@ -38,6 +38,5 @@ print(myList);
 print(add("A random number between ", str(numA), " and 15 is ", str(rand(numA, 15))))
 
 web.on("keydown") -> {
-	_debug
 	print(event.key)
 }

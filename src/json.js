@@ -116,9 +116,7 @@ export function fromJSON(json, parent = null, all = false) {
                 }
             }
         });
-        console.log(s);
     }
     storeObject(json, scope);
-    console.log(scope.localFunctions);
     return scope;
 }

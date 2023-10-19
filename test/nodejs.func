@@ -1,0 +1,6 @@
+<!server>
+
+print("Hello from FScript!")
+server.read() -> {
+	print(param(0))
+}

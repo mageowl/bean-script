@@ -36,7 +36,7 @@ if (isWeb) {
     });
 }
 else {
-    console.log(`NodeJS detected.`);
+    console.log("NodeJS detected. Use src/node.js to run code on a server.");
 }
 export default function compile(code, options) {
     return executer(parser(lexer(code)), {

@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "Function oriented language",
 	"main": "npm.js",
+	"type": "module",
 	"directories": {
 		"test": "test"
 	},
@@ -18,5 +19,8 @@
 	"bugs": {
 		"url": "https://github.com/mageowl/f-script/issues"
 	},
-	"homepage": "https://github.com/mageowl/f-script#readme"
+	"homepage": "https://github.com/mageowl/f-script#readme",
+	"devDependencies": {
+		"@types/node": "^20.8.7"
+	}
 }
