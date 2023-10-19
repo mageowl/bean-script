@@ -1,5 +1,6 @@
 import { error } from "../error.js";
 import { execute } from "../executer.js";
+import { fromJSON } from "../json.js";
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 class HTMLElementScope extends Scope {
@@ -102,7 +103,7 @@ if (isWeb) {
             consoleEl = document.getElementById(id.value);
         }
     });
-    scope.localFunctions.set("getElement", {
+    scope.localFunctions.set("get", {
         type: "js",
         run(selector, { scope }) {
             let el = new HTMLElementScope(scope, document.querySelector(selector.value));
@@ -110,7 +111,7 @@ if (isWeb) {
             return el;
         }
     });
-    scope.localFunctions.set("createElement", {
+    scope.localFunctions.set("make", {
         type: "js",
         run(type, { scope }) {
             let htmlEl = document.createElement(type.value);
@@ -123,6 +124,18 @@ if (isWeb) {
         type: "js",
         run() {
             return { type: "Block", scope: bodyEl, body: [] };
+        }
+    });
+    scope.localFunctions.set("on", {
+        type: "js",
+        run(event, data, yieldFunction) {
+            window.addEventListener(event.value, (e) => {
+                let scope = new Scope(data.scope);
+                let eventScope = fromJSON(e, data.scope, true);
+                yieldFunction.scope = scope;
+                scope.childScopes.set("event", eventScope);
+                execute(yieldFunction, data);
+            });
         }
     });
     scope.localFunctions.set("input", {

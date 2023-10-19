@@ -1,4 +1,4 @@
-import ListScope from "./array.js";
+import { ListScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import { isWeb } from "./process.js";
@@ -24,7 +24,7 @@ export function applyRuntimeFunctions(runtime, execute) {
     function addFunc(name, run) {
         runtime.localFunctions.set(name, { type: "js", run });
     }
-    addFunc("def", function (memoryRaw, data, yieldFunction) {
+    addFunc("fn", function (memoryRaw, data, yieldFunction) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
@@ -36,7 +36,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             run: yieldFunction
         });
     });
-    addFunc("defI", function (memoryRaw, data, yieldFunction) {
+    addFunc("let", function (memoryRaw, data, yieldFunction) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
@@ -131,7 +131,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         let block = yieldFunction;
         if (memory.type !== "MemoryLiteral") {
-            error(`The first parameter for obj must be a memory literal. Instead, I got a ${memory.type}`, "Type");
+            error(`The first parameter for obj() must be a memory literal. Instead, I got a ${memory.type}`, "Type");
         }
         function check() {
             if (block.type === "FunctionCall") {
@@ -204,5 +204,22 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("list", function (...params) {
         let array = params.slice(0, -2);
         return new ListScope(array);
+    });
+    addFunc("rand", function (min, max, data) {
+        if (min?.type != "NumberLiteral" && min?.type != undefined)
+            error(`Minimum value ${min.type} is not a NumberLiteral`, "Type");
+        if (max?.type != "NumberLiteral" && max?.type != undefined)
+            error(`Maximum value ${max.type} is not a NumberLiteral`, "Type");
+        let minInt = data == null ? 0 : min.value != null ? min.value : min;
+        let maxInt = max == null ? 0 : max.value != null ? max.value : min;
+        if (max == null)
+            return { type: "NumberLiteral", value: Math.random() };
+        return {
+            type: "NumberLiteral",
+            value: Math.floor(Math.random() * (maxInt - minInt)) + minInt
+        };
+    });
+    addFunc("_debug", function (data) {
+        console.log(data);
     });
 }

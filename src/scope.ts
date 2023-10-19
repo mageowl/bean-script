@@ -1,10 +1,10 @@
-import { FCallableAny } from "./interfaces";
+import { FCallableAny } from "./interfaces.js";
 
 export class Scope {
 	localFunctions: Map<string, FCallableAny> = new Map();
 	parent: Scope;
 	returnValue = null;
-	childScopes = new Map();
+	childScopes: Map<string, Scope> = new Map();
 	returnSelf = false;
 
 	constructor(parent: Scope = null) {
@@ -35,7 +35,7 @@ export class Scope {
 		} else return false;
 	}
 
-	setFunction(name: string, value) {
+	setFunction(name: string, value: FCallableAny) {
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0]))
 			return this.childScopes
@@ -65,7 +65,7 @@ export class Slot {
 		this.name = name;
 	}
 
-	set(value: any) {
+	set(value: FCallableAny) {
 		if (this.used) return;
 		this.scope.localFunctions.set(this.name, value);
 	}

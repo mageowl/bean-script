@@ -1,12 +1,7 @@
 import { error } from "../error.js";
 import { execute } from "../executer.js";
-import {
-	FCallData,
-	FNode,
-	FNodeBlock,
-	FNodeType,
-	FNodeValue
-} from "../interfaces.js";
+import { FCallData, FNode, FNodeBlock, FNodeValue } from "../interfaces.js";
+import { fromJSON } from "../json.js";
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 
@@ -148,6 +143,20 @@ if (isWeb) {
 		type: "js",
 		run() {
 			return { type: "Block", scope: bodyEl, body: [] };
+		}
+	});
+
+	scope.localFunctions.set("on", {
+		type: "js",
+		run(event: FNodeValue, data: FCallData, yieldFunction: FNodeBlock) {
+			window.addEventListener(event.value, (e) => {
+				let scope = new Scope(data.scope);
+				let eventScope = fromJSON(e, data.scope, true);
+				yieldFunction.scope = scope;
+				scope.childScopes.set("event", eventScope);
+
+				execute(yieldFunction, data);
+			});
 		}
 	});
 

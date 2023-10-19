@@ -1,16 +1,16 @@
-use(<web>)
+<!web>;
 web.useElementAsConsole("fscript-logs");
 
 * fn(<lessThan>) -> {
 * 	<!math>
-
+* 
 * 	fn(<diff>) -> sub(param(0), param(1));
 * 	fn(<less>) -> false;
-
+* 
 * 	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
 * 		set(<less>) -> true;
 * 	}
-
+* 
 * 	return(less);
 * }
 
@@ -35,3 +35,9 @@ print(myList.1);
 myList.push("grep");
 myList.delete(2)
 print(myList);
+print(add("A random number between ", str(numA), " and 15 is ", str(rand(numA, 15))))
+
+web.on("keydown") -> {
+	_debug
+	print(event.key)
+}

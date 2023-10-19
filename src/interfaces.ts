@@ -29,7 +29,7 @@ export interface FNodeFunctionCall extends FNode {
 	type: "FunctionCall";
 	name: String;
 	parameters: FNodeBlock[];
-	yieldFunction: FNode | null;
+	yieldFunction: FNodeAny | null;
 }
 
 export interface FNodeValue extends FNode {
@@ -53,6 +53,7 @@ export type FNodeAny =
 	| FNodeFunctionCall
 	| FNodeValue
 	| FNodeMemory
+	| Scope
 	| null;
 
 export interface FCallData {
@@ -68,7 +69,13 @@ export interface FCallable {
 
 export interface FJSCallable extends FCallable {
 	type: "js";
-	run(...params): FNode | void;
+	run(...params): FNodeAny | void;
 }
 
-export type FCallableAny = FCallable | FJSCallable;
+export interface FUserCallable extends FCallable {
+	type: "custom";
+	run: FNodeAny;
+	scope?: Scope;
+}
+
+export type FCallableAny = FCallable | FJSCallable | FUserCallable;

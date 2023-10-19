@@ -59,9 +59,6 @@ function chunk(code: string): string[] {
 		} else if (char === ">" && !inString) {
 			currentChunk += char;
 			split();
-		} else if (char === "!" && !inString) {
-			split();
-			currentChunk += char;
 		} else currentChunk += char;
 
 		i++;

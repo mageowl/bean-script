@@ -1,4 +1,4 @@
-import ListScope from "./array.js";
+import { ListScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import { FNodeAny, FNodeMemory, FNodeValue } from "./interfaces.js";
@@ -164,7 +164,7 @@ export function applyRuntimeFunctions(runtime, execute) {
 
 		if (memory.type !== "MemoryLiteral") {
 			error(
-				`The first parameter for obj must be a memory literal. Instead, I got a ${memory.type}`,
+				`The first parameter for obj() must be a memory literal. Instead, I got a ${memory.type}`,
 				"Type"
 			);
 		}
@@ -253,5 +253,25 @@ export function applyRuntimeFunctions(runtime, execute) {
 		let array = params.slice(0, -2);
 
 		return new ListScope(array);
+	});
+
+	addFunc("rand", function (min, max, data) {
+		if (min?.type != "NumberLiteral" && min?.type != undefined)
+			error(`Minimum value ${min.type} is not a NumberLiteral`, "Type");
+		if (max?.type != "NumberLiteral" && max?.type != undefined)
+			error(`Maximum value ${max.type} is not a NumberLiteral`, "Type");
+
+		let minInt = data == null ? 0 : min.value != null ? min.value : min;
+		let maxInt = max == null ? 0 : max.value != null ? max.value : min;
+		if (max == null) return { type: "NumberLiteral", value: Math.random() };
+
+		return {
+			type: "NumberLiteral",
+			value: Math.floor(Math.random() * (maxInt - minInt)) + minInt
+		};
+	});
+
+	addFunc("_debug", function (data) {
+		console.log(data);
 	});
 }

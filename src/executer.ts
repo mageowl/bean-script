@@ -3,7 +3,7 @@ import { Scope } from "./scope.js";
 import { FCallData, FNodeAny } from "./interfaces.js";
 import { applyRuntimeFunctions } from "./runtimeFunctions.js";
 
-export function execute(node, dataRaw: FCallData = {}): FNodeAny | Scope {
+export function execute(node, dataRaw: FCallData = {}): FNodeAny {
 	const data: FCallData = { scope: runtime, ...dataRaw };
 	let scope: Scope;
 

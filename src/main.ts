@@ -18,8 +18,8 @@ if (isWeb) {
 			if (!scriptEl.src) {
 				const lex = lexer(scriptEl.innerText);
 				console.log(lex);
-				// const parse = parser(lex);
-				// executer(parse);
+				const parse = parser(lex);
+				executer(parse);
 			} else {
 				const ENV = await getENVData(scriptEl.src);
 				const customModules = await loadModules(ENV.dependencies);
@@ -28,6 +28,7 @@ if (isWeb) {
 					.then((text) => {
 						const lex = lexer(text);
 						const parse = parser(lex);
+						console.log(parse);
 						executer(parse, {
 							...defaultModules,
 							...customModules
