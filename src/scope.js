@@ -21,15 +21,12 @@ export class Scope {
     hasFunction(name) {
         let path = name.split(".");
         if (path.length > 1 && this.childScopes.has(path[0])) {
-            // console.log(`Child Scope: ${path[0]}`);
             return this.childScopes.get(path[0]).hasFunction(path.slice(1).join("."));
         }
         else if (this.localFunctions.has(name)) {
-            // console.log(`Found: ${name}, Local Functions: `, this.localFunctions);
             return true;
         }
         else if (this.parent) {
-            // console.log("Parent: ", this.parent);
             return this.parent.hasFunction(name);
         }
         else
@@ -56,14 +53,14 @@ export class Scope {
 export class Slot {
     scope;
     name;
-    used;
     constructor(scope, name) {
         this.scope = scope;
         this.name = name;
     }
     set(value) {
-        if (this.used)
-            return;
         this.scope.localFunctions.set(this.name, value);
+    }
+    get() {
+        return this.scope.localFunctions.get(this.name);
     }
 }

@@ -2,7 +2,6 @@ import { executer } from "./executer.js";
 import { lexer } from "./lexer.js";
 import { parser } from "./parser.js";
 import { isWeb } from "./process.js";
-import { getENVData } from "./env.js";
 import { loadModules } from "./moduleLoader.js";
 import * as defaultModules from "./defaultModules/main.js";
 
@@ -17,23 +16,17 @@ if (isWeb) {
 		for (let scriptEl of scripts) {
 			if (!scriptEl.src) {
 				const lex = lexer(scriptEl.innerText);
-				console.log(lex);
 				const parse = parser(lex);
 				executer(parse);
 			} else {
-				const ENV = await getENVData(scriptEl.src);
-				const customModules = await loadModules(ENV.dependencies);
-				fetch(scriptEl.src)
-					.then((res) => res.text())
-					.then((text) => {
-						const lex = lexer(text);
-						const parse = parser(lex);
-						console.log(parse);
-						executer(parse, {
-							...defaultModules,
-							...customModules
-						});
-					});
+				const customModules = await loadModules();
+				const text = await fetch(scriptEl.src).then((d) => d.text());
+				const lex = lexer(text);
+				const parse = parser(lex);
+				executer(parse, {
+					...defaultModules,
+					...customModules
+				});
 			}
 		}
 	});

@@ -5,11 +5,12 @@ import { fromJSON } from "../json.js";
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
 
-class HTMLElementScope extends Scope implements FNodeBlock {
+export class HTMLElementScope extends Scope implements FNodeBlock {
 	htmlEl: HTMLElement;
 	type: "Block" = "Block";
+	subType: "HTMLElementScope" = "HTMLElementScope";
 	body: FNode[] = [];
-	scope = this;
+	scope = this; // NEED THIS TO SAVE OBJECT PROPERLY.
 	destroyed = false;
 	returnSelf = true;
 
@@ -110,6 +111,7 @@ const scope = new Scope();
 if (isWeb) {
 	let bodyEl = new HTMLElementScope(null, document.body);
 	let trackedElements = [bodyEl];
+	scope.childScopes.set("body", bodyEl);
 
 	scope.localFunctions.set("useElementAsConsole", {
 		type: "js",

@@ -24,13 +24,10 @@ export class Scope {
 	hasFunction(name: string): boolean {
 		let path = name.split(".");
 		if (path.length > 1 && this.childScopes.has(path[0])) {
-			// console.log(`Child Scope: ${path[0]}`);
 			return this.childScopes.get(path[0]).hasFunction(path.slice(1).join("."));
 		} else if (this.localFunctions.has(name)) {
-			// console.log(`Found: ${name}, Local Functions: `, this.localFunctions);
 			return true;
 		} else if (this.parent) {
-			// console.log("Parent: ", this.parent);
 			return this.parent.hasFunction(name);
 		} else return false;
 	}
@@ -58,7 +55,6 @@ export class Scope {
 export class Slot {
 	scope: Scope;
 	name: string;
-	used: boolean;
 
 	constructor(scope: Scope, name: string) {
 		this.scope = scope;
@@ -66,7 +62,10 @@ export class Slot {
 	}
 
 	set(value: FCallableAny) {
-		if (this.used) return;
 		this.scope.localFunctions.set(this.name, value);
+	}
+
+	get(): FCallableAny | void {
+		return this.scope.localFunctions.get(this.name);
 	}
 }

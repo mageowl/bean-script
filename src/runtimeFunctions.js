@@ -2,6 +2,7 @@ import { ListScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import { isDebug, isWeb } from "./process.js";
+import call from "./functionCall.js";
 export function toFString(node) {
     if (!node)
         return;
@@ -68,6 +69,27 @@ export function applyRuntimeFunctions(runtime, execute) {
             run: literal(yieldFunction, data)
         });
     });
+    addFunc("del", function (memory, data) {
+        if (memory.type !== "MemoryLiteral")
+            error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
+        if (!data.scope.hasFunction(memory.value))
+            error(`Value <${memory.value}> is not defined.`, "Memory");
+        data.scope.localFunctions.delete(memory?.value);
+    });
+    addFunc("query", function (memory, data) {
+        if (memory.type !== "MemoryLiteral")
+            error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
+        if (!data.scope.hasFunction(memory.value))
+            error(`Value <${memory.value}> is not defined.`, "Memory");
+        let fn;
+        if (!memory?.slot)
+            fn = execute(memory, data).slot.get();
+        else
+            fn = memory.slot.get();
+        if (fn == null)
+            return;
+        return call(fn, [], data, null, execute);
+    });
     addFunc("print", function (string, data) {
         if (isWeb && getConsoleEl()) {
             getConsoleEl().innerHTML += `<span>${toFString(execute(string, data))}</span><br>`;
@@ -78,8 +100,15 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("param", function (paramIndex, data) {
         return data.parameters[paramIndex.value];
     });
-    addFunc("yield", function (data) {
-        return execute(data.yieldFunction, data);
+    addFunc("params", function (data) {
+        return new ListScope(data.parameters);
+    });
+    addFunc("yield", function (...params) {
+        const data = params.at(-2);
+        return execute(data.yieldFunction, {
+            ...data.yieldScope,
+            parameters: params.length > 2 ? params.slice(0, -2) : data.yieldScope.parameters
+        });
     });
     addFunc("return", function (value, data) {
         data.scope.return(value);
@@ -161,7 +190,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         }
         return { type: "BooleanLiteral", value: false };
     });
-    addFunc("unless", function (condition, data, yieldFunction) {
+    addFunc("else", function (condition, data, yieldFunction) {
         let isTrue = execute(condition, data);
         if (isTrue.value === undefined)
             error(`${isTrue.type} is not type cast-able to boolean.`, "Type");
@@ -218,6 +247,25 @@ export function applyRuntimeFunctions(runtime, execute) {
             type: "NumberLiteral",
             value: Math.floor(Math.random() * (maxInt - minInt)) + minInt
         };
+    });
+    addFunc("pow", function (num1, num2) {
+        if (num1.type !== "NumberLiteral" || num2.type !== "NumberLiteral")
+            error(`To raise to the nth power, both objects must be numbers.`, "Type");
+        return {
+            type: "NumberLiteral",
+            value: num1.value ** num2.value
+        };
+    });
+    addFunc("repeat", function (times, data, yieldFunction) {
+        if (times.type !== "NumberLiteral")
+            error(`Parameter of repeat() should be a number. Instead, I got a ${times.type}.`, "Type");
+        let i = 0;
+        while (i < times.value) {
+            const result = execute(yieldFunction, data);
+            if (result?.type === "NumberLiteral" && result?.value === 1)
+                break;
+            i++;
+        }
     });
     if (isDebug) {
         addFunc("__debug", function (data) {

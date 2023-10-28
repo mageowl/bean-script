@@ -3,11 +3,12 @@ import { execute } from "../executer.js";
 import { fromJSON } from "../json.js";
 import { isWeb } from "../process.js";
 import { Scope } from "../scope.js";
-class HTMLElementScope extends Scope {
+export class HTMLElementScope extends Scope {
     htmlEl;
     type = "Block";
+    subType = "HTMLElementScope";
     body = [];
-    scope = this;
+    scope = this; // NEED THIS TO SAVE OBJECT PROPERLY.
     destroyed = false;
     returnSelf = true;
     constructor(parent = null, element) {
@@ -97,6 +98,7 @@ const scope = new Scope();
 if (isWeb) {
     let bodyEl = new HTMLElementScope(null, document.body);
     let trackedElements = [bodyEl];
+    scope.childScopes.set("body", bodyEl);
     scope.localFunctions.set("useElementAsConsole", {
         type: "js",
         run(id) {

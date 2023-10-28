@@ -1,2 +1,2 @@
 export const isWeb = globalThis?.window != null;
-export const isDebug = false;
+export const isDebug = true;

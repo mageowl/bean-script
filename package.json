@@ -22,5 +22,8 @@
 	"homepage": "https://github.com/mageowl/f-script#readme",
 	"devDependencies": {
 		"@types/node": "^20.8.7"
+	},
+	"dependencies": {
+		"path-browserify": "^1.0.1"
 	}
 }

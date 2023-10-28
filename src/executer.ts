@@ -2,6 +2,7 @@ import { error } from "./error.js";
 import { Scope } from "./scope.js";
 import { FCallData, FNodeAny } from "./interfaces.js";
 import { applyRuntimeFunctions } from "./runtimeFunctions.js";
+import call from "./functionCall.js";
 
 export function execute(node, dataRaw: FCallData = {}): FNodeAny {
 	const data: FCallData = { scope: runtime, ...dataRaw };
@@ -13,21 +14,14 @@ export function execute(node, dataRaw: FCallData = {}): FNodeAny {
 			let fn = data.scope.getFunction(node.name);
 			if (!fn) error(`Unknown value or function "${node.name}".`, "Reference");
 
-			if (fn.type === "js") {
-				return fn.run(
-					...node.parameters.map((node) => execute(node, data)),
-					data,
-					node.yieldFunction
-				);
-			} else if (fn.type === "custom") {
-				let params =
-					(node.parameters.length ? node.parameters : data.parameters) || [];
-				return execute(fn.run, {
-					scope: fn.scope,
-					parameters: params.map((node) => execute(node, data)),
-					yieldFunction: node.yieldFunction
-				});
-			}
+			const response = call(
+				fn,
+				node.parameters,
+				data,
+				node.yieldFunction,
+				execute
+			);
+			if (response != null) return response as FNodeAny;
 			break;
 
 		case "Block":

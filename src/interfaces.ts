@@ -78,4 +78,9 @@ export interface FUserCallable extends FCallable {
 	scope?: Scope;
 }
 
-export type FCallableAny = FCallable | FJSCallable | FUserCallable;
+export type FCallableAny = FJSCallable | FUserCallable;
+
+export interface FModuleSource {
+	type: "file/javascript" | "file/f-script" | "github";
+	path: string;
+}

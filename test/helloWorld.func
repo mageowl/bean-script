@@ -1,42 +1,24 @@
-<!web>;
-web.useElementAsConsole("fscript-logs");
+<!web>
+web.useElementAsConsole("fscript-logs")
 
-* fn(<lessThan>) -> {
-* 	<!math>
-* 
-* 	fn(<diff>) -> sub(param(0), param(1));
-* 	fn(<less>) -> false;
-* 
-* 	unless(is(sub(math.abs(diff), diff)) -> 0) -> {
-* 		set(<less>) -> true;
-* 	}
-* 
-* 	return(less);
-* }
-
-* let(<numA>) -> num(web.input("Enter a number:"));
-let(<numA>) -> 10;
+let(<numA>) -> 10
 
 if(less(numA) -> 30) -> {
-	print(add(str(numA), " is less than 30."));
-};
+	print(add(str(numA), " is less than 30."))
+}
 
-let(<mem>) -> <value>;
+let(<mem>) -> <value>
 
 fn(<func>) -> {
-	let(mem) -> "Wow!";
-};
+	let(mem) -> "Wow!"
+}
 
 obj(<myList>) -> list("a", "b", "c")
 
-func;
-print(value);
-print(myList.1);
-myList.push("grep");
+func
+print(value)
+print(myList.1)
+myList.push("grep")
 myList.delete(2)
-print(myList);
+print(myList)
 print(add("A random number between ", str(numA), " and 15 is ", str(rand(numA, 15))))
-
-web.on("keydown") -> {
-	print(event.key)
-}
