@@ -16,7 +16,10 @@ export class TurtleScope extends Scope implements FNodeBlock {
 	type: "Block" = "Block";
 	subType: "TurtleScope" = "TurtleScope";
 	body: FNode[] = [];
-	scope?: Scope = this; // NEED THIS TO SAVE OBJECT PROPERLY.
+
+	// NEED THIS TO SAVE OBJECT PROPERLY.
+	scope?: Scope = this;
+	returnSelf = true;
 
 	x: number = 0;
 	y: number = 0;
@@ -157,6 +160,18 @@ export class TurtleScope extends Scope implements FNodeBlock {
 			self.start(pathType.value);
 		});
 		set("end", () => self.end());
+
+		set("image", (element) => {
+			if (
+				element?.subType !== "HTMLElementScope" ||
+				element?.htmlEl?.constructor !== HTMLImageElement
+			)
+				error(
+					`Expected an <img> element. Instead, got a ${element.type}`,
+					"Type"
+				);
+			self.image(element.htmlEl);
+		});
 	}
 
 	goto(x: number, y: number): void {

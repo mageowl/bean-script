@@ -1,17 +1,15 @@
 <!turtle>
 <!web>
+<!meta>
 
 fn(<img>) -> {
 	obj(<el>) -> web.make("img")
 	el.setAttr("src", param(0))
+	el.setAttr("style", "display:none;")
 	web.body.add(el)
 	el.on("load") -> {
-		yield()
+		yield(el)
 	}
-}
-
-img("https://mageowlstudios.com/images/owl.png") -> {
-	print(param(0))
 }
 
 obj(<canvas>) -> web.make("canvas")
@@ -20,7 +18,7 @@ web.body.add(canvas)
 obj(<turtle>) -> turtle.new(canvas)
 
 turtle.goto(50, 50)
-turtle.size(10) turtle.cap("round") turtle.join("round")
+turtle.size(10) turtle.cap("square") turtle.join("miter")
 turtle.start("fill")
 
 repeat(4) -> {
@@ -29,3 +27,7 @@ repeat(4) -> {
 }
 
 turtle.end()
+
+img("https://mageowlstudios.com/images/gradient.png") -> {
+	turtle.image(param(0))
+}

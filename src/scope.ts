@@ -1,4 +1,4 @@
-import { FCallableAny } from "./interfaces.js";
+import { FCallableAny, FNode } from "./interfaces.js";
 
 export class Scope {
 	localFunctions: Map<string, FCallableAny> = new Map();
@@ -6,6 +6,12 @@ export class Scope {
 	returnValue = null;
 	childScopes: Map<string, Scope> = new Map();
 	returnSelf = false;
+	type: string = "Block";
+	subType: string = "Scope";
+	body: FNode[] = [];
+
+	matchCases: Function[] = [];
+	hasDefaultCase = false;
 
 	constructor(parent: Scope = null) {
 		this.parent = parent;

@@ -1,0 +1,30 @@
+* Counting loops
+fn(<counter>) -> {
+	else(if(exists(param(0))) -> {
+		set(param(0)) -> add(num(query(param(0))), 1)
+	}) -> {
+		let(param(0)) -> 0
+	}
+	yield()
+}
+
+repeat(10) -> counter(<i>) -> {
+	print(add("hey dere. index: ", str(i)))
+}
+
+* Match statements
+let(<x>) -> 42
+match(x) -> {
+	case(42) -> {
+		print("tis the number 42.")
+	}
+	case(128) -> {
+		print("ooh, an multiplee of 8!")
+	}
+	case(null) -> {
+		print("crap, a nothin!")
+	}
+	default -> {
+		print("~not nothing~")
+	}
+}

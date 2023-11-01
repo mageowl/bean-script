@@ -4,6 +4,11 @@ export class Scope {
     returnValue = null;
     childScopes = new Map();
     returnSelf = false;
+    type = "Block";
+    subType = "Scope";
+    body = [];
+    matchCases = [];
+    hasDefaultCase = false;
     constructor(parent = null) {
         this.parent = parent;
     }

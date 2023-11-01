@@ -7,7 +7,9 @@ export class TurtleScope extends Scope {
     type = "Block";
     subType = "TurtleScope";
     body = [];
-    scope = this; // NEED THIS TO SAVE OBJECT PROPERLY.
+    // NEED THIS TO SAVE OBJECT PROPERLY.
+    scope = this;
+    returnSelf = true;
     x = 0;
     y = 0;
     w = 0;
@@ -111,6 +113,12 @@ export class TurtleScope extends Scope {
             self.start(pathType.value);
         });
         set("end", () => self.end());
+        set("image", (element) => {
+            if (element?.subType !== "HTMLElementScope" ||
+                element?.htmlEl?.constructor !== HTMLImageElement)
+                error(`Expected an <img> element. Instead, got a ${element.type}`, "Type");
+            self.image(element.htmlEl);
+        });
     }
     goto(x, y) {
         this.x = x;

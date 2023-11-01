@@ -17,7 +17,9 @@ if (isWeb) {
 			if (!scriptEl.src) {
 				const lex = lexer(scriptEl.innerText);
 				const parse = parser(lex);
-				executer(parse);
+				executer(parse, {
+					...defaultModules
+				});
 			} else {
 				const customModules = await loadModules();
 				const text = await fetch(scriptEl.src).then((d) => d.text());

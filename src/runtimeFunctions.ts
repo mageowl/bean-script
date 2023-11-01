@@ -10,6 +10,7 @@ import {
 } from "./interfaces.js";
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
+import { Scope } from "./scope.js";
 
 export function toFString(node) {
 	if (!node) return;
@@ -121,8 +122,13 @@ export function applyRuntimeFunctions(
 			)}</span><br>`;
 		} else console.log(toFString(execute(string, data)));
 	});
+	addFunc("error", function (message) {
+		console.error("[fscript] " + message.value);
+	});
 
 	addFunc("param", function (paramIndex, data) {
+		if (!data.parameters?.length || data.parameters.length <= paramIndex.value)
+			error(`Parameter ${paramIndex.value} was not given.`, "Reference");
 		return data.parameters[paramIndex.value];
 	});
 	addFunc("params", function (data) {
@@ -220,7 +226,10 @@ export function applyRuntimeFunctions(
 
 		check();
 
-		let scope = execute(block, { ...data, returnScope: true });
+		let scope =
+			block?.subType === "Scope"
+				? block
+				: execute(block, { ...data, returnScope: true });
 		memory.slot.scope.childScopes.set(memory.slot.name, scope);
 
 		memory.slot.set({
@@ -337,6 +346,51 @@ export function applyRuntimeFunctions(
 			if (result?.type === "NumberLiteral" && result?.value === 1) break;
 			i++;
 		}
+	});
+
+	addFunc("match", function (value, data, yieldFunction) {
+		const matchScope: Scope = execute(yieldFunction, {
+			...data,
+			returnScope: true
+		});
+		const valueLiteral = execute(value, data);
+		for (let callback of matchScope.matchCases) {
+			if (callback(valueLiteral, data.scope)) break;
+		}
+	});
+	addFunc("case", function (match, data: FCallData, yieldFunction) {
+		if (data.scope.hasDefaultCase)
+			error("Cannot add cases after default case.", "Syntax");
+
+		const matchValue = execute(match, data);
+		data.scope.matchCases.push((input, matchScope) => {
+			if (
+				input?.type === matchValue?.type &&
+				input?.value === matchValue?.value &&
+				input?.type.endsWith("Literal")
+			) {
+				matchScope.return(execute(yieldFunction, data));
+				return true;
+			}
+			return false;
+		});
+	});
+	addFunc("default", function (data: FCallData, yieldFunction) {
+		if (data.scope.hasDefaultCase)
+			error("Cannot have more than one default case.", "Syntax");
+
+		data.scope.matchCases.push((_, matchScope) => {
+			matchScope.return(execute(yieldFunction, data));
+			return true;
+		});
+		data.scope.hasDefaultCase = true;
+	});
+
+	addFunc("type", function (value) {
+		return {
+			type: "StringLiteral",
+			value: value.type.replace("Literal", "").toLowerCase()
+		};
 	});
 
 	if (isDebug) {

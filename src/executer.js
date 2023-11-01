@@ -40,6 +40,12 @@ export function execute(node, dataRaw = {}) {
                 error(`Unknown module '${node.value}'.`, "Reference");
             scope = modules.get(node.value);
             runtime.childScopes.set(node.value, scope);
+            runtime.localFunctions.set(node.value, {
+                type: "js",
+                run() {
+                    return scope;
+                }
+            });
             return scope;
         case "MemoryLiteral":
             return {

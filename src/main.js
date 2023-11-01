@@ -13,7 +13,9 @@ if (isWeb) {
             if (!scriptEl.src) {
                 const lex = lexer(scriptEl.innerText);
                 const parse = parser(lex);
-                executer(parse);
+                executer(parse, {
+                    ...defaultModules
+                });
             }
             else {
                 const customModules = await loadModules();

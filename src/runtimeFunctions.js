@@ -97,7 +97,12 @@ export function applyRuntimeFunctions(runtime, execute) {
         else
             console.log(toFString(execute(string, data)));
     });
+    addFunc("error", function (message) {
+        console.error("[fscript] " + message.value);
+    });
     addFunc("param", function (paramIndex, data) {
+        if (!data.parameters?.length || data.parameters.length <= paramIndex.value)
+            error(`Parameter ${paramIndex.value} was not given.`, "Reference");
         return data.parameters[paramIndex.value];
     });
     addFunc("params", function (data) {
@@ -171,7 +176,9 @@ export function applyRuntimeFunctions(runtime, execute) {
                 error(`Yield to obj must be a block. Instead, I got a ${block.type}`, "Type");
         }
         check();
-        let scope = execute(block, { ...data, returnScope: true });
+        let scope = block?.subType === "Scope"
+            ? block
+            : execute(block, { ...data, returnScope: true });
         memory.slot.scope.childScopes.set(memory.slot.name, scope);
         memory.slot.set({
             type: "js",
@@ -266,6 +273,46 @@ export function applyRuntimeFunctions(runtime, execute) {
                 break;
             i++;
         }
+    });
+    addFunc("match", function (value, data, yieldFunction) {
+        const matchScope = execute(yieldFunction, {
+            ...data,
+            returnScope: true
+        });
+        const valueLiteral = execute(value, data);
+        for (let callback of matchScope.matchCases) {
+            if (callback(valueLiteral, data.scope))
+                break;
+        }
+    });
+    addFunc("case", function (match, data, yieldFunction) {
+        if (data.scope.hasDefaultCase)
+            error("Cannot add cases after default case.", "Syntax");
+        const matchValue = execute(match, data);
+        data.scope.matchCases.push((input, matchScope) => {
+            if (input?.type === matchValue?.type &&
+                input?.value === matchValue?.value &&
+                input?.type.endsWith("Literal")) {
+                matchScope.return(execute(yieldFunction, data));
+                return true;
+            }
+            return false;
+        });
+    });
+    addFunc("default", function (data, yieldFunction) {
+        if (data.scope.hasDefaultCase)
+            error("Cannot have more than one default case.", "Syntax");
+        data.scope.matchCases.push((_, matchScope) => {
+            matchScope.return(execute(yieldFunction, data));
+            return true;
+        });
+        data.scope.hasDefaultCase = true;
+    });
+    addFunc("type", function (value) {
+        return {
+            type: "StringLiteral",
+            value: value.type.replace("Literal", "").toLowerCase()
+        };
     });
     if (isDebug) {
         addFunc("__debug", function (data) {
