@@ -1,0 +1,53 @@
+<!turtle>
+<!meta>
+<!web>
+meta.include(meta)
+
+if(web.exists("#fscript-logs")) -> {
+	web.useElementAsConsole(null)
+	obj(<console>) -> web.get("#fscript-logs")
+	console.destroy()
+}
+
+obj(<assets>) -> dispatcher -> {
+	event("finish")
+	event("added")
+	event("load")
+
+	let(<tracked>) -> 0
+	let(<loaded>) -> 0
+	let(<finished>) -> false
+
+	on("load") -> bind(<loaded>, <finished>) -> {
+		set(param(0)) -> add(loaded, 1)
+		print("huh")
+		if(eq(tracked, loaded)) -> bind(param(1)) -> {
+			set(param(0)) -> true
+			emit("finish")
+		}
+	}
+	on("added") -> bind(<tracked>) -> {
+		else(if(finished) -> {
+			error("assets have already finished loading.")
+		}) -> {
+			set(param(0)) -> add(tracked, 1)
+		}
+	}
+
+	fn(<img>) -> {
+		obj(<el>) -> web.make("img")
+		el.setAttr("src", yield)
+		el.setAttr("style", "display:none;")
+		web.body.add(el)
+
+		emit("added")
+		el.on("load") -> {
+			emit("load")
+		}
+	}
+}
+
+assets.img() -> "https://png.pngtree.com/png-clipart/20230201/original/pngtree-photo-of-avocado-png-image_8939900.png"
+assets.on("finish") -> {
+	print("un avocado")
+}

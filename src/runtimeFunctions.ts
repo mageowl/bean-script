@@ -1,4 +1,4 @@
-import { ListScope } from "./json.js";
+import { ListScope, MapScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import {
@@ -276,27 +276,20 @@ export function applyRuntimeFunctions(
 		};
 	});
 
-	addFunc("is", function (node, data, yieldFunction) {
-		let obj = execute(node, data);
-		let match = execute(yieldFunction, data);
-		let value = obj.value === match.value && obj.type === match.type;
+	addFunc("eq", function (a, b, data) {
+		let value = a?.type === b?.type && a?.value === b?.value;
 
 		return { type: "BooleanLiteral", value };
 	});
 
-	addFunc("less", function (node, data, yieldFunction) {
-		let obj: FNodeValue = execute(node, data);
-		let match: FNodeValue = execute(yieldFunction, data);
-
-		let value = obj.value < match.value && obj.type === match.type;
+	addFunc("lt", function (a, b, data) {
+		let value = a?.type === b?.type && a?.value < b?.value;
 
 		return { type: "BooleanLiteral", value };
 	});
 
-	addFunc("more", function (node, data, yieldFunction) {
-		let obj: FNodeValue = execute(node, data);
-		let match: FNodeValue = execute(yieldFunction, data);
-		let value = obj.value > match.value && obj.type === match.type;
+	addFunc("gt", function (a, b, data) {
+		let value = a?.type === b?.type && a?.value > b?.value;
 
 		return { type: "BooleanLiteral", value };
 	});
@@ -305,6 +298,21 @@ export function applyRuntimeFunctions(
 		let array = params.slice(0, -2);
 
 		return new ListScope(array);
+	});
+	addFunc("map", function (...params) {
+		let map = params
+			.slice(0, -2)
+			.reduce(
+				(arr, item) =>
+					arr.length > 0
+						? arr.at(-1).length === 2
+							? arr.concat([[item]])
+							: arr.slice(0, -1).concat([[arr.at(-1)[0], item]])
+						: [[item]],
+				[]
+			);
+
+		return new MapScope(map);
 	});
 
 	addFunc("rand", function (min, max, data) {
@@ -355,7 +363,8 @@ export function applyRuntimeFunctions(
 		});
 		const valueLiteral = execute(value, data);
 		for (let callback of matchScope.matchCases) {
-			if (callback(valueLiteral, data.scope)) break;
+			const res = callback(valueLiteral, data.scope);
+			if (res != null) return res;
 		}
 	});
 	addFunc("case", function (match, data: FCallData, yieldFunction) {
@@ -369,10 +378,9 @@ export function applyRuntimeFunctions(
 				input?.value === matchValue?.value &&
 				input?.type.endsWith("Literal")
 			) {
-				matchScope.return(execute(yieldFunction, data));
-				return true;
+				return execute(yieldFunction, { ...data, returnScope: false });
 			}
-			return false;
+			return null;
 		});
 	});
 	addFunc("default", function (data: FCallData, yieldFunction) {
@@ -391,6 +399,15 @@ export function applyRuntimeFunctions(
 			type: "StringLiteral",
 			value: value.type.replace("Literal", "").toLowerCase()
 		};
+	});
+
+	addFunc("size", function (string) {
+		if (string?.type !== "StringLiteral")
+			error(
+				`Expected a string. Instead got a ${string?.type}. If you are trying to measure the length of a list, use list.size()`,
+				"Type"
+			);
+		return { type: "NumberLiteral", value: string.value.length };
 	});
 
 	if (isDebug) {

@@ -6,6 +6,18 @@ scope.localFunctions.set("dispatcher", {
     type: "js",
     run(data, yieldFunction) {
         const events = new Map();
+        const onFn = {
+            type: "js",
+            run(eventName, data, yieldFunction) {
+                if (eventName.type !== "StringLiteral")
+                    error(`Expected a string, instead got a ${eventName.type}`, "Type");
+                if (!events.has(eventName.value))
+                    error(`Event ${eventName.value} does not exist.`, "Reference");
+                events.get(eventName.value).push(() => {
+                    execute(yieldFunction, data);
+                });
+            }
+        };
         const dispatcherInterface = new Scope(data.scope);
         dispatcherInterface.localFunctions.set("event", {
             type: "js",
@@ -25,23 +37,13 @@ scope.localFunctions.set("dispatcher", {
                 events.get(name.value).forEach((cb) => cb());
             }
         });
+        dispatcherInterface.localFunctions.set("on", onFn);
         const scope = execute(yieldFunction, {
             ...data,
             scope: dispatcherInterface,
             returnScope: true
         });
-        scope.localFunctions.set("on", {
-            type: "js",
-            run(eventName, data, yieldFunction) {
-                if (eventName.type !== "StringLiteral")
-                    error(`Expected a string, instead got a ${eventName.type}`, "Type");
-                if (!events.has(eventName.value))
-                    error(`Event ${eventName.value} does not exist.`, "Reference");
-                events.get(eventName.value).push(() => {
-                    execute(yieldFunction, data);
-                });
-            }
-        });
+        scope.localFunctions.set("on", onFn);
         return scope;
     }
 });

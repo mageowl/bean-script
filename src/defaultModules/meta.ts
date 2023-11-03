@@ -1,5 +1,6 @@
 import { error } from "../error.js";
 import { execute } from "../executer.js";
+import { FJSCallable } from "../interfaces.js";
 import { ListScope } from "../json.js";
 import { Scope } from "../scope.js";
 
@@ -8,7 +9,20 @@ const scope = new Scope();
 scope.localFunctions.set("dispatcher", {
 	type: "js",
 	run(data, yieldFunction) {
-		const events = new Map<String, Function[]>();
+		const events = new Map<string, Function[]>();
+		const onFn: FJSCallable = {
+			type: "js",
+			run(eventName, data, yieldFunction) {
+				if (eventName.type !== "StringLiteral")
+					error(`Expected a string, instead got a ${eventName.type}`, "Type");
+				if (!events.has(eventName.value))
+					error(`Event ${eventName.value} does not exist.`, "Reference");
+
+				events.get(eventName.value).push(() => {
+					execute(yieldFunction, data);
+				});
+			}
+		};
 
 		const dispatcherInterface = new Scope(data.scope);
 		dispatcherInterface.localFunctions.set("event", {
@@ -31,25 +45,14 @@ scope.localFunctions.set("dispatcher", {
 				events.get(name.value).forEach((cb) => cb());
 			}
 		});
+		dispatcherInterface.localFunctions.set("on", onFn);
 
 		const scope: Scope = execute(yieldFunction, {
 			...data,
 			scope: dispatcherInterface,
 			returnScope: true
 		}) as Scope;
-		scope.localFunctions.set("on", {
-			type: "js",
-			run(eventName, data, yieldFunction) {
-				if (eventName.type !== "StringLiteral")
-					error(`Expected a string, instead got a ${eventName.type}`, "Type");
-				if (!events.has(eventName.value))
-					error(`Event ${eventName.value} does not exist.`, "Reference");
-
-				events.get(eventName.value).push(() => {
-					execute(yieldFunction, data);
-				});
-			}
-		});
+		scope.localFunctions.set("on", onFn);
 
 		return scope;
 	}

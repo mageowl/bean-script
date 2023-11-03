@@ -116,7 +116,9 @@ if (isWeb) {
 	scope.localFunctions.set("useElementAsConsole", {
 		type: "js",
 		run(id: FNodeValue) {
-			consoleEl = document.getElementById(id.value);
+			if (id?.type != "StringLiteral") {
+				if (id?.type === "NullLiteral") consoleEl = null;
+			} else consoleEl = document.getElementById(id.value);
 		}
 	});
 
@@ -129,6 +131,13 @@ if (isWeb) {
 			);
 			trackedElements.push(el);
 			return el;
+		}
+	});
+	scope.localFunctions.set("exists", {
+		type: "js",
+		run(selector: FNodeValue, { scope }: FNodeBlock) {
+			let el = document.querySelector(selector.value);
+			return { type: "BooleanLiteral", value: el !== null };
 		}
 	});
 

@@ -27,7 +27,7 @@ export interface FNode {
 
 export interface FNodeFunctionCall extends FNode {
 	type: "FunctionCall";
-	name: String;
+	name: string;
 	parameters: FNodeBlock[];
 	yieldFunction: FNodeAny | null;
 }

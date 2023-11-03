@@ -33,7 +33,7 @@
 			"patterns": [
 				{
 					"name": "entity.name.function.fscript",
-					"match": "[^\\s.()]+(?=\\([^)]*\\))"
+					"match": "[^\\s.()]+(?=\\([^)]*)"
 				},
 				{
 					"name": "entity.name.other.module.fscript",

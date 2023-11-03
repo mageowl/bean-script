@@ -1,4 +1,4 @@
-* Counting loops
+print(" == Counting Loops")
 fn(<counter>) -> {
 	else(if(exists(param(0))) -> {
 		set(param(0)) -> add(num(query(param(0))), 1)
@@ -8,23 +8,41 @@ fn(<counter>) -> {
 	yield()
 }
 
-repeat(10) -> counter(<i>) -> {
-	print(add("hey dere. index: ", str(i)))
+repeat(3) -> counter(<i>) -> {
+	print(add("index: ", str(i)))
+} del(<i>)
+
+print("") print(" == Match statements")
+fn(<matchVal>) -> {
+	print(add("matching ", str(param(0))))
+	print(match(param(0)) -> {
+		case("abe") -> {
+			return("OMG, abe!")
+		}
+		case("jenny") -> {
+			return("OMG, jenny!")
+		}
+		default -> {
+			return("Unkown person")
+		}
+	})
 }
 
-* Match statements
-let(<x>) -> 42
-match(x) -> {
-	case(42) -> {
-		print("tis the number 42.")
-	}
-	case(128) -> {
-		print("ooh, an multiplee of 8!")
-	}
-	case(null) -> {
-		print("crap, a nothin!")
-	}
-	default -> {
-		print("~not nothing~")
-	}
+matchVal("abe")
+matchVal("joe")
+matchVal("jenny")
+
+print("") print(" == For Loops")
+obj(<list1>) -> list("a", "b", "c")
+print(list1)
+list1.for -> {
+	print(add("Item is ", item))
 }
+
+print("") print(" == Map Loops")
+obj(<map1>) -> map("robot", "fire", "wyrm", "water", "golem", "earth")
+print(map1)
+map1.for -> {
+	print(add(key, mul(" ", sub(6, size(key))), "| ", value))
+}
+

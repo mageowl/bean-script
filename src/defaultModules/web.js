@@ -102,7 +102,12 @@ if (isWeb) {
     scope.localFunctions.set("useElementAsConsole", {
         type: "js",
         run(id) {
-            consoleEl = document.getElementById(id.value);
+            if (id?.type != "StringLiteral") {
+                if (id?.type === "NullLiteral")
+                    consoleEl = null;
+            }
+            else
+                consoleEl = document.getElementById(id.value);
         }
     });
     scope.localFunctions.set("get", {
@@ -111,6 +116,13 @@ if (isWeb) {
             let el = new HTMLElementScope(scope, document.querySelector(selector.value));
             trackedElements.push(el);
             return el;
+        }
+    });
+    scope.localFunctions.set("exists", {
+        type: "js",
+        run(selector, { scope }) {
+            let el = document.querySelector(selector.value);
+            return { type: "BooleanLiteral", value: el !== null };
         }
     });
     scope.localFunctions.set("make", {

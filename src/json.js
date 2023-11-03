@@ -1,5 +1,7 @@
 import { toFString } from "./runtimeFunctions.js";
 import { Scope } from "./scope.js";
+import { error } from "./error.js";
+import { execute } from "./executer.js";
 export class ListScope extends Scope {
     array = [];
     type = "Block";
@@ -13,6 +15,12 @@ export class ListScope extends Scope {
     }
     applyFunctions() {
         const array = this.array;
+        this.localFunctions.set("size", {
+            type: "js",
+            run() {
+                return { type: "NumberLiteral", value: array.length };
+            }
+        });
         this.localFunctions.set("push", {
             type: "js",
             run(item) {
@@ -31,6 +39,23 @@ export class ListScope extends Scope {
                 return array.splice(index.value, 1)[0];
             }
         });
+        this.localFunctions.set("for", {
+            type: "js",
+            run(data, yieldFunction) {
+                const scope = new Scope(data.scope);
+                let currentItem = null;
+                scope.localFunctions.set("item", {
+                    type: "js",
+                    run() {
+                        return currentItem;
+                    }
+                });
+                array.forEach((item) => {
+                    currentItem = item;
+                    execute(yieldFunction, { ...data, scope });
+                });
+            }
+        });
     }
     hasFunction(name) {
         if (!isNaN(parseInt(name)))
@@ -44,7 +69,7 @@ export class ListScope extends Scope {
             return {
                 type: "js",
                 run() {
-                    return array[parseInt(name)];
+                    return array[parseInt(name)] ?? { type: "NullLiteral" };
                 }
             };
         }
@@ -54,6 +79,99 @@ export class ListScope extends Scope {
         return `[${this.array
             .map((item) => toFString(item))
             .join(", ")}]`;
+    }
+}
+export class MapScope extends Scope {
+    map = new Map();
+    type = "Block";
+    body = [];
+    scope = this;
+    returnSelf = true;
+    constructor(kvPairs = []) {
+        super();
+        kvPairs.forEach(([key, value]) => {
+            if (key?.type !== "StringLiteral")
+                error(`Key must be a string, instead got ${key?.type}`, "Type");
+            this.map.set(key.value, value);
+        });
+        this.applyFunctions();
+    }
+    applyFunctions() {
+        const map = this.map;
+        this.localFunctions.set("set", {
+            type: "js",
+            run(key, value) {
+                if (key?.type !== "StringLiteral")
+                    error(`Expected a string, instead got ${key?.type}`, "Type");
+                map.set(key.value, value);
+            }
+        });
+        this.localFunctions.set("get", {
+            type: "js",
+            run(key) {
+                if (key?.type !== "StringLiteral")
+                    error(`Expected a string, instead got ${key?.type}`, "Type");
+                map.get(key.value);
+            }
+        });
+        this.localFunctions.set("has", {
+            type: "js",
+            run(key) {
+                if (key?.type !== "StringLiteral")
+                    error(`Expected a string, instead got ${key?.type}`, "Type");
+                return { type: "BooleanLiteral", value: map.has(key.value) };
+            }
+        });
+        this.localFunctions.set("for", {
+            type: "js",
+            run(data, yieldFunction) {
+                const scope = new Scope(data.scope);
+                let currentValue = null;
+                let currentKey = "";
+                scope.localFunctions.set("key", {
+                    type: "js",
+                    run() {
+                        return { type: "StringLiteral", value: currentKey };
+                    }
+                });
+                scope.localFunctions.set("value", {
+                    type: "js",
+                    run() {
+                        return currentValue;
+                    }
+                });
+                Array.from(map.entries()).forEach(([key, value]) => {
+                    currentKey = key;
+                    currentValue = value;
+                    execute(yieldFunction, { ...data, scope });
+                });
+            }
+        });
+    }
+    hasFunction(name) {
+        if (this.map.has(name))
+            return true;
+        return super.hasFunction(name);
+    }
+    getFunction(name) {
+        if (this.map.has(name) &&
+            parseInt(name).toString().length === name.length) {
+            const map = this.map;
+            return {
+                type: "js",
+                run() {
+                    return map.get(name) ?? { type: "NullLiteral" };
+                }
+            };
+        }
+        return super.getFunction(name);
+    }
+    toFString() {
+        return ("{ " +
+            Array.from(this.map.entries())
+                .map(([v, k]) => `${v} = ${toFString(k)}`)
+                .join(", ") +
+            " }");
     }
 }
 export function fromJSON(json, parent = null, all = false) {
