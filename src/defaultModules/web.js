@@ -158,5 +158,15 @@ if (isWeb) {
             return { type: "StringLiteral", value: prompt(text.value) };
         }
     });
+    scope.localFunctions.set("startLoop", {
+        type: "js",
+        run() {
+            function tick() {
+                window.dispatchEvent(new Event("tick"));
+                requestAnimationFrame(tick);
+            }
+            tick();
+        }
+    });
 }
 export default scope;
