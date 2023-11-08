@@ -189,6 +189,19 @@ if (isWeb) {
 			tick();
 		}
 	});
+
+	scope.localFunctions.set("width", {
+		type: "js",
+		run() {
+			return { type: "NumberLiteral", value: window.innerWidth };
+		}
+	});
+	scope.localFunctions.set("height", {
+		type: "js",
+		run() {
+			return { type: "NumberLiteral", value: window.innerHeight };
+		}
+	});
 }
 
 export default scope;

@@ -9,6 +9,7 @@ if(web.exists("#fscript-logs")) -> {
 	console.destroy()
 }
 
+obj(<assetMap>) -> map()
 obj(<assets>) -> dispatcher -> {
 	event("finish")
 	event("added")
@@ -20,7 +21,6 @@ obj(<assets>) -> dispatcher -> {
 
 	on("load") -> bind(<loaded>, <finished>) -> {
 		set(param(0)) -> add(loaded, 1)
-		print("huh")
 		if(eq(tracked, loaded)) -> bind(param(1)) -> {
 			set(param(0)) -> true
 			emit("finish")
@@ -40,6 +40,9 @@ obj(<assets>) -> dispatcher -> {
 		el.setAttr("style", "display:none;")
 		web.body.add(el)
 
+		print(el)
+		assetMap.set(param(0), el)
+
 		emit("added")
 		el.on("load") -> {
 			emit("load")
@@ -47,7 +50,8 @@ obj(<assets>) -> dispatcher -> {
 	}
 }
 
-assets.img() -> "https://png.pngtree.com/png-clipart/20230201/original/pngtree-photo-of-avocado-png-image_8939900.png"
+assets.img("avocado") -> "https://png.pngtree.com/png-clipart/20230201/original/pngtree-photo-of-avocado-png-image_8939900.png"
 assets.on("finish") -> {
-	print("un avocado")
+	obj(<avo>) -> assetMap.avocado
+	avo.setAttr("style", "") * Show avocado :)
 }

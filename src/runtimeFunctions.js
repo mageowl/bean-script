@@ -17,6 +17,8 @@ export function toFString(node) {
             return node.value.toString();
         case "MemoryLiteral":
             return `<${node.value}>`;
+        case "Block":
+            return "[block]";
         default:
             return "[null]";
     }

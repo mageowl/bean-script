@@ -149,18 +149,19 @@ export class MapScope extends Scope {
         });
     }
     hasFunction(name) {
+        console.log(name);
         if (this.map.has(name))
             return true;
         return super.hasFunction(name);
     }
     getFunction(name) {
-        if (this.map.has(name) &&
-            parseInt(name).toString().length === name.length) {
-            const map = this.map;
+        if (this.map.has(name)) {
+            const value = this.map.get(name) ?? { type: "NullLiteral" };
+            console.log(name);
             return {
                 type: "js",
                 run() {
-                    return map.get(name) ?? { type: "NullLiteral" };
+                    return value;
                 }
             };
         }
