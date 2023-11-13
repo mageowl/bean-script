@@ -6,6 +6,7 @@ function chunk(code) {
     let blockComment = false;
     let i = 0;
     let inString = false;
+    const isDigit = (char) => "1234567890".includes(char) && char.length === 1;
     function split() {
         chunks.push(currentChunk);
         currentChunk = "";
@@ -51,7 +52,8 @@ function chunk(code) {
             .flatMap((o) => (typeof o === "object" ? Object.values(o) : o))
             .includes(char) ||
             char === ";") &&
-            !inString) {
+            !inString &&
+            !(isDigit(code[i - 1]) && isDigit(code[i + 1]))) {
             split();
             currentChunk += char;
             split();

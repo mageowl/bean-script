@@ -1,15 +1,20 @@
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
-import { FCallData, FNodeAny } from "./interfaces.js";
+import {
+	FCallData,
+	FNodeAny,
+	FNodeFunctionAccess,
+	FNodeType
+} from "./interfaces.js";
 import { applyRuntimeFunctions } from "./runtimeFunctions.js";
 import call from "./functionCall.js";
 
-export function execute(node, dataRaw: FCallData = {}): FNodeAny {
+export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 	const data: FCallData = { scope: runtime, ...dataRaw };
 	let scope: Scope;
 
 	if (node == null) return;
-	switch (node.type) {
+	switch (node.type as FNodeType) {
 		case "FunctionCall":
 			let fn = data.scope.getFunction(node.name);
 			if (!fn) error(`Unknown value or function "${node.name}".`, "Reference");
@@ -62,6 +67,16 @@ export function execute(node, dataRaw: FCallData = {}): FNodeAny {
 				slot: data.scope.createSlot(node.value),
 				...node
 			};
+
+		case "FunctionAccess":
+			let target = execute(node.target, data);
+			if (target?.type != "Block" || (target as Scope)?.subType != "Scope")
+				error(
+					`To access a function inside a scope, I need a scope. Instead, I got a ${target.type}.`,
+					"Type"
+				);
+
+			return execute(node.call, { ...data, scope: target as Scope });
 
 		default:
 			return node;

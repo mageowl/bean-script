@@ -8,7 +8,8 @@ export const operator = {
         END: "}"
     },
     ARROW: "->",
-    COMMA: ","
+    COMMA: ",",
+    ACCESS: "."
 };
 export var FTokenType;
 (function (FTokenType) {

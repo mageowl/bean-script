@@ -52,6 +52,11 @@ export function execute(node, dataRaw = {}) {
                 slot: data.scope.createSlot(node.value),
                 ...node
             };
+        case "FunctionAccess":
+            let target = execute(node.target, data);
+            if (target?.type != "Block" || target?.subType != "Scope")
+                error(`To access a function inside a scope, I need a scope. Instead, I got a ${target.type}.`, "Type");
+            return execute(node.call, { ...data, scope: target });
         default:
             return node;
     }

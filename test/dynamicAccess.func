@@ -1,0 +1,10 @@
+<!math>
+
+print("== Accessing a module")
+print(math.abs(-1.5))
+
+print("== Accessing a user-made block")
+obj(<block>) -> {
+	let(<value>) -> 42
+}
+print(block.value)
