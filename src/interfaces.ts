@@ -67,7 +67,8 @@ export interface FCallData {
 	scope?: Scope;
 	parameters?: FNodeBlock[];
 	yieldFunction?: FNode | null;
-	returnScope?: Scope;
+	returnScope?: boolean;
+	fnScope?: Scope;
 }
 
 export interface FCallable {

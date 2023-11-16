@@ -16,7 +16,7 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 	if (node == null) return;
 	switch (node.type as FNodeType) {
 		case "FunctionCall":
-			let fn = data.scope.getFunction(node.name);
+			let fn = (data.fnScope ?? data.scope).getFunction(node.name);
 			if (!fn) error(`Unknown value or function "${node.name}".`, "Reference");
 
 			const response = call(
@@ -64,19 +64,19 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 
 		case "MemoryLiteral":
 			return {
-				slot: data.scope.createSlot(node.value),
+				slot: (data.fnScope ?? data.scope).createSlot(node.value),
 				...node
 			};
 
 		case "FunctionAccess":
 			let target = execute(node.target, data);
-			if (target?.type != "Block" || (target as Scope)?.subType != "Scope")
+			if ((target as Scope)?.subType != "Scope")
 				error(
-					`To access a function inside a scope, I need a scope. Instead, I got a ${target.type}.`,
+					`To access a function inside a scope, I need a scope. Instead, I got a ${target?.type}.`,
 					"Type"
 				);
 
-			return execute(node.call, { ...data, scope: target as Scope });
+			return execute(node.call, { ...data, fnScope: target as Scope });
 
 		default:
 			return node;

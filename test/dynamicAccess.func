@@ -1,10 +1,32 @@
 <!math>
+<!meta>
 
-print("== Accessing a module")
+print("<br>== Accessing a module")
 print(math.abs(-1.5))
 
-print("== Accessing a user-made block")
-obj(<block>) -> {
+print("<br>== Accessing a user-made block")
+let(<block>) -> {
 	let(<value>) -> 42
+	fn(<function>) -> {
+		print("hello from inside a function!")
+	}
 }
 print(block.value)
+block.function()
+
+print("<br>== Calling a scope with parameters")
+fn(<createScope>) -> {
+	let(<parameter>) -> param(0)
+	return(meta.self)
+}
+
+print(createScope("text input").parameter)
+
+print("<br>== Putting a variable inside a scope")
+let(<data>) -> {
+	let(<value1>) -> "set from inside block"
+}
+let(data.<value2>) -> "set from outside of block"
+
+print(data.value1)
+print(data.value2)

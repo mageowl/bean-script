@@ -47,14 +47,28 @@ export function applyRuntimeFunctions(runtime, execute) {
             error(`Value <${memory.value}> is already defined.`, "Memory");
         function literal(node, data) {
             if (node.type.endsWith("Literal"))
-                return execute(node, data);
+                return node;
+            if (node.type.endsWith("Block")) {
+                return execute(node, { ...data, returnScope: true });
+            }
             return literal(execute(node, data), data);
         }
-        memory.slot.set({
-            type: "custom",
-            scope: data.scope,
-            run: literal(yieldFunction, data)
-        });
+        let value = literal(yieldFunction, data);
+        if (value?.subType === "Scope") {
+            memory.slot.set({
+                type: "js",
+                run() {
+                    return value;
+                }
+            });
+        }
+        else {
+            memory.slot.set({
+                type: "custom",
+                scope: data.scope,
+                run: value
+            });
+        }
     });
     addFunc("set", function (memory, data, yieldFunction) {
         if (memory.type !== "MemoryLiteral")
