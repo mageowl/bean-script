@@ -177,32 +177,6 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("num", function (node) {
         return { type: "NumberLiteral", value: parseInt(node.value) };
     });
-    addFunc("obj", function (memoryRaw, data, yieldFunction) {
-        let memory = execute(memoryRaw, data);
-        let block = yieldFunction;
-        if (memory.type !== "MemoryLiteral") {
-            error(`The first parameter for obj() must be a memory literal. Instead, I got a ${memory.type}`, "Type");
-        }
-        function check() {
-            if (block.type === "FunctionCall") {
-                block = execute(yieldFunction, data);
-                check();
-            }
-            else if (!block.type.startsWith("Block") && block.type !== "FunctionCall")
-                error(`Yield to obj must be a block. Instead, I got a ${block.type}`, "Type");
-        }
-        check();
-        let scope = block?.subType === "Scope"
-            ? block
-            : execute(block, { ...data, returnScope: true });
-        memory.slot.scope.childScopes.set(memory.slot.name, scope);
-        memory.slot.set({
-            type: "js",
-            run() {
-                return scope;
-            }
-        });
-    });
     addFunc("if", function (condition, data, yieldFunction) {
         let isTrue = execute(condition, data);
         if (isTrue.value === undefined)
