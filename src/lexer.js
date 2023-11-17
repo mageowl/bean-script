@@ -6,6 +6,7 @@ function chunk(code) {
     let blockComment = false;
     let i = 0;
     let inString = false;
+    const isDigit = (char) => "1234567890".includes(char) && char.length === 1;
     function split() {
         chunks.push(currentChunk);
         currentChunk = "";
@@ -47,11 +48,20 @@ function chunk(code) {
             currentChunk += char;
             split();
         }
+        else if (char === "." && code[i + 1] === "." && !inString) {
+            split();
+            currentChunk += char;
+        }
+        else if (char === "." && code[i - 1] === "." && !inString) {
+            currentChunk += char;
+            split();
+        }
         else if ((Object.values(operator)
             .flatMap((o) => (typeof o === "object" ? Object.values(o) : o))
             .includes(char) ||
             char === ";") &&
-            !inString) {
+            !inString &&
+            !(isDigit(code[i - 1]) && isDigit(code[i + 1]))) {
             split();
             currentChunk += char;
             split();
@@ -76,19 +86,19 @@ export function lexer(code) {
     let tokens = [];
     chunks.forEach((chunk) => {
         switch (true) {
-            case /^-?[\d.]*\d$/g.test(chunk):
+            case /^-?[\d.]*\d$/.test(chunk):
                 tokens.push({ type: FTokenType.NUMBER, value: parseFloat(chunk) });
                 break;
-            case /^"[^"]*"$/g.test(chunk):
+            case /^"[^"]*"$/.test(chunk):
                 tokens.push({ type: FTokenType.STRING, value: chunk.slice(1, -1) });
                 break;
-            case /^true|false$/g.test(chunk):
+            case /^true|false$/.test(chunk):
                 tokens.push({ type: FTokenType.BOOLEAN, value: chunk === "true" });
                 break;
-            case /^null$/g.test(chunk):
+            case /^null$/.test(chunk):
                 tokens.push({ type: FTokenType.NULL });
                 break;
-            case /^<[^>]+>$/g.test(chunk):
+            case /^<[^>]+>$/.test(chunk):
                 tokens.push({ type: FTokenType.MEMORY, value: chunk.slice(1, -1) });
                 break;
             case Object.values(operator)

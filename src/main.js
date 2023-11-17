@@ -22,6 +22,7 @@ if (isWeb) {
                 const text = await fetch(scriptEl.src).then((d) => d.text());
                 const lex = lexer(text);
                 const parse = parser(lex);
+                console.log(parse);
                 executer(parse, {
                     ...defaultModules,
                     ...customModules

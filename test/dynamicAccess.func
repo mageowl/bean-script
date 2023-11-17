@@ -1,0 +1,69 @@
+<!math>
+<!meta>
+
+print("=== DYNAMIC DOT OPERATOR ===")
+print("This branch of f-script is an example implementation of a dynamic access operator.
+It replaces the obj() function with let(), and allows you to access properties of any function that returns a scope.")
+
+print("<br>== Accessing a module")
+print("Absolute value of -1.5 is ", math.abs(-1.5))
+
+print("<br>== Accessing a user-made block")
+let(<testBlock1>) -> {
+	let(<value>) -> 42
+	fn(<function>) -> {
+		print("Hello from inside a function! param 0: ", param(0))
+	}
+}
+print("Getting value: ", testBlock1.value)
+testBlock1.function("test")
+
+print("<br>== Calling a function with parameters to create scope")
+fn(<createScope>) -> {
+	let(<parameter>) -> param(0)
+	return(meta.self)
+}
+
+print("Created scope and got: ", createScope("text input").parameter)
+
+print("<br>== Putting a variable inside a scope")
+let(<testBlock2>) -> {
+	let(<value1>) -> "This variable was set from inside block"
+}
+let(testBlock2.<value2>) -> "This variable was set from outside of block"
+
+print(testBlock2.value1)
+print(testBlock2.value2)
+
+print("<br>== Multiple hierarchy")
+let(<testBlock3>) -> {
+	let(<block>) -> {
+		let(<value>) -> "inside block 2"
+	}
+	let(<value>) -> "inside block 1"
+}
+
+print("Accessing .value: ", testBlock3.value)
+print("Accessing .block.value: ", testBlock3.block.value)
+
+print("<br>== Setting value in parent")
+let(<testBlock4>) -> {
+	let(<x>) -> "First value (set on initialize)"
+	fn(<setX>) -> {
+		set(..<x>) -> param(0)
+	}
+}
+
+print("x: ", testBlock4.x)
+print("calling fn")
+testBlock4.setX("Second value (set by calling function)")
+print("x: ", testBlock4.x)
+
+print("<br>== Dynamic else")
+let(<n>) -> rand
+print("Random number N: ", math.round(n, 100))
+if(gt(n, 0.5)) -> {
+	print(math.round(n, 100), " is bigger than 0.5.")
+} else -> {
+	print(math.round(n, 100), " is smaller than 0.5.")
+}

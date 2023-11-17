@@ -9,6 +9,7 @@ export class Scope {
     body = [];
     matchCases = [];
     hasDefaultCase = false;
+    ifValue = null;
     constructor(parent = null) {
         this.parent = parent;
     }

@@ -9,10 +9,10 @@ export function execute(node, dataRaw = {}) {
         return;
     switch (node.type) {
         case "FunctionCall":
-            let fn = data.scope.getFunction(node.name);
+            let fn = (data.fnScope ?? data.scope).getFunction(node.name);
             if (!fn)
                 error(`Unknown value or function "${node.name}".`, "Reference");
-            const response = call(fn, node.parameters, data, node.yieldFunction, execute);
+            const response = call(fn, node.parameters, { ...data, fnScope: null }, node.yieldFunction, execute);
             if (response != null)
                 return response;
             break;
@@ -49,9 +49,21 @@ export function execute(node, dataRaw = {}) {
             return scope;
         case "MemoryLiteral":
             return {
-                slot: data.scope.createSlot(node.value),
+                slot: (data.fnScope ?? data.scope).createSlot(node.value),
                 ...node
             };
+        case "FunctionAccess": {
+            let target = execute(node.target, data);
+            if (target?.subType != "Scope")
+                error(`To access a function inside a scope, I need a scope. Instead, I got a ${target?.type}.`, "Type");
+            return execute(node.call, { ...data, fnScope: target });
+        }
+        case "ParentAccess": {
+            let parentScope = data.scope.parent;
+            if (parentScope == null)
+                error("Scope is detached. Either you are trying to access the parent of the root scope, or something is wrong.", "Reference");
+            return execute(node.call, { ...data, fnScope: parentScope });
+        }
         default:
             return node;
     }

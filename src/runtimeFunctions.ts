@@ -64,34 +64,59 @@ export function applyRuntimeFunctions(
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 
 		function literal(node, data) {
-			if (node.type.endsWith("Literal")) return execute(node, data);
+			if (node.type.endsWith("Literal")) return node;
+			if (node.type.endsWith("Block"))
+				return execute(node, { ...data, returnScope: true });
 
 			return literal(execute(node, data), data);
 		}
 
-		memory.slot.set({
-			type: "custom",
-			scope: data.scope,
-			run: literal(yieldFunction, data)
-		});
+		let value = literal(yieldFunction, data);
+		if ((value as Scope)?.subType === "Scope") {
+			memory.slot.set({
+				type: "js",
+				run() {
+					return value;
+				}
+			});
+		} else {
+			memory.slot.set({
+				type: "custom",
+				scope: data.scope,
+				run: value
+			});
+		}
 	});
-
-	addFunc("set", function (memory, data, yieldFunction) {
+	addFunc("set", function (memoryRaw, data, yieldFunction) {
+		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (!data.scope.hasFunction(memory.value))
-			error(`Value <${memory.value}> is not defined.`, "Memory");
+			error(`Value <${memory.value}> is not already defined.`, "Memory");
 
-		function literal(node, data = null) {
+		function literal(node, data) {
 			if (node.type.endsWith("Literal")) return node;
+			if (node.type.endsWith("Block"))
+				return execute(node, { ...data, returnScope: true });
 
-			return literal(execute(node, data));
+			return literal(execute(node, data), data);
 		}
 
-		data.scope.setFunction(memory.value, {
-			type: "custom",
-			run: literal(yieldFunction, data)
-		});
+		let value = literal(yieldFunction, data);
+		if ((value as Scope)?.subType === "Scope") {
+			memory.slot.set({
+				type: "js",
+				run() {
+					return value;
+				}
+			});
+		} else {
+			memory.slot.set({
+				type: "custom",
+				scope: data.scope,
+				run: value
+			});
+		}
 	});
 
 	addFunc("del", function (memory, data: FCallData) {
@@ -118,12 +143,14 @@ export function applyRuntimeFunctions(
 		return call(fn, [], data, null, execute);
 	});
 
-	addFunc("print", function (string: FNodeAny, data) {
+	addFunc("print", function (...components) {
+		let string = components
+			.slice(0, -2)
+			.map((x) => toFString(x))
+			.join("");
 		if (isWeb && getConsoleEl()) {
-			getConsoleEl().innerHTML += `<span>${toFString(
-				execute(string, data)
-			)}</span><br>`;
-		} else console.log(toFString(execute(string, data)));
+			getConsoleEl().innerHTML += `<span>${string}</span><br>`;
+		} else console.log(string);
 	});
 	addFunc("error", function (message) {
 		console.error("[fscript] " + message.value);
@@ -209,44 +236,11 @@ export function applyRuntimeFunctions(
 		return { type: "NumberLiteral", value: parseInt(node.value) };
 	});
 
-	addFunc("obj", function (memoryRaw: FNodeAny, data, yieldFunction) {
-		let memory: FNodeMemory = execute(memoryRaw, data);
-		let block = yieldFunction;
-
-		if (memory.type !== "MemoryLiteral") {
-			error(
-				`The first parameter for obj() must be a memory literal. Instead, I got a ${memory.type}`,
-				"Type"
-			);
-		}
-
-		function check() {
-			if (block.type === "FunctionCall") {
-				block = execute(yieldFunction, data);
-				check();
-			} else if (!block.type.startsWith("Block") && block.type !== "FunctionCall") error(`Yield to obj must be a block. Instead, I got a ${block.type}`, "Type");
-		}
-
-		check();
-
-		let scope =
-			block?.subType === "Scope"
-				? block
-				: execute(block, { ...data, returnScope: true });
-		memory.slot.scope.childScopes.set(memory.slot.name, scope);
-
-		memory.slot.set({
-			type: "js",
-			run() {
-				return scope;
-			}
-		});
-	});
-
 	addFunc("if", function (condition, data, yieldFunction) {
 		let isTrue = execute(condition, data);
 		if (isTrue.value === undefined)
 			error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+		data.scope.ifValue = !!isTrue?.value;
 		if (isTrue?.value) {
 			execute(yieldFunction, data);
 			return { type: "BooleanLiteral", value: true };
@@ -254,11 +248,31 @@ export function applyRuntimeFunctions(
 		return { type: "BooleanLiteral", value: false };
 	});
 
-	addFunc("else", function (condition, data, yieldFunction) {
+	addFunc("else", function (data, yieldFunction) {
+		let isTrue = data.scope.ifValue;
+		if (isTrue == null)
+			error(
+				"Unexpected else function. Make sure to call if() first.",
+				"Syntax"
+			);
+		data.scope.ifValue = null;
+		if (!isTrue) {
+			execute(yieldFunction, data);
+		}
+	});
+
+	addFunc("elseIf", function (condition, data, yieldFunction) {
+		if (data.scope.ifValue == null)
+			error(
+				"Unexpected else if function. Make sure to call if() first.",
+				"Syntax"
+			);
+		if (!data.scope.ifValue) return;
 		let isTrue = execute(condition, data);
 		if (isTrue.value === undefined)
-			error(`${isTrue.type} is not type cast-able to boolean.`, "Type");
-		if (!isTrue?.value) {
+			error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+		data.scope.ifValue = !!isTrue?.value;
+		if (isTrue?.value) {
 			execute(yieldFunction, data);
 			return { type: "BooleanLiteral", value: true };
 		}
@@ -297,12 +311,12 @@ export function applyRuntimeFunctions(
 		return { type: "BooleanLiteral", value };
 	});
 
-	addFunc("list", function (...params) {
+	addFunc("a", function (...params) {
 		let array = params.slice(0, -2);
 
 		return new ListScope(array);
 	});
-	addFunc("map", function (...params) {
+	addFunc("m", function (...params) {
 		let map = params
 			.slice(0, -2)
 			.reduce(

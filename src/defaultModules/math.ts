@@ -84,4 +84,17 @@ scope.localFunctions.set("sqrt", {
 	}
 });
 
+scope.localFunctions.set("round", {
+	type: "js",
+	run(number, snap) {
+		if (typeof snap?.value !== "number") {
+			return { type: "NumberLiteral", value: Math.round(number?.value) };
+		}
+		return {
+			type: "NumberLiteral",
+			value: Math.round(number?.value * snap?.value) / snap?.value
+		};
+	}
+});
+
 export default scope;

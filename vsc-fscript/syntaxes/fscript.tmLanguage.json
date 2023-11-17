@@ -52,13 +52,17 @@
 		"literals": {
 			"patterns": [
 				{
+					"name": "constant.numeric.fscript",
+					"match": "-?\\d[\\d.]*"
+				},
+				{
 					"name": "string.quoted.double.fscript",
 					"begin": "\"",
 					"end": "\"",
 					"patterns": [
 						{
 							"name": "constant.character.escape.fscript",
-							"match": "\\\\."
+							"match": "\\."
 						}
 					]
 				},
@@ -66,10 +70,6 @@
 					"name": "entity.name.tag.fscript",
 					"begin": "<",
 					"end": ">"
-				},
-				{
-					"name": "constant.numeric.fscript",
-					"match": "\\d[\\d.]*"
 				},
 				{
 					"name": "constant.language.boolean.fscript",

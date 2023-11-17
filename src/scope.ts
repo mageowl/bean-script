@@ -13,6 +13,8 @@ export class Scope {
 	matchCases: Function[] = [];
 	hasDefaultCase = false;
 
+	ifValue: boolean = null;
+
 	constructor(parent: Scope = null) {
 		this.parent = parent;
 	}
