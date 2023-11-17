@@ -8,8 +8,10 @@ export const operator = {
 		END: "}"
 	},
 	ARROW: "->",
+	COLON: ":",
 	COMMA: ",",
-	ACCESS: "."
+	ACCESS: ".",
+	PARENT: ".."
 };
 
 export enum FTokenType {

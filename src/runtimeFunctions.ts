@@ -65,9 +65,8 @@ export function applyRuntimeFunctions(
 
 		function literal(node, data) {
 			if (node.type.endsWith("Literal")) return node;
-			if (node.type.endsWith("Block")) {
+			if (node.type.endsWith("Block"))
 				return execute(node, { ...data, returnScope: true });
-			}
 
 			return literal(execute(node, data), data);
 		}
@@ -88,23 +87,36 @@ export function applyRuntimeFunctions(
 			});
 		}
 	});
-
-	addFunc("set", function (memory, data, yieldFunction) {
+	addFunc("set", function (memoryRaw, data, yieldFunction) {
+		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (!data.scope.hasFunction(memory.value))
-			error(`Value <${memory.value}> is not defined.`, "Memory");
+			error(`Value <${memory.value}> is not already defined.`, "Memory");
 
-		function literal(node, data = null) {
+		function literal(node, data) {
 			if (node.type.endsWith("Literal")) return node;
+			if (node.type.endsWith("Block"))
+				return execute(node, { ...data, returnScope: true });
 
-			return literal(execute(node, data));
+			return literal(execute(node, data), data);
 		}
 
-		data.scope.setFunction(memory.value, {
-			type: "custom",
-			run: literal(yieldFunction, data)
-		});
+		let value = literal(yieldFunction, data);
+		if ((value as Scope)?.subType === "Scope") {
+			memory.slot.set({
+				type: "js",
+				run() {
+					return value;
+				}
+			});
+		} else {
+			memory.slot.set({
+				type: "custom",
+				scope: data.scope,
+				run: value
+			});
+		}
 	});
 
 	addFunc("del", function (memory, data: FCallData) {

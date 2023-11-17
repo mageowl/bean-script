@@ -5,28 +5,57 @@ print("<br>== Accessing a module")
 print(math.abs(-1.5))
 
 print("<br>== Accessing a user-made block")
-let(<block>) -> {
-	let(<value>) -> 42
-	fn(<function>) -> {
+let(<testBlock1>): {
+	let(<value>): 42
+	fn(<function>): {
 		print("hello from inside a function!")
 	}
 }
-print(block.value)
-block.function()
+print(testBlock1.value)
+testBlock1.function()
 
 print("<br>== Calling a scope with parameters")
-fn(<createScope>) -> {
-	let(<parameter>) -> param(0)
+fn(<createScope>): {
+	let(<parameter>): param(0)
 	return(meta.self)
 }
 
 print(createScope("text input").parameter)
 
 print("<br>== Putting a variable inside a scope")
-let(<data>) -> {
-	let(<value1>) -> "set from inside block"
+let(<testBlock2>): {
+	let(<value1>): "set from inside block"
 }
-let(data.<value2>) -> "set from outside of block"
+let(testBlock2.<value2>): "set from outside of block"
 
-print(data.value1)
-print(data.value2)
+print(testBlock2.value1)
+print(testBlock2.value2)
+
+print("<br>== Multiple hierarchy")
+let(<testBlock3>): {
+	let(<block>): {
+		let(<value>): "inside block 2"
+	}
+	let(<value>): "inside block 1"
+}
+
+print(testBlock3.value)
+print(testBlock3.block.value)
+
+print("<br>== Setting value in parent")
+let(<testBlock4>): {
+	let(<x>): "first value"
+	fn(<setX>): {
+		set(..<x>): param(0)
+	}
+}
+
+print(testBlock4.x)
+print("calling fn")
+testBlock4.setX("second value")
+print(testBlock4.x)
+
+print("<br>== Dynamic else")
+if(false): {
+	print("somethings wrong")
+}

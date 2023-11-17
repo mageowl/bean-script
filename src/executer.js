@@ -52,11 +52,18 @@ export function execute(node, dataRaw = {}) {
                 slot: (data.fnScope ?? data.scope).createSlot(node.value),
                 ...node
             };
-        case "FunctionAccess":
+        case "FunctionAccess": {
             let target = execute(node.target, data);
             if (target?.subType != "Scope")
                 error(`To access a function inside a scope, I need a scope. Instead, I got a ${target?.type}.`, "Type");
             return execute(node.call, { ...data, fnScope: target });
+        }
+        case "ParentAccess": {
+            let parentScope = data.scope.parent;
+            if (parentScope == null)
+                error("Scope is detached. Either you are trying to access the parent of the root scope, or something is wrong.", "Reference");
+            return execute(node.call, { ...data, fnScope: parentScope });
+        }
         default:
             return node;
     }

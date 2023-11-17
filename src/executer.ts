@@ -68,7 +68,7 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 				...node
 			};
 
-		case "FunctionAccess":
+		case "FunctionAccess": {
 			let target = execute(node.target, data);
 			if ((target as Scope)?.subType != "Scope")
 				error(
@@ -77,6 +77,18 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 				);
 
 			return execute(node.call, { ...data, fnScope: target as Scope });
+		}
+
+		case "ParentAccess": {
+			let parentScope = data.scope.parent;
+			if (parentScope == null)
+				error(
+					"Scope is detached. Either you are trying to access the parent of the root scope, or something is wrong.",
+					"Reference"
+				);
+
+			return execute(node.call, { ...data, fnScope: parentScope });
+		}
 
 		default:
 			return node;

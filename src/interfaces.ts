@@ -20,7 +20,8 @@ export type FNodeType =
 	| "NumberLiteral"
 	| "BooleanLiteral"
 	| "NullLiteral"
-	| "FunctionAccess";
+	| "FunctionAccess"
+	| "ParentAccess";
 
 export interface FNode {
 	type: FNodeType;
@@ -37,8 +38,9 @@ export interface FNodeValue extends FNode {
 	value: any;
 }
 
-export interface FNodeMemory extends FNode {
+export interface FNodeMemory extends FNodeValue {
 	type: "MemoryLiteral";
+	value: string;
 	slot: Slot;
 }
 
@@ -54,12 +56,19 @@ export interface FNodeFunctionAccess extends FNode {
 	call: FNodeAny;
 }
 
+export interface FNodeParentAccess extends FNode {
+	type: "ParentAccess";
+	call: FNodeAny;
+}
+
 export type FNodeAny =
 	| FNode
 	| FNodeBlock
 	| FNodeFunctionCall
 	| FNodeValue
 	| FNodeMemory
+	| FNodeFunctionAccess
+	| FNodeParentAccess
 	| Scope
 	| null;
 

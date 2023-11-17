@@ -45,7 +45,7 @@ export function parser(tokens) {
                 }
                 if (peek() &&
                     peek().type === "operator" &&
-                    peek().value === operator.ARROW) {
+                    (peek().value === operator.ARROW || peek().value === operator.COLON)) {
                     next();
                     node.yieldFunction = parse(next());
                 }
@@ -72,7 +72,7 @@ export function parser(tokens) {
             }
             else if (token.type === FTokenType.OPERATOR) {
                 switch (token.value) {
-                    case operator.BRACE.START:
+                    case operator.BRACE.START: {
                         let body = [];
                         while (peek() &&
                             !(peek().type === "operator" &&
@@ -82,10 +82,27 @@ export function parser(tokens) {
                         next();
                         body.filter((x) => x != undefined);
                         return { type: "Block", body };
+                    }
+                    case operator.PAREN.START: {
+                        let body = [];
+                        while (peek() &&
+                            !(peek().type === "operator" &&
+                                peek().value === operator.PAREN.END)) {
+                            body.push(parse(next()));
+                        }
+                        next();
+                        body.filter((x) => x != undefined);
+                        return { type: "ParameterBlock", body };
+                    }
                     case operator.ACCESS:
                         return {
                             type: "FunctionAccess",
                             target: prev,
+                            call: parse(next())
+                        };
+                    case operator.PARENT:
+                        return {
+                            type: "ParentAccess",
                             call: parse(next())
                         };
                     default:
