@@ -12,7 +12,7 @@ export function execute(node, dataRaw = {}) {
             let fn = (data.fnScope ?? data.scope).getFunction(node.name);
             if (!fn)
                 error(`Unknown value or function "${node.name}".`, "Reference");
-            const response = call(fn, node.parameters, data, node.yieldFunction, execute);
+            const response = call(fn, node.parameters, { ...data, fnScope: null }, node.yieldFunction, execute);
             if (response != null)
                 return response;
             break;

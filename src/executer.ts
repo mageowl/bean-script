@@ -22,7 +22,7 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 			const response = call(
 				fn,
 				node.parameters,
-				data,
+				{ ...data, fnScope: null },
 				node.yieldFunction,
 				execute
 			);

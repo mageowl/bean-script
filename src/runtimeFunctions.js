@@ -120,12 +120,16 @@ export function applyRuntimeFunctions(runtime, execute) {
             return;
         return call(fn, [], data, null, execute);
     });
-    addFunc("print", function (string, data) {
+    addFunc("print", function (...components) {
+        let string = components
+            .slice(0, -2)
+            .map((x) => toFString(x))
+            .join("");
         if (isWeb && getConsoleEl()) {
-            getConsoleEl().innerHTML += `<span>${toFString(execute(string, data))}</span><br>`;
+            getConsoleEl().innerHTML += `<span>${string}</span><br>`;
         }
         else
-            console.log(toFString(execute(string, data)));
+            console.log(string);
     });
     addFunc("error", function (message) {
         console.error("[fscript] " + message.value);
@@ -195,17 +199,32 @@ export function applyRuntimeFunctions(runtime, execute) {
         let isTrue = execute(condition, data);
         if (isTrue.value === undefined)
             error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+        data.scope.ifValue = !!isTrue?.value;
         if (isTrue?.value) {
             execute(yieldFunction, data);
             return { type: "BooleanLiteral", value: true };
         }
         return { type: "BooleanLiteral", value: false };
     });
-    addFunc("else", function (condition, data, yieldFunction) {
+    addFunc("else", function (data, yieldFunction) {
+        let isTrue = data.scope.ifValue;
+        if (isTrue == null)
+            error("Unexpected else function. Make sure to call if() first.", "Syntax");
+        data.scope.ifValue = null;
+        if (!isTrue) {
+            execute(yieldFunction, data);
+        }
+    });
+    addFunc("elseIf", function (condition, data, yieldFunction) {
+        if (data.scope.ifValue == null)
+            error("Unexpected else if function. Make sure to call if() first.", "Syntax");
+        if (!data.scope.ifValue)
+            return;
         let isTrue = execute(condition, data);
         if (isTrue.value === undefined)
-            error(`${isTrue.type} is not type cast-able to boolean.`, "Type");
-        if (!isTrue?.value) {
+            error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+        data.scope.ifValue = !!isTrue?.value;
+        if (isTrue?.value) {
             execute(yieldFunction, data);
             return { type: "BooleanLiteral", value: true };
         }
@@ -235,11 +254,11 @@ export function applyRuntimeFunctions(runtime, execute) {
         let value = a?.type === b?.type && a?.value > b?.value;
         return { type: "BooleanLiteral", value };
     });
-    addFunc("list", function (...params) {
+    addFunc("a", function (...params) {
         let array = params.slice(0, -2);
         return new ListScope(array);
     });
-    addFunc("map", function (...params) {
+    addFunc("m", function (...params) {
         let map = params
             .slice(0, -2)
             .reduce((arr, item) => arr.length > 0
