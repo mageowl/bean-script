@@ -67,3 +67,19 @@ if(gt(n, 0.5)) -> {
 } else -> {
 	print(math.round(n, 100), " is smaller than 0.5.")
 }
+
+print("<br>== Private properties")
+fn(<testBlock5>) -> {
+	let(<privateValue>) -> 72
+	let(<public>) -> {
+		let(<publicValue>) -> 31
+		fn(<getPrivate>) -> {
+			return(privateValue)
+		}
+	}
+
+	return(public)
+}
+
+print("Public value: ", testBlock5.publicValue)
+print("Private getter: ", testBlock5.getPrivate)
