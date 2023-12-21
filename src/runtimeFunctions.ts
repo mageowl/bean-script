@@ -11,6 +11,7 @@ import {
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
 import { Scope } from "./scope.js";
+import { constrainedMemory } from "node:process";
 
 export function toFString(node) {
 	if (!node) return;
@@ -60,7 +61,7 @@ export function applyRuntimeFunctions(
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (data.scope.hasFunction(memory.value))
+		if (memory.slot.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 
 		function literal(node, data) {
@@ -91,7 +92,7 @@ export function applyRuntimeFunctions(
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (!data.scope.hasFunction(memory.value))
+		if (!memory.slot.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is not already defined.`, "Memory");
 
 		function literal(node, data) {
@@ -119,13 +120,14 @@ export function applyRuntimeFunctions(
 		}
 	});
 
-	addFunc("del", function (memory, data: FCallData) {
+	addFunc("del", function (memoryRaw, data: FCallData) {
+		let memory = execute(memoryRaw, data)
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (!data.scope.hasFunction(memory.value))
+		if (!memory.slot.scope.hasFunction(memory.value))
 			error(`Value <${memory.value}> is not defined.`, "Memory");
 
-		data.scope.localFunctions.delete(memory?.value);
+		memory.slot.scope.localFunctions.delete(memory?.value);
 	});
 
 	addFunc("query", function (memory, data) {

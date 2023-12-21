@@ -43,7 +43,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (data.scope.hasFunction(memory.value))
+        if (memory.slot.scope.hasFunction(memory.value))
             error(`Value <${memory.value}> is already defined.`, "Memory");
         function literal(node, data) {
             if (node.type.endsWith("Literal"))
@@ -73,7 +73,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (!data.scope.hasFunction(memory.value))
+        if (!memory.slot.scope.hasFunction(memory.value))
             error(`Value <${memory.value}> is not already defined.`, "Memory");
         function literal(node, data) {
             if (node.type.endsWith("Literal"))
@@ -99,12 +99,13 @@ export function applyRuntimeFunctions(runtime, execute) {
             });
         }
     });
-    addFunc("del", function (memory, data) {
+    addFunc("del", function (memoryRaw, data) {
+        let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (!data.scope.hasFunction(memory.value))
+        if (!memory.slot.scope.hasFunction(memory.value))
             error(`Value <${memory.value}> is not defined.`, "Memory");
-        data.scope.localFunctions.delete(memory?.value);
+        memory.slot.scope.localFunctions.delete(memory?.value);
     });
     addFunc("query", function (memory, data) {
         if (memory.type !== "MemoryLiteral")

@@ -27,13 +27,21 @@ fn(<createScope>) -> {
 print("Created scope and got: ", createScope("text input").parameter)
 
 print("<br>== Putting a variable inside a scope")
-let(<testBlock2>) -> {
+let(<testBlock2a>) -> {
 	let(<value1>) -> "This variable was set from inside block"
 }
-let(testBlock2.<value2>) -> "This variable was set from outside of block"
+let(testBlock2a.<value2>) -> "This variable was set from outside of block"
 
-print(testBlock2.value1)
-print(testBlock2.value2)
+print(testBlock2a.value1)
+print(testBlock2a.value2)
+
+print("<br>== Updating a variable inside a scope")
+let(<testBlock2b>) -> {
+	let(<value>) -> "This value was assinged from inside block"
+}
+set(testBlock2b.<value>) -> "This value was updated from outside of block"
+
+print(testBlock2b.value)
 
 print("<br>== Multiple hierarchy")
 let(<testBlock3>) -> {
