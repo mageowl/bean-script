@@ -13,16 +13,17 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +436 ~/Documents/GitHub/f-script/src/runtimeFunctions.ts
-badd +1 test/controlBlocks.func
-badd +1 index.html
-badd +53 ~/.config/nvim/syntax/fscript.vim
+badd +0 src/runtimeFunctions.ts
+badd +93 test/dynamicAccess.func
+badd +0 test/controlBlocks.func
+badd +0 src/json.ts
 argglobal
 %argdel
+$argadd src/runtimeFunctions.ts
 tabnew +setlocal\ bufhidden=wipe
 tabnew +setlocal\ bufhidden=wipe
 tabrewind
-edit ~/Documents/GitHub/f-script/src/runtimeFunctions.ts
+edit src/runtimeFunctions.ts
 argglobal
 setlocal fdm=manual
 setlocal fde=0
@@ -34,16 +35,16 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 436 - ((33 * winheight(0) + 21) / 43)
+let s:l = 441 - ((19 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 436
-normal! 015|
+keepjumps 441
+normal! 06|
 tabnext
 edit test/controlBlocks.func
 argglobal
-balt ~/Documents/GitHub/f-script/src/runtimeFunctions.ts
+balt test/dynamicAccess.func
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -54,15 +55,16 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 40 - ((21 * winheight(0) + 21) / 43)
+let s:l = 50 - ((25 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 40
-normal! 0
+keepjumps 50
+normal! 035|
 tabnext
-edit index.html
+edit src/json.ts
 argglobal
+balt test/controlBlocks.func
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -73,13 +75,13 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 33 - ((32 * winheight(0) + 21) / 43)
+let s:l = 129 - ((0 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 33
-normal! 038|
-tabnext 1
+keepjumps 129
+normal! 0
+tabnext 3
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
 endif

@@ -3,7 +3,7 @@ import {
 	FCallableAny,
 	FNodeAny,
 	FNodeBlock,
-	FNodeValue
+	FNodeValue,
 } from "./interfaces.js";
 import { toFString } from "./runtimeFunctions.js";
 import { Scope } from "./scope.js";
@@ -32,28 +32,28 @@ export class ListScope extends Scope implements FNodeBlock {
 			type: "js",
 			run() {
 				return { type: "NumberLiteral", value: array.length };
-			}
+			},
 		});
 
 		this.localFunctions.set("push", {
 			type: "js",
 			run(item: FNodeValue) {
 				array.push(item);
-			}
+			},
 		});
 
 		this.localFunctions.set("pop", {
 			type: "js",
 			run() {
 				return array.pop();
-			}
+			},
 		});
 
 		this.localFunctions.set("delete", {
 			type: "js",
 			run(index: FNodeValue) {
 				return array.splice(index.value, 1)[0];
-			}
+			},
 		});
 
 		this.localFunctions.set("for", {
@@ -65,17 +65,17 @@ export class ListScope extends Scope implements FNodeBlock {
 					type: "js",
 					run() {
 						return currentItem;
-					}
+					},
 				});
-				
+
 				let returnValues = [];
 				array.forEach((item) => {
 					currentItem = item;
 					returnValues.push(execute(yieldFunction, { ...data, scope }));
 				});
-				
+
 				return new ListScope(returnValues);
-			}
+			},
 		});
 	}
 
@@ -94,7 +94,7 @@ export class ListScope extends Scope implements FNodeBlock {
 				type: "js",
 				run() {
 					return array[parseInt(name)] ?? { type: "NullLiteral" };
-				}
+				},
 			};
 		}
 		return super.getFunction(name);
@@ -133,7 +133,7 @@ export class MapScope extends Scope implements FNodeBlock {
 			type: "js",
 			run() {
 				return { type: "NumberLiteral", value: map.size };
-			}
+			},
 		});
 
 		this.localFunctions.set("set", {
@@ -142,16 +142,16 @@ export class MapScope extends Scope implements FNodeBlock {
 				if (key?.type !== "StringLiteral")
 					error(`Expected a string, instead got ${key?.type}`, "Type");
 				map.set(key.value, value);
-			}
+			},
 		});
-		
+
 		this.localFunctions.set("delete", {
 			type: "js",
 			run(key) {
 				if (key?.type !== "StringLiteral")
-					error(`Expected a string, instead got ${key?.type}`, "Type")
-				map.delete(key.value)
-			}
+					error(`Expected a string, instead got ${key?.type}`, "Type");
+				map.delete(key.value);
+			},
 		});
 
 		this.localFunctions.set("get", {
@@ -160,7 +160,7 @@ export class MapScope extends Scope implements FNodeBlock {
 				if (key?.type !== "StringLiteral")
 					error(`Expected a string, instead got ${key?.type}`, "Type");
 				map.get(key.value);
-			}
+			},
 		});
 
 		this.localFunctions.set("has", {
@@ -169,7 +169,7 @@ export class MapScope extends Scope implements FNodeBlock {
 				if (key?.type !== "StringLiteral")
 					error(`Expected a string, instead got ${key?.type}`, "Type");
 				return { type: "BooleanLiteral", value: map.has(key.value) };
-			}
+			},
 		});
 
 		this.localFunctions.set("for", {
@@ -183,21 +183,22 @@ export class MapScope extends Scope implements FNodeBlock {
 					type: "js",
 					run() {
 						return { type: "StringLiteral", value: currentKey };
-					}
+					},
 				});
 				scope.localFunctions.set("value", {
 					type: "js",
 					run() {
 						return currentValue;
-					}
+					},
 				});
 
+				let returnValues = [];
 				Array.from(map.entries()).forEach(([key, value]) => {
 					currentKey = key;
 					currentValue = value;
-					execute(yieldFunction, { ...data, scope });
+					returnValues.push(key, execute(yieldFunction, { ...data, scope }));
 				});
-			}
+			},
 		});
 	}
 
@@ -215,7 +216,7 @@ export class MapScope extends Scope implements FNodeBlock {
 				type: "js",
 				run() {
 					return value;
-				}
+				},
 			};
 		}
 		return super.getFunction(name);
@@ -235,7 +236,7 @@ export class MapScope extends Scope implements FNodeBlock {
 export function fromJSON(
 	json: Object,
 	parent: Scope = null,
-	all: boolean = false
+	all: boolean = false,
 ) {
 	const scope = new Scope(parent);
 
@@ -250,7 +251,7 @@ export function fromJSON(
 			.filter(
 				([_, value]) =>
 					["string", "number", "boolean", "undefined"].includes(typeof value) ||
-					Array.isArray(value)
+					Array.isArray(value),
 			)
 			.forEach(([key, value]) => {
 				switch (typeof value) {

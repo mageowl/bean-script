@@ -6,7 +6,7 @@ import {
 	FNode,
 	FNodeAny,
 	FNodeMemory,
-	FNodeValue
+	FNodeValue,
 } from "./interfaces.js";
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
@@ -38,7 +38,7 @@ export function toFString(node) {
 
 export function applyRuntimeFunctions(
 	runtime,
-	execute: (nodes, data) => FNode | any
+	execute: (nodes, data) => FNode | any,
 ) {
 	function addFunc(name: string, run: Function) {
 		runtime.localFunctions.set(name, { type: "js", run });
@@ -53,7 +53,7 @@ export function applyRuntimeFunctions(
 		memory.slot.set({
 			type: "custom",
 			scope: data.scope,
-			run: yieldFunction
+			run: yieldFunction,
 		});
 	});
 
@@ -78,13 +78,13 @@ export function applyRuntimeFunctions(
 				type: "js",
 				run() {
 					return value;
-				}
+				},
 			});
 		} else {
 			memory.slot.set({
 				type: "custom",
 				scope: data.scope,
-				run: value
+				run: value,
 			});
 		}
 	});
@@ -109,19 +109,19 @@ export function applyRuntimeFunctions(
 				type: "js",
 				run() {
 					return value;
-				}
+				},
 			});
 		} else {
 			memory.slot.set({
 				type: "custom",
 				scope: data.scope,
-				run: value
+				run: value,
 			});
 		}
 	});
 
 	addFunc("del", function (memoryRaw, data: FCallData) {
-		let memory = execute(memoryRaw, data)
+		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
 		if (!memory.slot.scope.hasFunction(memory.value))
@@ -172,7 +172,7 @@ export function applyRuntimeFunctions(
 		return execute(data.yieldFunction, {
 			...data.yieldScope,
 			parameters:
-				params.length > 2 ? params.slice(0, -2) : data.yieldScope.parameters
+				params.length > 2 ? params.slice(0, -2) : data.yieldScope.parameters,
 		});
 	});
 
@@ -188,15 +188,15 @@ export function applyRuntimeFunctions(
 		if (noTypeMatch)
 			error(
 				`Cannot add a ${noTypeMatch.type} to a ${numbers[0].type}. Please type cast using str()`,
-				"Type"
+				"Type",
 			);
 		return {
 			type:
 				numbers[0].type === "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
 			value: numbers.reduce(
 				(num1, num2) =>
-					(num1.value != undefined ? num1.value : num1) + num2.value
-			)
+					(num1.value != undefined ? num1.value : num1) + num2.value,
+			),
 		};
 	});
 
@@ -205,7 +205,7 @@ export function applyRuntimeFunctions(
 			error(`To subtract, both objects must be numbers.`, "Type");
 		return {
 			type: "NumberLiteral",
-			value: num1.value - num2.value
+			value: num1.value - num2.value,
 		};
 	});
 
@@ -217,7 +217,7 @@ export function applyRuntimeFunctions(
 			value:
 				num1.type === "NumberLiteral"
 					? num1.value * num2.value
-					: "".padStart(num1.value.length * num2.value, num1.value)
+					: "".padStart(num1.value.length * num2.value, num1.value),
 		};
 	});
 
@@ -226,7 +226,7 @@ export function applyRuntimeFunctions(
 			error(`To divide, both objects must be numbers.`, "Type");
 		return {
 			type: "NumberLiteral",
-			value: num1.value / num2.value
+			value: num1.value / num2.value,
 		};
 	});
 
@@ -255,7 +255,7 @@ export function applyRuntimeFunctions(
 		if (isTrue == null)
 			error(
 				"Unexpected else function. Make sure to call if() first.",
-				"Syntax"
+				"Syntax",
 			);
 		data.scope.ifValue = null;
 		if (!isTrue) {
@@ -267,7 +267,7 @@ export function applyRuntimeFunctions(
 		if (data.scope.ifValue == null)
 			error(
 				"Unexpected else if function. Make sure to call if() first.",
-				"Syntax"
+				"Syntax",
 			);
 		if (!data.scope.ifValue) return;
 		let isTrue = execute(condition, data);
@@ -281,6 +281,16 @@ export function applyRuntimeFunctions(
 		return { type: "BooleanLiteral", value: false };
 	});
 
+	addFunc("ifv", function (condition, valueTrue, valueFalse, data) {
+		let isTrue = execute(condition, data);
+		if (isTrue.value === undefined)
+			error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+		if (isTrue?.value) {
+			return valueTrue;
+		}
+		return valueFalse;
+	});
+
 	addFunc("not", function (bool, data) {
 		let isTrue = execute(bool, data);
 		if (isTrue.value === undefined)
@@ -291,7 +301,7 @@ export function applyRuntimeFunctions(
 	addFunc("exists", function (memory, data) {
 		return {
 			type: "BooleanLiteral",
-			value: data.scope.hasFunction(memory.value)
+			value: data.scope.hasFunction(memory.value),
 		};
 	});
 
@@ -328,7 +338,7 @@ export function applyRuntimeFunctions(
 							? arr.concat([[item]])
 							: arr.slice(0, -1).concat([[arr.at(-1)[0], item]])
 						: [[item]],
-				[]
+				[],
 			);
 
 		return new MapScope(map);
@@ -346,7 +356,7 @@ export function applyRuntimeFunctions(
 
 		return {
 			type: "NumberLiteral",
-			value: Math.floor(Math.random() * (maxInt - minInt)) + minInt
+			value: Math.floor(Math.random() * (maxInt - minInt)) + minInt,
 		};
 	});
 
@@ -356,7 +366,7 @@ export function applyRuntimeFunctions(
 
 		return {
 			type: "NumberLiteral",
-			value: num1.value ** num2.value
+			value: num1.value ** num2.value,
 		};
 	});
 
@@ -364,7 +374,7 @@ export function applyRuntimeFunctions(
 		if (times.type !== "NumberLiteral")
 			error(
 				`Parameter of repeat() should be a number. Instead, I got a ${times.type}.`,
-				"Type"
+				"Type",
 			);
 
 		let i = 0;
@@ -378,7 +388,7 @@ export function applyRuntimeFunctions(
 	addFunc("match", function (value, data, yieldFunction) {
 		const matchScope: Scope = execute(yieldFunction, {
 			...data,
-			returnScope: true
+			returnScope: true,
 		});
 		const valueLiteral = execute(value, data);
 		for (let callback of matchScope.matchCases) {
@@ -415,7 +425,7 @@ export function applyRuntimeFunctions(
 	addFunc("type", function (value) {
 		return {
 			type: "StringLiteral",
-			value: value.type.replace("Literal", "").toLowerCase()
+			value: value.type.replace("Literal", "").toLowerCase(),
 		};
 	});
 
@@ -423,13 +433,25 @@ export function applyRuntimeFunctions(
 		if (string?.type !== "StringLiteral")
 			error(
 				`Expected a string. Instead got a ${string?.type}. If you are trying to measure the length of a list, use list.size()`,
-				"Type"
+				"Type",
 			);
 		return { type: "NumberLiteral", value: string.value.length };
 	});
 
+	addFunc("split", function (string: FNodeValue, delimiter: FNodeValue) {
+		if (string?.type !== "StringLiteral")
+			error(`Expected a string. Instead got a ${string?.type}.`, "Type");
+		if (delimiter?.type !== "StringLiteral")
+			error(`Expected a string. Instead got a ${delimiter?.type}.`, "Type");
+		return new ListScope(
+			string.value
+				.split(delimiter.value)
+				.map((value: string) => ({ type: "StringLiteral", value })),
+		);
+	});
+
 	if (isDebug) {
-		addFunc("__debug", function (data) {
+		addFunc("__debug", function (data: FCallData) {
 			console.log(data);
 		});
 	}

@@ -36,7 +36,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         memory.slot.set({
             type: "custom",
             scope: data.scope,
-            run: yieldFunction
+            run: yieldFunction,
         });
     });
     addFunc("let", function (memoryRaw, data, yieldFunction) {
@@ -58,14 +58,14 @@ export function applyRuntimeFunctions(runtime, execute) {
                 type: "js",
                 run() {
                     return value;
-                }
+                },
             });
         }
         else {
             memory.slot.set({
                 type: "custom",
                 scope: data.scope,
-                run: value
+                run: value,
             });
         }
     });
@@ -88,14 +88,14 @@ export function applyRuntimeFunctions(runtime, execute) {
                 type: "js",
                 run() {
                     return value;
-                }
+                },
             });
         }
         else {
             memory.slot.set({
                 type: "custom",
                 scope: data.scope,
-                run: value
+                run: value,
             });
         }
     });
@@ -147,7 +147,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         const data = params.at(-2);
         return execute(data.yieldFunction, {
             ...data.yieldScope,
-            parameters: params.length > 2 ? params.slice(0, -2) : data.yieldScope.parameters
+            parameters: params.length > 2 ? params.slice(0, -2) : data.yieldScope.parameters,
         });
     });
     addFunc("return", function (value, data) {
@@ -161,7 +161,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             error(`Cannot add a ${noTypeMatch.type} to a ${numbers[0].type}. Please type cast using str()`, "Type");
         return {
             type: numbers[0].type === "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
-            value: numbers.reduce((num1, num2) => (num1.value != undefined ? num1.value : num1) + num2.value)
+            value: numbers.reduce((num1, num2) => (num1.value != undefined ? num1.value : num1) + num2.value),
         };
     });
     addFunc("sub", function (num1, num2) {
@@ -169,7 +169,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             error(`To subtract, both objects must be numbers.`, "Type");
         return {
             type: "NumberLiteral",
-            value: num1.value - num2.value
+            value: num1.value - num2.value,
         };
     });
     addFunc("mul", function (num1, num2) {
@@ -179,7 +179,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             type: num1.type === "NumberLiteral" ? "NumberLiteral" : "StringLiteral",
             value: num1.type === "NumberLiteral"
                 ? num1.value * num2.value
-                : "".padStart(num1.value.length * num2.value, num1.value)
+                : "".padStart(num1.value.length * num2.value, num1.value),
         };
     });
     addFunc("div", function (num1, num2) {
@@ -187,7 +187,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             error(`To divide, both objects must be numbers.`, "Type");
         return {
             type: "NumberLiteral",
-            value: num1.value / num2.value
+            value: num1.value / num2.value,
         };
     });
     addFunc("str", function (node) {
@@ -231,6 +231,15 @@ export function applyRuntimeFunctions(runtime, execute) {
         }
         return { type: "BooleanLiteral", value: false };
     });
+    addFunc("ifv", function (condition, valueTrue, valueFalse, data) {
+        let isTrue = execute(condition, data);
+        if (isTrue.value === undefined)
+            error(`Hmm... ${isTrue.type} is not type cast-able to boolean.`, "Type");
+        if (isTrue?.value) {
+            return valueTrue;
+        }
+        return valueFalse;
+    });
     addFunc("not", function (bool, data) {
         let isTrue = execute(bool, data);
         if (isTrue.value === undefined)
@@ -240,7 +249,7 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("exists", function (memory, data) {
         return {
             type: "BooleanLiteral",
-            value: data.scope.hasFunction(memory.value)
+            value: data.scope.hasFunction(memory.value),
         };
     });
     addFunc("eq", function (a, b, data) {
@@ -280,7 +289,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             return { type: "NumberLiteral", value: Math.random() };
         return {
             type: "NumberLiteral",
-            value: Math.floor(Math.random() * (maxInt - minInt)) + minInt
+            value: Math.floor(Math.random() * (maxInt - minInt)) + minInt,
         };
     });
     addFunc("pow", function (num1, num2) {
@@ -288,7 +297,7 @@ export function applyRuntimeFunctions(runtime, execute) {
             error(`To raise to the nth power, both objects must be numbers.`, "Type");
         return {
             type: "NumberLiteral",
-            value: num1.value ** num2.value
+            value: num1.value ** num2.value,
         };
     });
     addFunc("repeat", function (times, data, yieldFunction) {
@@ -305,7 +314,7 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("match", function (value, data, yieldFunction) {
         const matchScope = execute(yieldFunction, {
             ...data,
-            returnScope: true
+            returnScope: true,
         });
         const valueLiteral = execute(value, data);
         for (let callback of matchScope.matchCases) {
@@ -338,13 +347,22 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("type", function (value) {
         return {
             type: "StringLiteral",
-            value: value.type.replace("Literal", "").toLowerCase()
+            value: value.type.replace("Literal", "").toLowerCase(),
         };
     });
     addFunc("size", function (string) {
         if (string?.type !== "StringLiteral")
             error(`Expected a string. Instead got a ${string?.type}. If you are trying to measure the length of a list, use list.size()`, "Type");
         return { type: "NumberLiteral", value: string.value.length };
+    });
+    addFunc("split", function (string, delimiter) {
+        if (string?.type !== "StringLiteral")
+            error(`Expected a string. Instead got a ${string?.type}.`, "Type");
+        if (delimiter?.type !== "StringLiteral")
+            error(`Expected a string. Instead got a ${delimiter?.type}.`, "Type");
+        return new ListScope(string.value
+            .split(delimiter.value)
+            .map((value) => ({ type: "StringLiteral", value })));
     });
     if (isDebug) {
         addFunc("__debug", function (data) {

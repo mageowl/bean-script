@@ -20,25 +20,25 @@ export class ListScope extends Scope {
             type: "js",
             run() {
                 return { type: "NumberLiteral", value: array.length };
-            }
+            },
         });
         this.localFunctions.set("push", {
             type: "js",
             run(item) {
                 array.push(item);
-            }
+            },
         });
         this.localFunctions.set("pop", {
             type: "js",
             run() {
                 return array.pop();
-            }
+            },
         });
         this.localFunctions.set("delete", {
             type: "js",
             run(index) {
                 return array.splice(index.value, 1)[0];
-            }
+            },
         });
         this.localFunctions.set("for", {
             type: "js",
@@ -49,7 +49,7 @@ export class ListScope extends Scope {
                     type: "js",
                     run() {
                         return currentItem;
-                    }
+                    },
                 });
                 let returnValues = [];
                 array.forEach((item) => {
@@ -57,7 +57,7 @@ export class ListScope extends Scope {
                     returnValues.push(execute(yieldFunction, { ...data, scope }));
                 });
                 return new ListScope(returnValues);
-            }
+            },
         });
     }
     hasFunction(name) {
@@ -73,7 +73,7 @@ export class ListScope extends Scope {
                 type: "js",
                 run() {
                     return array[parseInt(name)] ?? { type: "NullLiteral" };
-                }
+                },
             };
         }
         return super.getFunction(name);
@@ -105,7 +105,7 @@ export class MapScope extends Scope {
             type: "js",
             run() {
                 return { type: "NumberLiteral", value: map.size };
-            }
+            },
         });
         this.localFunctions.set("set", {
             type: "js",
@@ -113,7 +113,7 @@ export class MapScope extends Scope {
                 if (key?.type !== "StringLiteral")
                     error(`Expected a string, instead got ${key?.type}`, "Type");
                 map.set(key.value, value);
-            }
+            },
         });
         this.localFunctions.set("delete", {
             type: "js",
@@ -121,7 +121,7 @@ export class MapScope extends Scope {
                 if (key?.type !== "StringLiteral")
                     error(`Expected a string, instead got ${key?.type}`, "Type");
                 map.delete(key.value);
-            }
+            },
         });
         this.localFunctions.set("get", {
             type: "js",
@@ -129,7 +129,7 @@ export class MapScope extends Scope {
                 if (key?.type !== "StringLiteral")
                     error(`Expected a string, instead got ${key?.type}`, "Type");
                 map.get(key.value);
-            }
+            },
         });
         this.localFunctions.set("has", {
             type: "js",
@@ -137,7 +137,7 @@ export class MapScope extends Scope {
                 if (key?.type !== "StringLiteral")
                     error(`Expected a string, instead got ${key?.type}`, "Type");
                 return { type: "BooleanLiteral", value: map.has(key.value) };
-            }
+            },
         });
         this.localFunctions.set("for", {
             type: "js",
@@ -149,20 +149,21 @@ export class MapScope extends Scope {
                     type: "js",
                     run() {
                         return { type: "StringLiteral", value: currentKey };
-                    }
+                    },
                 });
                 scope.localFunctions.set("value", {
                     type: "js",
                     run() {
                         return currentValue;
-                    }
+                    },
                 });
+                let returnValues = [];
                 Array.from(map.entries()).forEach(([key, value]) => {
                     currentKey = key;
                     currentValue = value;
-                    execute(yieldFunction, { ...data, scope });
+                    returnValues.push(key, execute(yieldFunction, { ...data, scope }));
                 });
-            }
+            },
         });
     }
     hasFunction(name) {
@@ -179,7 +180,7 @@ export class MapScope extends Scope {
                 type: "js",
                 run() {
                     return value;
-                }
+                },
             };
         }
         return super.getFunction(name);
