@@ -49,3 +49,7 @@ map1.for -> {
 
 print("") print(" == For & return")
 print(list1.for -> return(size(item)))
+
+print("") print(" == Split & Join")
+
+print(split("spanish", "s").join("th"))

@@ -39,6 +39,7 @@ export class HTMLElementScope extends Scope implements FNodeBlock {
 			run(name: FNodeValue, value: FNodeValue) {
 				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.setAttribute(name.value, value.value);
+				return self;
 			}
 		});
 
@@ -60,6 +61,7 @@ export class HTMLElementScope extends Scope implements FNodeBlock {
 			run(text: FNodeValue) {
 				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.innerText = text.value;
+				return self;
 			}
 		});
 
@@ -68,6 +70,7 @@ export class HTMLElementScope extends Scope implements FNodeBlock {
 			run(text: FNodeValue) {
 				if (self.destroyed) error("Trying to edit a destroyed element.", "Web");
 				el.innerText += text.value;
+				return self;
 			}
 		});
 
@@ -87,6 +90,7 @@ export class HTMLElementScope extends Scope implements FNodeBlock {
 				el.addEventListener(event.value, () => {
 					execute(yieldFunction, data);
 				});
+				return self;
 			}
 		});
 

@@ -33,6 +33,7 @@ export class HTMLElementScope extends Scope {
                 if (self.destroyed)
                     error("Trying to edit a destroyed element.", "Web");
                 el.setAttribute(name.value, value.value);
+                return self;
             }
         });
         this.localFunctions.set("get", {
@@ -53,6 +54,7 @@ export class HTMLElementScope extends Scope {
                 if (self.destroyed)
                     error("Trying to edit a destroyed element.", "Web");
                 el.innerText = text.value;
+                return self;
             }
         });
         this.localFunctions.set("appendText", {
@@ -61,6 +63,7 @@ export class HTMLElementScope extends Scope {
                 if (self.destroyed)
                     error("Trying to edit a destroyed element.", "Web");
                 el.innerText += text.value;
+                return self;
             }
         });
         this.localFunctions.set("add", {
@@ -79,6 +82,7 @@ export class HTMLElementScope extends Scope {
                 el.addEventListener(event.value, () => {
                     execute(yieldFunction, data);
                 });
+                return self;
             }
         });
         this.localFunctions.set("destroy", {

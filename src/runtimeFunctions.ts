@@ -4,37 +4,12 @@ import { error } from "./error.js";
 import {
 	FCallData,
 	FNode,
-	FNodeAny,
-	FNodeMemory,
 	FNodeValue,
 } from "./interfaces.js";
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
 import { Scope } from "./scope.js";
-import { constrainedMemory } from "node:process";
-
-export function toFString(node) {
-	if (!node) return;
-	if (node.toFString != null) return node.toFString();
-	switch (node.type) {
-		case "NumberLiteral":
-			return node.value.toString();
-		case "StringLiteral":
-			return node.value;
-
-		case "BooleanLiteral":
-			return node.value.toString();
-
-		case "MemoryLiteral":
-			return `<${node.value}>`;
-
-		case "Block":
-			return "[block]";
-
-		default:
-			return "[null]";
-	}
-}
+import toFString from "./toString.js";
 
 export function applyRuntimeFunctions(
 	runtime,

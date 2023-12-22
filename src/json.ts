@@ -5,7 +5,7 @@ import {
 	FNodeBlock,
 	FNodeValue,
 } from "./interfaces.js";
-import { toFString } from "./runtimeFunctions.js";
+import toFString from "./toString.js";
 import { Scope } from "./scope.js";
 import { error } from "./error.js";
 import { execute } from "./executer.js";
@@ -35,6 +35,13 @@ export class ListScope extends Scope implements FNodeBlock {
 				return { type: "NumberLiteral", value: array.length };
 			},
 		});
+
+		this.localFunctions.set("has", {
+			type: "js",
+			run(item) {
+				return { type: "BooleanLiteral", value: array.some((i) => i?.type == item?.type && i?.value == item?.value) }
+			}
+		})
 
 		this.localFunctions.set("push", {
 			type: "js",
@@ -78,6 +85,16 @@ export class ListScope extends Scope implements FNodeBlock {
 				return new ListScope(returnValues);
 			},
 		});
+
+		this.localFunctions.set("join", {
+			type: "js",
+			run(seperator: FNodeValue) {
+				if (seperator?.type != "StringLiteral")
+					error(`Delimiter must be a string, instead got ${seperator?.type}`, "Type")
+				
+				return { type: "StringLiteral", value: array.map(toFString).join(seperator.value) }
+			}
+		})
 	}
 
 	hasFunction(name: string): boolean {
