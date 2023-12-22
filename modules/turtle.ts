@@ -1,10 +1,9 @@
 import { HTMLElementScope } from "../src/defaultModules/web.js";
 import { error } from "../src/error.js";
 import {
-	FCallableAny,
 	FNode,
 	FNodeAny,
-	FNodeBlock
+	FNodeBlock,
 } from "../src/interfaces.js";
 import { Scope } from "../src/scope.js";
 
@@ -49,7 +48,7 @@ export class TurtleScope extends Scope implements FNodeBlock {
 		const ctx: CanvasRenderingContext2D = this.canvas;
 		const set = (
 			name: string | string[],
-			run: (...params: any[]) => void | FNodeAny
+			run: (...params: any[]) => void | FNodeAny,
 		) => {
 			if (Array.isArray(name))
 				name.forEach((id) => this.localFunctions.set(id, { type: "js", run }));
@@ -70,7 +69,7 @@ export class TurtleScope extends Scope implements FNodeBlock {
 			return { type: "NumberLiteral", value: radToDeg(self.angle) };
 		});
 
-		set("goto", (x, y, data) => {
+		set("goto", (x, y) => {
 			if (x?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${x.type}.`, "Type");
 			if (y?.type !== "NumberLiteral")
@@ -78,56 +77,56 @@ export class TurtleScope extends Scope implements FNodeBlock {
 
 			self.goto(x.value, y.value);
 		});
-		set("forward", (distance, data) => {
+		set("forward", (distance) => {
 			if (distance?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${distance.type}.`, "Type");
 
 			self.forward(distance.value);
 		});
 
-		set(["right", "turn"], (turn, data) => {
+		set(["right", "turn"], (turn) => {
 			if (turn?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${turn.type}.`, "Type");
 
 			self.angle += degToRad(turn.value);
 		});
-		set("left", (turn, data) => {
+		set("left", (turn) => {
 			if (turn?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${turn.type}.`, "Type");
 
 			self.angle -= degToRad(turn.value);
 		});
-		set("angle", (turn, data) => {
+		set("angle", (turn) => {
 			if (turn?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${turn.type}.`, "Type");
 
 			self.angle = degToRad(turn.value);
 		});
 
-		set("size", (size, data) => {
+		set("size", (size) => {
 			if (size?.type !== "NumberLiteral")
 				error(`Expected a number, instead got a ${size.type}.`, "Type");
 
 			self.strokeSize = size.value;
 		});
-		set("cap", (cap, data) => {
+		set("cap", (cap) => {
 			if (cap?.type !== "StringLiteral")
 				error(`Expected a number, instead got a ${cap.type}.`, "Type");
 			if (!["round", "square", "butt"].includes(cap.value))
 				error(
 					`Expected either 'butt', 'round', or 'square'. Instead got "${cap.value}".`,
-					"Type"
+					"Type",
 				);
 
 			self.lineCap = cap.value;
 		});
-		set("join", (join, data) => {
+		set("join", (join) => {
 			if (join?.type !== "StringLiteral")
 				error(`Expected a number, instead got a ${join.type}.`, "Type");
 			if (!["round", "bevel", "miter"].includes(join.value))
 				error(
 					`Expected either 'miter', 'round', or 'bevel'. Instead got "${join.value}".`,
-					"Type"
+					"Type",
 				);
 
 			self.lineJoin = join.value;
@@ -136,25 +135,25 @@ export class TurtleScope extends Scope implements FNodeBlock {
 			if (stroke?.type !== "StringLiteral")
 				error(
 					`Expected a string for the stroke color, instead got a ${stroke.type}.`,
-					"Type"
+					"Type",
 				);
 			if (fill?.type != null && fill.type !== "StringLiteral")
 				error(
 					`Expected a string for the fill color, instead got a ${fill.type}.`,
-					"Type"
+					"Type",
 				);
 
 			self.strokeColor = stroke.value;
 			if (data != null) self.fillColor = fill.value;
 		});
 
-		set("start", (pathType, data) => {
+		set("start", (pathType) => {
 			if (pathType?.type !== "StringLiteral")
 				error(`Expected a string, instead got a ${pathType.type}.`, "Type");
 			if (!["none", "fill", "stroke"].includes(pathType.value))
 				error(
 					`Expected either 'none', 'fill', or 'stroke'. Instead got "${pathType.value}".`,
-					"Type"
+					"Type",
 				);
 
 			self.start(pathType.value);
@@ -168,7 +167,7 @@ export class TurtleScope extends Scope implements FNodeBlock {
 			)
 				error(
 					`Expected an <img> element. Instead, got a ${element.type}`,
-					"Type"
+					"Type",
 				);
 			self.image(element.htmlEl);
 		});
@@ -189,7 +188,7 @@ export class TurtleScope extends Scope implements FNodeBlock {
 	forward(distance: number): void {
 		this.goto(
 			this.x + Math.sin(this.angle) * distance,
-			this.y + Math.cos(this.angle) * distance
+			this.y + Math.cos(this.angle) * distance,
 		);
 	}
 
@@ -209,13 +208,13 @@ export class TurtleScope extends Scope implements FNodeBlock {
 			this.canvas.strokeStyle,
 			this.canvas.lineWidth,
 			this.canvas.lineCap,
-			this.canvas.lineJoin
+			this.canvas.lineJoin,
 		] = [
 			this.fillColor,
 			this.strokeColor,
 			this.strokeSize,
 			this.lineCap,
-			this.lineJoin
+			this.lineJoin,
 		];
 
 		if (this.drawMode === "stroke") this.canvas.stroke(this.path);
@@ -230,7 +229,7 @@ const scope = new Scope();
 
 scope.localFunctions.set("new", {
 	type: "js",
-	run(canvas: HTMLElementScope, data) {
+	run(canvas: HTMLElementScope) {
 		if (
 			canvas?.subType !== "HTMLElementScope" ||
 			canvas.htmlEl.constructor !== HTMLCanvasElement
@@ -241,7 +240,7 @@ scope.localFunctions.set("new", {
 
 		let turtle = new TurtleScope(canvas.htmlEl);
 		return turtle;
-	}
+	},
 });
 
 export default scope;
