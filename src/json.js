@@ -9,6 +9,7 @@ export class ListScope extends Scope {
     scope = this;
     returnSelf = true;
     isArray = true;
+    subType = "ListScope";
     constructor(array) {
         super();
         this.array = array;
@@ -90,6 +91,7 @@ export class MapScope extends Scope {
     body = [];
     scope = this;
     returnSelf = true;
+    subType = "MapScope";
     constructor(kvPairs = []) {
         super();
         kvPairs.forEach(([key, value]) => {

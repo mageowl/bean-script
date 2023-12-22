@@ -1,5 +1,5 @@
-const { Scope, error } = fScript.util;
-
+import { error } from "../src/error.js";
+import { Scope } from "../src/scope.js";
 const degToRad = (degrees) => Math.PI * (degrees / 180);
 const radToDeg = (radians) => 180 * (radians / Math.PI);
 export class TurtleScope extends Scope {
@@ -177,5 +177,4 @@ scope.localFunctions.set("new", {
         return turtle;
     },
 });
-
-fScript.modules["mageowl.turtle"] = scope;
+export default scope;

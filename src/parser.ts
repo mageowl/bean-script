@@ -7,7 +7,7 @@ import {
 	FNodeFunctionAccess
 } from "./interfaces.js";
 
-export function parser(tokens: FToken[]) {
+export function parser(tokens: FToken[]): FNodeBlock {
 	let i = 0;
 	let prev: FNodeAny = null;
 	let ast: FNodeBlock = {

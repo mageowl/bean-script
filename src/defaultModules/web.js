@@ -137,7 +137,7 @@ if (isWeb) {
     scope.localFunctions.set("body", {
         type: "js",
         run() {
-            return { type: "Block", scope: bodyEl, body: [] };
+            return bodyEl;
         }
     });
     scope.localFunctions.set("on", {

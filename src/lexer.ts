@@ -10,6 +10,7 @@ function chunk(code: string): string[] {
 	let i = 0;
 
 	let inString = false;
+	let inMemory = false;
 
 	const isDigit = (char) => "1234567890".includes(char) && char.length === 1;
 	function split() {
@@ -57,7 +58,8 @@ function chunk(code: string): string[] {
 				.includes(char) ||
 				char === ";") &&
 			!inString &&
-			!(isDigit(code[i - 1]) && isDigit(code[i + 1]))
+			!(isDigit(code[i - 1]) && isDigit(code[i + 1])) &&
+			!(char === "." && inMemory)
 		) {
 			split();
 			currentChunk += char;
@@ -65,7 +67,9 @@ function chunk(code: string): string[] {
 		} else if (char === "<" && !inString) {
 			split();
 			currentChunk += char;
+			inMemory = true;
 		} else if (char === ">" && !inString) {
+			inMemory = false;
 			currentChunk += char;
 			split();
 		} else currentChunk += char;

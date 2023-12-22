@@ -3,11 +3,13 @@ import { Scope } from "./scope.js";
 import {
 	FCallData,
 	FNodeAny,
+	FNodeBlock,
 	FNodeFunctionAccess,
-	FNodeType
+	FNodeType,
 } from "./interfaces.js";
 import { applyRuntimeFunctions } from "./runtimeFunctions.js";
 import call from "./functionCall.js";
+declare const fScript: { modules: Object; util: Object; isWeb: boolean };
 
 export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 	const data: FCallData = { scope: runtime, ...dataRaw };
@@ -24,7 +26,7 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 				node.parameters,
 				{ ...data, fnScope: null },
 				node.yieldFunction,
-				execute
+				execute,
 			);
 			if (response != null) return response as FNodeAny;
 			break;
@@ -49,31 +51,33 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 			node.body.forEach((node) => output.push(execute(node, data)));
 			return output.slice(-1)[0];
 
-		case "NeedOperator":
+		case "NeedOperator": {
+			const name = node.value.split(".").at(-1);
 			if (!modules.has(node.value))
 				error(`Unknown module '${node.value}'.`, "Reference");
 			scope = modules.get(node.value);
-			runtime.childScopes.set(node.value, scope);
-			runtime.localFunctions.set(node.value, {
+			runtime.childScopes.set(name, scope);
+			runtime.localFunctions.set(name, {
 				type: "js",
 				run() {
 					return scope;
-				}
+				},
 			});
 			return scope;
+		}
 
 		case "MemoryLiteral":
 			return {
 				slot: (data.fnScope ?? data.scope).createSlot(node.value),
-				...node
+				...node,
 			};
 
 		case "FunctionAccess": {
 			let target = execute(node.target, data);
-			if ((target as Scope)?.subType != "Scope")
+			if (!(target as Scope)?.subType?.endsWith("Scope"))
 				error(
-					`To access a function inside a scope, I need a scope. Instead, I got a ${target?.type}.`,
-					"Type"
+					`To access a function, I need a scope. Instead, I got a ${target?.type}.`,
+					"Type",
 				);
 
 			return execute(node.call, { ...data, fnScope: target as Scope });
@@ -84,7 +88,7 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 			if (parentScope == null)
 				error(
 					"Scope is detached. Either you are trying to access the parent of the root scope, or something is wrong.",
-					"Reference"
+					"Reference",
 				);
 
 			return execute(node.call, { ...data, fnScope: parentScope });
@@ -95,17 +99,14 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 	}
 }
 
-const modules = new Map();
+const modules: Map<string, Scope> = new Map();
 const runtime = new Scope();
 applyRuntimeFunctions(runtime, execute);
 
-export function executer(ast, defaultModules = {}) {
-	for (const mod in defaultModules) {
-		if (Object.hasOwnProperty.call(defaultModules, mod)) {
-			const scope = defaultModules[mod];
-			modules.set(mod, scope);
-		}
-	}
+export function executer(ast: FNodeBlock) {
+	Object.entries(fScript.modules).forEach(([id, scope]) => {
+		if (!modules.has(id)) modules.set(id, scope);
+	});
 
 	return execute(ast);
 }

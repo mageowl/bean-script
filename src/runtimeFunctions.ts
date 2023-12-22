@@ -417,7 +417,7 @@ export function applyRuntimeFunctions(
 			error("Cannot have more than one default case.", "Syntax");
 
 		data.scope.matchCases.push(() => {
-			return execute(yieldFunction, data);
+			return execute(yieldFunction, { ...data, returnScope: false });
 		});
 		data.scope.hasDefaultCase = true;
 	});

@@ -17,6 +17,7 @@ export class ListScope extends Scope implements FNodeBlock {
 	scope = this;
 	returnSelf = true;
 	isArray = true;
+	subType = "ListScope"
 
 	constructor(array: any[]) {
 		super();
@@ -113,6 +114,7 @@ export class MapScope extends Scope implements FNodeBlock {
 	body = [];
 	scope = this;
 	returnSelf = true;
+	subType: string = "MapScope";
 
 	constructor(kvPairs = []) {
 		super();

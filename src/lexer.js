@@ -6,6 +6,7 @@ function chunk(code) {
     let blockComment = false;
     let i = 0;
     let inString = false;
+    let inMemory = false;
     const isDigit = (char) => "1234567890".includes(char) && char.length === 1;
     function split() {
         chunks.push(currentChunk);
@@ -61,7 +62,8 @@ function chunk(code) {
             .includes(char) ||
             char === ";") &&
             !inString &&
-            !(isDigit(code[i - 1]) && isDigit(code[i + 1]))) {
+            !(isDigit(code[i - 1]) && isDigit(code[i + 1])) &&
+            !(char === "." && inMemory)) {
             split();
             currentChunk += char;
             split();
@@ -69,8 +71,10 @@ function chunk(code) {
         else if (char === "<" && !inString) {
             split();
             currentChunk += char;
+            inMemory = true;
         }
         else if (char === ">" && !inString) {
+            inMemory = false;
             currentChunk += char;
             split();
         }

@@ -1,9 +1,9 @@
-<!turtle>
+<!mageowl.turtle>
 <!web>
 <!meta>
 
 fn(<img>) -> {
-	obj(<el>) -> web.make("img")
+	let(<el>) -> web.make("img")
 	el.setAttr("src", param(0))
 	el.setAttr("style", "display:none;")
 	web.body.add(el)
@@ -12,22 +12,22 @@ fn(<img>) -> {
 	}
 }
 
-obj(<canvas>) -> web.make("canvas")
+let(<canvas>) -> web.make("canvas")
 web.body.add(canvas)
 
-obj(<turtle>) -> turtle.new(canvas)
+let(<t1>) -> turtle.new(canvas)
 
-turtle.goto(50, 50)
-turtle.size(10) turtle.cap("square") turtle.join("miter")
-turtle.start("fill")
+t1.goto(50, 50)
+t1.size(10) t1.cap("square") t1.join("miter")
+t1.start("fill")
 
 repeat(4) -> {
-	turtle.forward(70)
-	turtle.right(90)
+	t1.forward(70)
+	t1.right(90)
 }
 
-turtle.end()
+t1.end()
 
 img("https://mageowlstudios.com/images/gradient.png") -> {
-	turtle.image(param(0))
+	t1.image(param(0))
 }

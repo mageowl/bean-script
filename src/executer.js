@@ -35,27 +35,29 @@ export function execute(node, dataRaw = {}) {
             let output = [];
             node.body.forEach((node) => output.push(execute(node, data)));
             return output.slice(-1)[0];
-        case "NeedOperator":
+        case "NeedOperator": {
+            const name = node.value.split(".").at(-1);
             if (!modules.has(node.value))
                 error(`Unknown module '${node.value}'.`, "Reference");
             scope = modules.get(node.value);
-            runtime.childScopes.set(node.value, scope);
-            runtime.localFunctions.set(node.value, {
+            runtime.childScopes.set(name, scope);
+            runtime.localFunctions.set(name, {
                 type: "js",
                 run() {
                     return scope;
-                }
+                },
             });
             return scope;
+        }
         case "MemoryLiteral":
             return {
                 slot: (data.fnScope ?? data.scope).createSlot(node.value),
-                ...node
+                ...node,
             };
         case "FunctionAccess": {
             let target = execute(node.target, data);
-            if (target?.subType != "Scope")
-                error(`To access a function inside a scope, I need a scope. Instead, I got a ${target?.type}.`, "Type");
+            if (!target?.subType?.endsWith("Scope"))
+                error(`To access a function, I need a scope. Instead, I got a ${target?.type}.`, "Type");
             return execute(node.call, { ...data, fnScope: target });
         }
         case "ParentAccess": {
@@ -71,12 +73,10 @@ export function execute(node, dataRaw = {}) {
 const modules = new Map();
 const runtime = new Scope();
 applyRuntimeFunctions(runtime, execute);
-export function executer(ast, defaultModules = {}) {
-    for (const mod in defaultModules) {
-        if (Object.hasOwnProperty.call(defaultModules, mod)) {
-            const scope = defaultModules[mod];
-            modules.set(mod, scope);
-        }
-    }
+export function executer(ast) {
+    Object.entries(fScript.modules).forEach(([id, scope]) => {
+        if (!modules.has(id))
+            modules.set(id, scope);
+    });
     return execute(ast);
 }

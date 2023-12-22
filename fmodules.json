@@ -1,6 +1,0 @@
-{
-	"turtle": {
-		"type": "file/javascript",
-		"path": "./modules/turtle.js"
-	}
-}

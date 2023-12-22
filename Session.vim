@@ -13,13 +13,27 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +0 src/runtimeFunctions.ts
+badd +1 src/runtimeFunctions.ts
 badd +93 test/dynamicAccess.func
-badd +0 test/controlBlocks.func
-badd +0 src/json.ts
+badd +1 test/controlBlocks.func
+badd +129 src/json.ts
+badd +1 test/externalModules.func
+badd +3 src/moduleLoader.ts
+badd +6 fmodules.json
+badd +6 ~/.config/nvim/lua/core/keymaps.lua
+badd +6 ~/Documents/GitHub/f-script/modules/turtle.ts
+badd +4 ~/Documents/GitHub/f-script/src/moduleUtilities.ts
+badd +3 src/defaultModules/main.ts
+badd +1 src/defaultModules/main.js
+badd +0 index.html
+badd +9 src/main.ts
 argglobal
 %argdel
 $argadd src/runtimeFunctions.ts
+tabnew +setlocal\ bufhidden=wipe
+tabnew +setlocal\ bufhidden=wipe
+tabnew +setlocal\ bufhidden=wipe
+tabnew +setlocal\ bufhidden=wipe
 tabnew +setlocal\ bufhidden=wipe
 tabnew +setlocal\ bufhidden=wipe
 tabrewind
@@ -55,12 +69,125 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 50 - ((25 * winheight(0) + 21) / 43)
+let s:l = 51 - ((26 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 50
-normal! 035|
+keepjumps 51
+normal! 038|
+tabnext
+edit src/main.ts
+let s:save_splitbelow = &splitbelow
+let s:save_splitright = &splitright
+set splitbelow splitright
+wincmd _ | wincmd |
+vsplit
+1wincmd h
+wincmd w
+let &splitbelow = s:save_splitbelow
+let &splitright = s:save_splitright
+wincmd t
+let s:save_winminheight = &winminheight
+let s:save_winminwidth = &winminwidth
+set winminheight=0
+set winheight=1
+set winminwidth=0
+set winwidth=1
+exe 'vert 1resize ' . ((&columns * 30 + 122) / 244)
+exe 'vert 2resize ' . ((&columns * 213 + 122) / 244)
+argglobal
+enew
+file NvimTree_4
+balt src/main.ts
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal nofen
+wincmd w
+argglobal
+balt src/defaultModules/main.ts
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 9 - ((8 * winheight(0) + 21) / 43)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 9
+normal! 026|
+wincmd w
+exe 'vert 1resize ' . ((&columns * 30 + 122) / 244)
+exe 'vert 2resize ' . ((&columns * 213 + 122) / 244)
+tabnext
+edit ~/Documents/GitHub/f-script/src/moduleUtilities.ts
+argglobal
+balt ~/Documents/GitHub/f-script/modules/turtle.ts
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 4 - ((3 * winheight(0) + 21) / 43)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 4
+normal! 058|
+tabnext
+edit ~/Documents/GitHub/f-script/modules/turtle.ts
+argglobal
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 32 - ((21 * winheight(0) + 21) / 43)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 32
+normal! 066|
+tabnext
+edit index.html
+argglobal
+balt ~/Documents/GitHub/f-script/modules/turtle.ts
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let &fdl = &fdl
+let s:l = 27 - ((0 * winheight(0) + 21) / 43)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 27
+normal! 0
 tabnext
 edit src/json.ts
 argglobal
@@ -75,13 +202,13 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 129 - ((0 * winheight(0) + 21) / 43)
+let s:l = 213 - ((21 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 129
-normal! 0
-tabnext 3
+keepjumps 213
+normal! 069|
+tabnext 5
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
 endif
