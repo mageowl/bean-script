@@ -255,11 +255,11 @@ export function applyRuntimeFunctions(runtime, execute) {
         let value = a?.type === b?.type && a?.value > b?.value;
         return { type: "BooleanLiteral", value };
     });
-    addFunc("a", function (...params) {
+    addFunc("list", function (...params) {
         let array = params.slice(0, -2);
         return new ListScope(array);
     });
-    addFunc("m", function (...params) {
+    addFunc("map", function (...params) {
         let map = params
             .slice(0, -2)
             .reduce((arr, item) => arr.length > 0
@@ -318,7 +318,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         if (data.scope.hasDefaultCase)
             error("Cannot add cases after default case.", "Syntax");
         const matchValue = execute(match, data);
-        data.scope.matchCases.push((input, matchScope) => {
+        data.scope.matchCases.push((input) => {
             if (input?.type === matchValue?.type &&
                 input?.value === matchValue?.value &&
                 input?.type.endsWith("Literal")) {
@@ -330,9 +330,8 @@ export function applyRuntimeFunctions(runtime, execute) {
     addFunc("default", function (data, yieldFunction) {
         if (data.scope.hasDefaultCase)
             error("Cannot have more than one default case.", "Syntax");
-        data.scope.matchCases.push((_, matchScope) => {
-            matchScope.return(execute(yieldFunction, data));
-            return true;
+        data.scope.matchCases.push(() => {
+            return execute(yieldFunction, data);
         });
         data.scope.hasDefaultCase = true;
     });

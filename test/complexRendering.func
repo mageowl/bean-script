@@ -5,12 +5,12 @@ meta.include(meta)
 
 if(web.exists("#fscript-logs")) -> {
 	web.useElementAsConsole(null)
-	obj(<console>) -> web.get("#fscript-logs")
+	let(<console>) -> web.get("#fscript-logs")
 	console.destroy()
 }
 
-obj(<assetMap>) -> map()
-obj(<assets>) -> dispatcher -> {
+let(<assetMap>) -> map
+let(<assets>) -> dispatcher -> {
 	event("finish")
 	event("added")
 	event("load")
@@ -35,7 +35,7 @@ obj(<assets>) -> dispatcher -> {
 	}
 
 	fn(<img>) -> {
-		obj(<el>) -> web.make("img")
+		let(<el>) -> web.make("img")
 		el.setAttr("src", yield)
 		el.setAttr("style", "display:none;")
 		web.body.add(el)
@@ -52,6 +52,6 @@ obj(<assets>) -> dispatcher -> {
 
 assets.img("avocado") -> "https://png.pngtree.com/png-clipart/20230201/original/pngtree-photo-of-avocado-png-image_8939900.png"
 assets.on("finish") -> {
-	obj(<avo>) -> assetMap.avocado
+	let(<avo>) -> assetMap.avocado
 	avo.setAttr("style", "") * Show avocado :)
 }

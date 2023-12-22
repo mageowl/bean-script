@@ -1,13 +1,12 @@
 <!web>
 web.useElementAsConsole("fscript-logs");
 
-obj(<console>) -> web.getElement("#fscript-logs");
-obj(<can>) -> web.createElement("span");
+let(<console>) -> web.getElement("#fscript-logs");
+let(<can>) -> web.createElement("span");
 can.text("OP POND");
 can.setAttr("style", "font-weight:bold;");
 console.add(can);
 
-
 web.on("keydown") -> {
-	print(event.key)
-}
+	print(event.key);
+};

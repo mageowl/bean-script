@@ -16,6 +16,7 @@ export class ListScope extends Scope implements FNodeBlock {
 	body = [];
 	scope = this;
 	returnSelf = true;
+	isArray = true;
 
 	constructor(array: any[]) {
 		super();
@@ -66,11 +67,14 @@ export class ListScope extends Scope implements FNodeBlock {
 						return currentItem;
 					}
 				});
-
+				
+				let returnValues = [];
 				array.forEach((item) => {
 					currentItem = item;
-					execute(yieldFunction, { ...data, scope });
+					returnValues.push(execute(yieldFunction, { ...data, scope }));
 				});
+				
+				return new ListScope(returnValues);
 			}
 		});
 	}
@@ -125,12 +129,28 @@ export class MapScope extends Scope implements FNodeBlock {
 	private applyFunctions() {
 		const map = this.map;
 
+		this.localFunctions.set("size", {
+			type: "js",
+			run() {
+				return { type: "NumberLiteral", value: map.size };
+			}
+		});
+
 		this.localFunctions.set("set", {
 			type: "js",
 			run(key, value) {
 				if (key?.type !== "StringLiteral")
 					error(`Expected a string, instead got ${key?.type}`, "Type");
 				map.set(key.value, value);
+			}
+		});
+		
+		this.localFunctions.set("delete", {
+			type: "js",
+			run(key) {
+				if (key?.type !== "StringLiteral")
+					error(`Expected a string, instead got ${key?.type}`, "Type")
+				map.delete(key.value)
 			}
 		});
 

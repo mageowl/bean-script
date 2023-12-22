@@ -10,7 +10,7 @@ fn(<func>) -> {
 	let(mem) -> "Wow!"
 }
 
-obj(<myList>) -> list("a", "b", "c")
+let(<myList>) -> list("a", "b", "c")
 
 func
 print(value)

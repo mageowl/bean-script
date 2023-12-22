@@ -1,8 +1,8 @@
 print(" == Counting Loops")
 fn(<counter>) -> {
-	else(if(exists(param(0))) -> {
+	if(exists(param(0))) -> {
 		set(param(0)) -> add(num(query(param(0))), 1)
-	}) -> {
+	} else -> {
 		let(param(0)) -> 0
 	}
 	yield()
@@ -33,16 +33,19 @@ matchVal("joe")
 matchVal("jenny")
 
 print("") print(" == For Loops")
-obj(<list1>) -> list("a", "b", "c")
+let(<list1>) -> list("abacus", "bowling", "chameleon")
 print(list1)
+
 list1.for -> {
 	print(add("Item is ", item))
 }
 
 print("") print(" == Map Loops")
-obj(<map1>) -> map("robot", "fire", "wyrm", "water", "golem", "earth")
+let(<map1>) -> map("robot", "storm", "wyrm", "water", "golem", "earth")
 print(map1)
 map1.for -> {
 	print(add(key, mul(" ", sub(6, size(key))), "| ", value))
 }
 
+print("") print(" == For & return")
+print(list1.for -> return(size(item)))
