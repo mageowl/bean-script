@@ -1,32 +1,29 @@
-<!meta>
-meta.include(meta) * Move the meta functions into global scope.
-
-obj(<pos>) -> {
-	let(<x>) -> 0
-	let(<y>) -> 0
+const(<pos>): {
+	let(<x>): 0
+	let(<y>): 0
 }
-fn(<person>) -> {
-	let(<name>) -> param(0)
+fn(<person>): {
+	let(<name>): p(0, "string")
 	return(self)
 }
 
-obj(<abc>) -> dispatcher -> {
+const(<abc>): {
 	include(pos)
 	event("explosion")
 
-	fn(<explode>) -> bind(<x>, <y>) -> {
-		set(param(0)) -> rand(-2, 3)
-		set(param(1)) -> rand(-2, 3)
+	fn(<explode>): {
+		x(rand(-2, 3))
+		y(rand(-2, 3))
 		emit("explosion")
 	}
 }
 
-obj(<player>) -> {
+const(<player>): {
 	include(pos)
-	include(person("Geon"))
+	include(person("Player"))
 }
 
-abc.on("explosion") -> {
+abc.on("explosion"): {
 	print(add(str(abc.x), ", ", str(abc.y)))
 	print(player.name)
 }
