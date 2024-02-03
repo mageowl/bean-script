@@ -131,6 +131,10 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					body.push(Box::new(parse_token(next(), &next, &peek)));
 				}
 
+				if let Token::ScopeClose = peek() {
+					next();
+				}
+
 				Node::Scope { body }
 			}
 			Token::ScopeClose => panic!("Unexpected scope close symbol. ('}}')"),
