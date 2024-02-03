@@ -1,7 +1,8 @@
-use std::cell::RefCell;
+use std::cell::Cell;
 
 use crate::lexer::Token;
 
+#[derive(Debug)]
 pub enum Node {
 	FnCall {
 		name: String,
@@ -29,23 +30,12 @@ pub enum Node {
 	Error(String),
 }
 
-impl Node {
-	fn append(&mut self, node: Node) {
-		match self {
-			Node::Scope { body } => body.push(Box::new(node)),
-			Node::ParameterBlock { body } => body.push(Box::new(node)),
-			Node::Program { body } => body.push(Box::new(node)),
-			_ => (),
-		}
-	}
-}
-
 pub fn parse(tokens: Vec<Token>) -> Node {
-	let i = RefCell::new(0);
-	let mut tree = Node::Program { body: Vec::new() };
+	let i = Cell::new(0);
+	let mut body = Vec::new();
 
-	let next = || &tokens[i.replace(*i.borrow() + 1)];
-	let peek = || &tokens[*i.borrow()];
+	let next = || &tokens[i.replace(i.get() + 1)];
+	let peek = || &tokens[i.get()];
 
 	fn parse_token<'a>(
 		token: &Token,
@@ -154,9 +144,10 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 		return node;
 	}
 
-	while *i.borrow() < tokens.len() - 1 {
-		tree.append(parse_token(next(), &next, &peek));
+	dbg!(&tokens);
+	while i.get() < tokens.len() - 1 {
+		body.push(Box::new(parse_token(next(), &next, &peek)));
 	}
 
-	return tree;
+	Node::Program { body }
 }

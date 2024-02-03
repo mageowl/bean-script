@@ -84,6 +84,7 @@ fn chunk(code: String) -> Vec<String> {
 		}
 	}
 
+	split();
 	return chunks;
 }
 
