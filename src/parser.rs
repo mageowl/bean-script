@@ -47,7 +47,6 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 				let mut parameters = Vec::new();
 				let mut yield_fn = None;
 
-				dbg!(peek());
 				if let Token::ArgOpen = peek() {
 					next();
 
@@ -73,9 +72,7 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 						parameters.push(Box::new(Node::ParameterBlock { body }));
 					}
 
-					dbg!(peek());
 					if let Token::ArgClose = peek() {
-						dbg!("here");
 						next();
 					}
 				}
@@ -86,6 +83,8 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 				}
 
 				if let Token::Accessor = peek() {
+					next();
+
 					Node::FnAccess {
 						target: Box::new(Node::FnCall {
 							name: name.clone(),

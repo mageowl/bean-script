@@ -1,7 +1,10 @@
-print("Hi! My names BADSCJ")
-
-fn(<explosion>): {
-	print("Oh no, an anti-explosion-gun!")
+const(<block>): {
+   let(<value>): 42
+   fn(<function>): {
+      print("Hello from inside a function! param 0: ", p(0))
+      return(false)
+   }
 }
 
-explosion
+print("Getting value: ", block.value)
+block.function("test")
