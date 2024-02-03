@@ -103,6 +103,8 @@ pub enum Token {
 	String(String),
 	Memory(String),
 	None,
+
+	EOF,
 }
 
 pub fn tokenize(code: String) -> Vec<Token> {
@@ -138,6 +140,8 @@ pub fn tokenize(code: String) -> Vec<Token> {
 			Token::FnName(chunk)
 		})
 	}
+
+	tokens.push(Token::EOF);
 
 	return tokens;
 }
