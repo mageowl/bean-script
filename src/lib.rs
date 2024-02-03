@@ -1,6 +1,10 @@
 pub mod data;
 pub mod scope;
 
+pub mod evaluator;
 pub mod lexer;
 pub mod parser;
-pub mod evaluator;
+
+pub fn interpert() {
+	todo!()
+}
