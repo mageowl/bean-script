@@ -5,6 +5,6 @@ pub mod evaluator;
 pub mod lexer;
 pub mod parser;
 
-pub fn interpert() {
+pub fn interpret() {
 	todo!()
 }
