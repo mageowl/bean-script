@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use crate::lexer::Token;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node {
 	FnCall {
 		name: String,
@@ -27,7 +27,6 @@ pub enum Node {
 	String(String),
 	Memory(String),
 	None,
-	Error(String),
 }
 
 pub fn parse(tokens: Vec<Token>) -> Node {
