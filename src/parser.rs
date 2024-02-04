@@ -59,7 +59,9 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 
 						loop {
 							match peek() {
-								Token::ArgSeparator | Token::ArgClose | Token::EOF => break,
+								Token::ArgSeparator | Token::ArgClose | Token::EOF => {
+									break
+								}
 								_ => (),
 							}
 							body.push(Box::new(parse_token(next(), &next, &peek)));
@@ -102,7 +104,9 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 				}
 			}
 			Token::FnYield => panic!("Unexpected yield symbol. (':')"),
-			Token::ArgSeparator => panic!("Unexpected argument separator. (',')"),
+			Token::ArgSeparator => {
+				panic!("Unexpected argument separator. (',')")
+			}
 			Token::ArgOpen => {
 				let mut body = Vec::new();
 
@@ -117,7 +121,9 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 
 				Node::ParameterBlock { body }
 			}
-			Token::ArgClose => panic!("Unexpected argument close symbol. (')')"),
+			Token::ArgClose => {
+				panic!("Unexpected argument close symbol. (')')")
+			}
 			Token::ScopeOpen => {
 				let mut body = Vec::new();
 
@@ -136,7 +142,9 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 
 				Node::Scope { body }
 			}
-			Token::ScopeClose => panic!("Unexpected scope close symbol. ('}}')"),
+			Token::ScopeClose => {
+				panic!("Unexpected scope close symbol. ('}}')")
+			}
 			Token::Accessor => panic!("Unexpected access symbol. ('.')"),
 			Token::Boolean(v) => Node::Boolean(*v),
 			Token::Number(v) => Node::Number(*v),
@@ -149,7 +157,6 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 		return node;
 	}
 
-	dbg!(&tokens);
 	while i.get() < tokens.len() - 1 {
 		body.push(Box::new(parse_token(next(), &next, &peek)));
 	}

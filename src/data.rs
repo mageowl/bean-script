@@ -1,11 +1,16 @@
-pub enum DataType {
+use std::{cell::RefCell, rc::Rc};
+
+use crate::scope::Scope;
+
+#[derive(Clone)]
+pub enum Data {
 	Boolean(bool),
 	Number(isize),
 	String(String),
 	Memory {
-		// TODO: add scope ref
+		scope: Rc<RefCell<Scope>>,
 		name: String,
 	},
-	Scope(/* TODO: add scope ref */),
+	Scope(Rc<RefCell<Scope>>),
 	None,
 }
