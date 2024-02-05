@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, collections::HashMap, mem, rc::Rc};
 
 use crate::{data::Data, evaluator::evaluate, parser::Node};
 
@@ -11,6 +11,7 @@ pub enum IfState {
 pub struct Scope {
 	local_functions: HashMap<String, Function>,
 	parent: Option<Rc<RefCell<Scope>>>,
+	pub arguments: Vec<Data>,
 	pub return_value: Data,
 	pub if_state: IfState,
 	pub match_value: Option<Data>,
@@ -20,6 +21,15 @@ impl Scope {
 	pub fn new(parent: Option<Rc<RefCell<Scope>>>) -> Self {
 		Self {
 			local_functions: HashMap::new(),
+			arguments: parent
+				.as_ref()
+				.map(|p| {
+					Borrow::<RefCell<Scope>>::borrow(p)
+						.borrow()
+						.arguments
+						.clone()
+				})
+				.unwrap_or_else(|| Vec::new()),
 			parent,
 			return_value: Data::None,
 			if_state: IfState::Finished,
@@ -87,7 +97,13 @@ impl Function {
 		scope: Rc<RefCell<Scope>>,
 	) -> Data {
 		match self {
-			Function::Custom { body, scope_ref } => evaluate(body, Rc::clone(scope_ref)),
+			Function::Custom { body, scope_ref } => {
+				let args_prev = mem::replace(&mut scope_ref.borrow_mut().arguments, args);
+
+				let value = evaluate(body, Rc::clone(scope_ref));
+				scope_ref.borrow_mut().arguments = args_prev;
+				value
+			}
 			Function::BuiltIn { callback } => callback(args, yield_fn, scope),
 			Function::Variable {
 				value,

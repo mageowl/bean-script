@@ -16,8 +16,19 @@ pub fn construct(module: &mut Module) {
 		.function("del", fn_del)
 		.function("call", fn_call)
 		.function("exists", fn_exists);
+
+	/* SCOPE */ module
+		.function("p", fn_p);
+		// .function("params", fn_params)
+		// .function("yield", fn_yield)
+		// .function("return", fn_return)
+		// .function("pass", fn_pass)
+		// .function("self", fn_self)
+		// .function("super", fn_super)
+		// .function("include", fn_include);
 }
 
+// MEMORY
 fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of function, but instead got {}.");
@@ -73,4 +84,9 @@ fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> D
 	arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn exists, but instead got {}.");
 	Data::Boolean(scope.borrow().has_function(name))
+}
+
+// SCOPE
+fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<Scope>>) -> Data {
+	todo!()
 }
