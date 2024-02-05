@@ -6,5 +6,5 @@ import { parser } from "./parser.js";
 throw new Error("FScript node is currently not working.");
 const target = argv[2];
 readFile(target, "utf-8").then((text) => {
-    executer(parser(lexer(text)));
+    executer(parser(lexer(text)), {});
 });

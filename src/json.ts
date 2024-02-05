@@ -5,7 +5,7 @@ import {
 	FNodeBlock,
 	FNodeValue,
 } from "./interfaces.js";
-import toFString from "./toString.js";
+import toFString from "./util/toString.js";
 import { Scope } from "./scope.js";
 import { error } from "./error.js";
 import { execute } from "./executer.js";

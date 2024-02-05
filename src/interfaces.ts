@@ -12,6 +12,7 @@ export type FNodeType =
 	| "Program"
 	| "ParameterBlock"
 	| "NeedOperator"
+	| "ModuleDeclaration"
 	| "MemoryLiteral"
 	| "NewLine"
 	| "StringLiteral"
@@ -78,6 +79,8 @@ export interface FCallData {
 	yieldFunction?: FNode | null;
 	returnScope?: boolean;
 	fnScope?: Scope;
+	moduleName?: string;
+	moduleSource?: string;
 }
 
 export interface FCallable {

@@ -1,0 +1,11 @@
+<#test>
+
+fn(<greet>) -> {
+	print(add("Hello, ", param(0)))
+}
+
+let(<submodule>) -> {
+	let(<value>) -> 42
+}
+
+export(<greet>) export(<submodule>)

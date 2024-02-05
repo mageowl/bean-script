@@ -1,5 +1,3 @@
-import { FNodeAny } from "./interfaces";
-
 export default function toFString(node) {
 	if (!node) return;
 	if (node?.toFString != null) return node.toFString();

@@ -76,4 +76,8 @@ export class Slot {
 	get(): FCallableAny | void {
 		return this.scope.localFunctions.get(this.name);
 	}
+
+	get exists(): boolean {
+		return this.scope.localFunctions.has(this.name);
+	}
 }

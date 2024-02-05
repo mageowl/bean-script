@@ -85,6 +85,11 @@ export function parser(tokens: FToken[]): FNodeBlock {
 				token.value.startsWith("!")
 			) {
 				return { type: "NeedOperator", value: token.value.slice(1) };
+			} else if (
+				token.type === FTokenType.MEMORY &&
+				token.value.startsWith("#")
+			) {
+				return { type: "ModuleDeclaration", value: token.value.slice(1) };
 			} else if (token.type === FTokenType.MEMORY) {
 				return { type: "MemoryLiteral", value: token.value };
 			} else if (token.type === FTokenType.NUMBER) {

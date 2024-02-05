@@ -69,4 +69,7 @@ export class Slot {
     get() {
         return this.scope.localFunctions.get(this.name);
     }
+    get exists() {
+        return this.scope.localFunctions.has(this.name);
+    }
 }

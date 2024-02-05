@@ -1,12 +1,6 @@
 import { error } from "./error.js";
 import { Scope } from "./scope.js";
-import {
-	FCallData,
-	FNodeAny,
-	FNodeBlock,
-	FNodeFunctionAccess,
-	FNodeType,
-} from "./interfaces.js";
+import { FCallData, FNodeAny, FNodeBlock, FNodeType } from "./interfaces.js";
 import { applyRuntimeFunctions } from "./runtimeFunctions.js";
 import call from "./functionCall.js";
 declare const fScript: { modules: Object; util: Object; isWeb: boolean };
@@ -52,10 +46,39 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 			return output.slice(-1)[0];
 
 		case "NeedOperator": {
-			const name = node.value.split(".").at(-1);
-			if (!modules.has(node.value))
-				error(`Unknown module '${node.value}'.`, "Reference");
-			scope = modules.get(node.value);
+			let [source, name, ...path] = node.value.split(".");
+			let shortcut = false;
+			if (name == null) {
+				shortcut = true;
+				name = source;
+				source = "local";
+			}
+			let id = `${source}.${name}`;
+
+			if (!modules.has(id)) {
+				if (!shortcut) {
+					path = [name];
+					name = source;
+					source = "local";
+					id = `${source}.${name}`;
+				}
+				if (!modules.has(id)) error(`Unknown module '${id}'.`, "Reference");
+			}
+
+			scope = modules.get(id);
+			if (path.length > 0) {
+				scope = call(
+					scope.getFunction(path.join(".")),
+					[],
+					data,
+					null,
+					execute,
+				) as Scope;
+				if (!scope?.subType.endsWith("Scope"))
+					error(`Unkown submodule '${node.value}'.`, "Reference");
+				name = path.at(-1);
+			}
+
 			runtime.childScopes.set(name, scope);
 			runtime.localFunctions.set(name, {
 				type: "js",
@@ -64,6 +87,16 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 				},
 			});
 			return scope;
+		}
+
+		case "ModuleDeclaration": {
+			if (!/^\w+$/g.test(node.value))
+				error(`Invalid module name '${node.value}'.`, "Syntax");
+			if (data.moduleName != null)
+				error("Module name has already been defined.", "Syntax");
+			dataRaw.moduleName = `${data.moduleSource}.${node.value}`;
+			fScript.modules[dataRaw.moduleName] = new Scope();
+			return node;
 		}
 
 		case "MemoryLiteral":
@@ -100,13 +133,15 @@ export function execute(node: any, dataRaw: FCallData = {}): FNodeAny {
 }
 
 const modules: Map<string, Scope> = new Map();
-const runtime = new Scope();
-applyRuntimeFunctions(runtime, execute);
+let runtime: Scope;
 
-export function executer(ast: FNodeBlock) {
+export function executer(ast: FNodeBlock, options: FCallData) {
 	Object.entries(fScript.modules).forEach(([id, scope]) => {
 		if (!modules.has(id)) modules.set(id, scope);
 	});
 
-	return execute(ast);
+	runtime = new Scope();
+	applyRuntimeFunctions(runtime, execute);
+
+	return execute(ast, options);
 }

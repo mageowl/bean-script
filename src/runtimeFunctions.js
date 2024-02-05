@@ -3,7 +3,7 @@ import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
-import toFString from "./toString.js";
+import toFString from "./util/toString.js";
 export function applyRuntimeFunctions(runtime, execute) {
     function addFunc(name, run) {
         runtime.localFunctions.set(name, { type: "js", run });
@@ -12,7 +12,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (memory.slot.scope.hasFunction(memory.value))
+        if (memory.slot.exists)
             error(`Value <${memory.value}> is already defined.`, "Memory");
         memory.slot.set({
             type: "custom",
@@ -24,7 +24,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (memory.slot.scope.hasFunction(memory.value))
+        if (memory.slot.exists)
             error(`Value <${memory.value}> is already defined.`, "Memory");
         function literal(node, data) {
             if (node.type.endsWith("Literal"))
@@ -54,7 +54,7 @@ export function applyRuntimeFunctions(runtime, execute) {
         let memory = execute(memoryRaw, data);
         if (memory.type !== "MemoryLiteral")
             error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-        if (!memory.slot.scope.hasFunction(memory.value))
+        if (!memory.slot.exists)
             error(`Value <${memory.value}> is not already defined.`, "Memory");
         function literal(node, data) {
             if (node.type.endsWith("Literal"))
@@ -344,6 +344,14 @@ export function applyRuntimeFunctions(runtime, execute) {
         return new ListScope(string.value
             .split(delimiter.value)
             .map((value) => ({ type: "StringLiteral", value })));
+    });
+    addFunc("export", function (memoryRaw, data) {
+        const memory = execute(memoryRaw, data);
+        if (memory?.type !== "MemoryLiteral")
+            error(`Expected a memory literal. Instead got a ${memory?.type}.`, "Type");
+        if (!memory?.slot?.exists)
+            error(`Trying to export undefined value <${memory.value}>`, "Reference");
+        fScript.modules[data.moduleName].localFunctions.set(memory.value, memory.slot.get());
     });
     if (isDebug) {
         addFunc("__debug", function (data) {

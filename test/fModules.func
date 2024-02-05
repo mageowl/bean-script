@@ -1,0 +1,5 @@
+<!test>
+<!test.submodule>
+
+test.greet("World")
+print(submodule.value)

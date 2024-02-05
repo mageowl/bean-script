@@ -36,10 +36,31 @@ export function execute(node, dataRaw = {}) {
             node.body.forEach((node) => output.push(execute(node, data)));
             return output.slice(-1)[0];
         case "NeedOperator": {
-            const name = node.value.split(".").at(-1);
-            if (!modules.has(node.value))
-                error(`Unknown module '${node.value}'.`, "Reference");
-            scope = modules.get(node.value);
+            let [source, name, ...path] = node.value.split(".");
+            let shortcut = false;
+            if (name == null) {
+                shortcut = true;
+                name = source;
+                source = "local";
+            }
+            let id = `${source}.${name}`;
+            if (!modules.has(id)) {
+                if (!shortcut) {
+                    path = [name];
+                    name = source;
+                    source = "local";
+                    id = `${source}.${name}`;
+                }
+                if (!modules.has(id))
+                    error(`Unknown module '${id}'.`, "Reference");
+            }
+            scope = modules.get(id);
+            if (path.length > 0) {
+                scope = call(scope.getFunction(path.join(".")), [], data, null, execute);
+                if (!scope?.subType.endsWith("Scope"))
+                    error(`Unkown submodule '${node.value}'.`, "Reference");
+                name = path.at(-1);
+            }
             runtime.childScopes.set(name, scope);
             runtime.localFunctions.set(name, {
                 type: "js",
@@ -48,6 +69,15 @@ export function execute(node, dataRaw = {}) {
                 },
             });
             return scope;
+        }
+        case "ModuleDeclaration": {
+            if (!/^\w+$/g.test(node.value))
+                error(`Invalid module name '${node.value}'.`, "Syntax");
+            if (data.moduleName != null)
+                error("Module name has already been defined.", "Syntax");
+            dataRaw.moduleName = `${data.moduleSource}.${node.value}`;
+            fScript.modules[dataRaw.moduleName] = new Scope();
+            return node;
         }
         case "MemoryLiteral":
             return {
@@ -71,12 +101,13 @@ export function execute(node, dataRaw = {}) {
     }
 }
 const modules = new Map();
-const runtime = new Scope();
-applyRuntimeFunctions(runtime, execute);
-export function executer(ast) {
+let runtime;
+export function executer(ast, options) {
     Object.entries(fScript.modules).forEach(([id, scope]) => {
         if (!modules.has(id))
             modules.set(id, scope);
     });
-    return execute(ast);
+    runtime = new Scope();
+    applyRuntimeFunctions(runtime, execute);
+    return execute(ast, options);
 }

@@ -1,15 +1,12 @@
 import { ListScope, MapScope } from "./json.js";
 import { getConsoleEl } from "./defaultModules/web.js";
 import { error } from "./error.js";
-import {
-	FCallData,
-	FNode,
-	FNodeValue,
-} from "./interfaces.js";
+import { FCallData, FNode, FNodeMemory, FNodeValue } from "./interfaces.js";
 import { isDebug, isWeb } from "./process.js";
 import call from "./functionCall.js";
 import { Scope } from "./scope.js";
-import toFString from "./toString.js";
+import toFString from "./util/toString.js";
+declare const fScript: { modules: Object; util: Object; isWeb: boolean };
 
 export function applyRuntimeFunctions(
 	runtime,
@@ -19,11 +16,11 @@ export function applyRuntimeFunctions(
 		runtime.localFunctions.set(name, { type: "js", run });
 	}
 
-	addFunc("fn", function (memoryRaw, data, yieldFunction) {
+	addFunc("fn", function (memoryRaw: FNodeMemory, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (memory.slot.scope.hasFunction(memory.value))
+		if (memory.slot.exists)
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 		memory.slot.set({
 			type: "custom",
@@ -32,11 +29,11 @@ export function applyRuntimeFunctions(
 		});
 	});
 
-	addFunc("let", function (memoryRaw, data, yieldFunction) {
+	addFunc("let", function (memoryRaw: FNodeMemory, data, yieldFunction) {
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (memory.slot.scope.hasFunction(memory.value))
+		if (memory.slot.exists)
 			error(`Value <${memory.value}> is already defined.`, "Memory");
 
 		function literal(node, data) {
@@ -67,7 +64,7 @@ export function applyRuntimeFunctions(
 		let memory = execute(memoryRaw, data);
 		if (memory.type !== "MemoryLiteral")
 			error(`Expected MemoryLiteral, instead got ${memory.type}`, "Type");
-		if (!memory.slot.scope.hasFunction(memory.value))
+		if (!memory.slot.exists)
 			error(`Value <${memory.value}> is not already defined.`, "Memory");
 
 		function literal(node, data) {
@@ -422,6 +419,22 @@ export function applyRuntimeFunctions(
 			string.value
 				.split(delimiter.value)
 				.map((value: string) => ({ type: "StringLiteral", value })),
+		);
+	});
+
+	addFunc("export", function (memoryRaw: FNodeMemory, data: FCallData) {
+		const memory = execute(memoryRaw, data);
+		if (memory?.type !== "MemoryLiteral")
+			error(
+				`Expected a memory literal. Instead got a ${memory?.type}.`,
+				"Type",
+			);
+		if (!memory?.slot?.exists)
+			error(`Trying to export undefined value <${memory.value}>`, "Reference");
+
+		fScript.modules[data.moduleName].localFunctions.set(
+			memory.value,
+			memory.slot.get(),
 		);
 	});
 
