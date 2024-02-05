@@ -57,6 +57,10 @@ impl Scope {
 			self.local_functions.insert(String::from(name), function);
 		}
 	}
+
+	pub fn delete_function(&mut self, name: &str) {
+		self.local_functions.remove(name);
+	}
 }
 
 #[derive(Clone)]
