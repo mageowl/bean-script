@@ -6,5 +6,5 @@ const(<block>): {
 	}
 }
 
-// print("Getting value: ", block.value)
+print("Getting value: ", block.value)
 block.function("test")
