@@ -6,7 +6,11 @@ use crate::{
 	scope::{Function, Scope},
 };
 
-pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
+pub fn evaluate_verbose(
+	node: &Node,
+	scope_ref: Rc<RefCell<Scope>>,
+	return_scope: bool,
+) -> Data {
 	let scope: &RefCell<Scope> = scope_ref.borrow();
 	let scope = scope.borrow();
 
@@ -51,7 +55,7 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 
 			let scope: &RefCell<Scope> = scope_ref.borrow();
 			let return_value = scope.borrow().return_value.clone();
-			return if let Data::None = return_value {
+			return if return_scope {
 				Data::Scope(scope_ref)
 			} else {
 				return_value
@@ -90,4 +94,8 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 		},
 		Node::None => Data::None,
 	}
+}
+
+pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
+	evaluate_verbose(node, scope_ref, false)
 }

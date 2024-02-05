@@ -19,9 +19,10 @@ pub fn construct(module: &mut Module) {
 		.function("exists", fn_exists);
 
 	/* SCOPE */
-	module.function("p", fn_p)
+	module
+		.function("p", fn_p)
 		.function("params", fn_params)
-	// .function("yield", fn_yield)
+		// .function("yield", fn_yield)
 	// .function("return", fn_return)
 	// .function("pass", fn_pass)
 	// .function("self", fn_self)
@@ -54,7 +55,7 @@ fn fn_let(
 		"Expected memory as name of variable, but instead got {}.");
 	let value = yield_fn
 		.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
-		.call(Vec::new(), None, Rc::clone(&o_scope));
+		.call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
 	scope.borrow_mut().set_function(
 		name,
@@ -77,7 +78,7 @@ fn fn_const(
 		"Expected memory as name of constant, but instead got {}.");
 	let value = yield_fn
 		.unwrap_or_else(|| panic!("To define a constant, add a yield block."))
-		.call(Vec::new(), None, Rc::clone(&o_scope));
+		.call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
 	scope.borrow_mut().set_function(
 		name,

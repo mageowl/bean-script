@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, cell::RefCell, collections::HashMap, mem, rc::Rc};
 
-use crate::{data::Data, evaluator::evaluate, parser::Node};
+use crate::{data::Data, evaluator::evaluate_verbose, parser::Node};
 
 pub enum IfState {
 	Started,
@@ -90,17 +90,18 @@ pub enum Function {
 }
 
 impl Function {
-	pub fn call(
+	fn call_verbose(
 		&self,
 		args: Vec<Data>,
 		yield_fn: Option<Function>,
 		scope: Rc<RefCell<Scope>>,
+		return_scope: bool,
 	) -> Data {
 		match self {
 			Function::Custom { body, scope_ref } => {
 				let args_prev = mem::replace(&mut scope_ref.borrow_mut().arguments, args);
 
-				let value = evaluate(body, Rc::clone(scope_ref));
+				let value = evaluate_verbose(body, Rc::clone(scope_ref), return_scope);
 				scope_ref.borrow_mut().arguments = args_prev;
 				value
 			}
@@ -128,5 +129,23 @@ impl Function {
 				}
 			}
 		}
+	}
+
+	pub fn call(
+		&self,
+		args: Vec<Data>,
+		yield_fn: Option<Function>,
+		scope: Rc<RefCell<Scope>>,
+	) -> Data {
+		self.call_verbose(args, yield_fn, scope, false)
+	}
+
+	pub fn call_scope(
+		&self,
+		args: Vec<Data>,
+		yield_fn: Option<Function>,
+		scope: Rc<RefCell<Scope>>,
+	) -> Data {
+		self.call_verbose(args, yield_fn, scope, true)
 	}
 }
