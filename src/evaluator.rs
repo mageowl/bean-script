@@ -49,7 +49,12 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 			}
 
 			let scope: &RefCell<Scope> = scope_ref.borrow();
-			return scope.borrow().return_value.clone();
+			let return_value = scope.borrow().return_value.clone();
+			return if let Data::None = return_value {
+				Data::Scope(Rc::clone(&scope_ref))
+			} else {
+				return_value
+			};
 		}
 		Node::ParameterBlock { body } => {
 			let mut return_value: Data = Data::None;

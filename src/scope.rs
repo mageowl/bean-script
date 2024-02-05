@@ -76,7 +76,7 @@ pub enum Function {
 		scope_ref: Rc<RefCell<Scope>>,
 	},
 	BuiltIn {
-		callback: Rc<dyn Fn(Vec<Data>, Option<Function>, &mut Scope) -> Data>,
+		callback: Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<Scope>>) -> Data>,
 	},
 	Variable {
 		value: Data,
@@ -94,9 +94,7 @@ impl Function {
 	) -> Data {
 		match self {
 			Function::Custom { body, scope_ref } => evaluate(body, Rc::clone(scope_ref)),
-			Function::BuiltIn { callback } => {
-				callback(args, yield_fn, &mut scope.borrow_mut())
-			}
+			Function::BuiltIn { callback } => callback(args, yield_fn, scope),
 			Function::Variable {
 				value,
 				constant,

@@ -5,16 +5,32 @@ use crate::{
 	scope::{Function, Scope},
 };
 
+pub mod runtime;
+
 pub struct Module {
-	functions:
-		HashMap<String, Rc<dyn Fn(Vec<Data>, Option<Function>, &mut Scope) -> Data>>,
+	functions: HashMap<
+		String,
+		Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<Scope>>) -> Data>,
+	>,
 	submodules: HashMap<String, Box<Module>>,
 }
 
 impl Module {
+	pub fn new<F>(constructor: F) -> Self
+	where
+		F: FnOnce(&mut Module),
+	{
+		let mut module = Module {
+			functions: HashMap::new(),
+			submodules: HashMap::new(),
+		};
+		constructor(&mut module);
+		module
+	}
+
 	pub fn function<F>(&mut self, name: &str, function: F) -> &mut Self
 	where
-		F: Fn(Vec<Data>, Option<Function>, &mut Scope) -> Data + 'static,
+		F: Fn(Vec<Data>, Option<Function>, Rc<RefCell<Scope>>) -> Data + 'static,
 	{
 		self.functions.insert(String::from(name), Rc::new(function));
 		self
