@@ -1,9 +1,9 @@
 const(<block>): {
-   let(<value>): 42
-   fn(<function>): {
-      print("Hello from inside a function! param 0: ", p(0))
-      return(false)
-   }
+	let(<value>): 42
+	fn(<function>): {
+		print("Hello from inside a function! param 0: ", p(0))
+		return(false)
+	}
 }
 
 print("Getting value: ", block.value)

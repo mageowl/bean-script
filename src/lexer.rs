@@ -40,7 +40,8 @@ fn chunk(code: String) -> Vec<String> {
 					append(&char);
 					context = Context::String;
 				} else if SYMBOLS.contains(&char)
-					&& !(chars[i - 1].is_digit(10) && chars[i + 1].is_digit(10))
+					&& !(i == 0
+						|| (chars[i - 1].is_digit(10) && chars[i + 1].is_digit(10)))
 				{
 					split();
 					append(&char);

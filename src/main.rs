@@ -1,6 +1,10 @@
 use std::{cell::RefCell, env, fs, rc::Rc};
 
-use f_script::{evaluator, lexer, parser, scope::Scope};
+use f_script::{
+	evaluator, lexer,
+	modules::{runtime, Module},
+	parser,
+};
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -9,6 +13,7 @@ fn main() {
 	let tokens = lexer::tokenize(file);
 	let tree = parser::parse(tokens);
 
-	let runtime = Rc::new(RefCell::new(Scope::runtime()));
-	evaluator::evaluate(&tree, runtime);
+	let runtime = Module::new(runtime::construct);
+	let runtime_scope = Rc::new(RefCell::new(runtime.as_scope()));
+	evaluator::evaluate(&tree, runtime_scope);
 }

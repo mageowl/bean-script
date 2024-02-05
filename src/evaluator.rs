@@ -25,6 +25,7 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 				args.push(evaluate(n, Rc::clone(&scope_ref)));
 			}
 
+			drop(scope);
 			let return_value = function.call(
 				args,
 				if let Some(body) = yield_fn {
@@ -51,7 +52,7 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 			let scope: &RefCell<Scope> = scope_ref.borrow();
 			let return_value = scope.borrow().return_value.clone();
 			return if let Data::None = return_value {
-				Data::Scope(Rc::clone(&scope_ref))
+				Data::Scope(scope_ref)
 			} else {
 				return_value
 			};
@@ -65,6 +66,7 @@ pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
 			return return_value;
 		}
 		Node::Program { body } => {
+			drop(scope);
 			for n in body {
 				evaluate(n, Rc::clone(&scope_ref));
 			}

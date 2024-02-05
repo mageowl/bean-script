@@ -27,16 +27,6 @@ impl Scope {
 		}
 	}
 
-	pub fn runtime() -> Self {
-		Self {
-			local_functions: HashMap::new(),
-			parent: None,
-			return_value: Data::None,
-			if_state: IfState::Finished,
-			match_value: None,
-		}
-	}
-
 	pub fn has_function(&self, name: &str) -> bool {
 		if self.local_functions.contains_key(name) {
 			true
