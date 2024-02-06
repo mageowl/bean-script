@@ -58,7 +58,7 @@ impl DataType {
 	}
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Data {
 	Boolean(bool),
 	Number(isize),

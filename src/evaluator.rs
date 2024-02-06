@@ -3,15 +3,15 @@ use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
 use crate::{
 	data::Data,
 	parser::Node,
-	scope::{Function, Scope},
+	scope::{block_scope::BlockScope, function::Function, Scope},
 };
 
 pub fn evaluate_verbose(
 	node: &Node,
-	scope_ref: Rc<RefCell<Scope>>,
+	scope_ref: Rc<RefCell<dyn Scope>>,
 	return_scope: bool,
 ) -> Data {
-	let scope: &RefCell<Scope> = scope_ref.borrow();
+	let scope: &RefCell<dyn Scope> = scope_ref.borrow();
 	let scope = scope.borrow();
 
 	match node {
@@ -46,14 +46,14 @@ pub fn evaluate_verbose(
 			return return_value;
 		}
 		Node::Scope { body } => {
-			let scope = Scope::new(Some(Rc::clone(&scope_ref)));
+			let scope = BlockScope::new(Some(Rc::clone(&scope_ref)));
 			let scope_ref = Rc::new(RefCell::new(scope));
 
 			for n in body {
-				evaluate(n, Rc::clone(&scope_ref));
+				evaluate(n, Rc::clone(&scope_ref) as Rc<RefCell<dyn Scope>>);
 			}
 
-			let scope: &RefCell<Scope> = scope_ref.borrow();
+			let scope: &RefCell<BlockScope> = scope_ref.borrow();
 			let return_value = scope.borrow().return_value.clone();
 			return if return_scope {
 				Data::Scope(scope_ref)
@@ -96,6 +96,6 @@ pub fn evaluate_verbose(
 	}
 }
 
-pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
+pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<dyn Scope>>) -> Data {
 	evaluate_verbose(node, scope_ref, false)
 }

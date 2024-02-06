@@ -1,8 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
 
 use crate::{
 	data::Data,
-	scope::{Function, Scope},
+	scope::{function::Function, Scope},
 };
 
 pub mod runtime;
@@ -12,7 +12,7 @@ pub struct Module {
 		String,
 		Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data>,
 	>,
-	submodules: HashMap<String, Box<Module>>,
+	submodules: HashMap<String, Rc<RefCell<Module>>>,
 }
 
 impl Module {
@@ -45,20 +45,51 @@ impl Module {
 			submodules: HashMap::new(),
 		};
 		constructor(&mut module);
-		self.submodules.insert(String::from(name), Box::new(module));
+		self.submodules
+			.insert(String::from(name), Rc::new(RefCell::new(module)));
 		self
 	}
 }
 
 impl Scope for Module {
 	fn has_function(&self, name: &str) -> bool {
-		self.functions.contains_key(name)
+		self.functions.contains_key(name) || self.submodules.contains_key(name)
 	}
 
 	fn get_function(&self, name: &str) -> Option<Function> {
-		self.functions.get(name).map(|x| Function::BuiltIn { callback: x })
+		self.functions
+			.get(name)
+			.map(|x| Function::BuiltIn {
+				callback: Rc::clone(x),
+			})
+			.or_else(|| {
+				self.submodules.get(name).map(|x: &Rc<RefCell<Module>>| {
+					Function::Variable {
+						value: Data::Scope(Rc::clone(x) as Rc<RefCell<dyn Scope>>),
+						constant: true,
+						name: String::new(),
+					}
+				})
+			})
 	}
 
-	fn set_function(&self, name: &str, function: Function) {}
-	fn delete_function(&self, name: &str) {}
+	fn set_function(&mut self, _name: &str, _function: Function) {}
+	fn delete_function(&mut self, _name: &str) {}
+
+	fn argument(&self, _i: usize) -> Option<Data> {
+		None
+	}
+
+	fn as_any(&self) -> &dyn Any {
+		self
+	}
+}
+
+impl Debug for Module {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("Module")
+			.field("functions", &self.functions.keys())
+			.field("submodules", &self.submodules)
+			.finish()
+	}
 }

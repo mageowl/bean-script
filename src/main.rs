@@ -4,6 +4,7 @@ use f_script::{
 	evaluator, lexer,
 	modules::{runtime, Module},
 	parser,
+	scope::{block_scope::BlockScope, Scope},
 };
 
 fn main() {
@@ -14,6 +15,11 @@ fn main() {
 	let tree = parser::parse(tokens);
 
 	let runtime = Module::new(runtime::construct);
-	let runtime_scope = Rc::new(RefCell::new(runtime.as_scope()));
-	evaluator::evaluate(&tree, runtime_scope);
+	let runtime_scope = Rc::new(RefCell::new(runtime));
+	evaluator::evaluate(
+		&tree,
+		Rc::new(RefCell::new(BlockScope::new(Some(
+			runtime_scope as Rc<RefCell<dyn Scope>>,
+		)))),
+	);
 }
