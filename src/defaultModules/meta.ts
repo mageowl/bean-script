@@ -73,7 +73,7 @@ scope.localFunctions.set("include", {
 			data.scope.localFunctions.set(name, fn)
 		);
 		scope.childScopes.forEach((sc, name) =>
-			data.scope.localFunctions.set(name, sc)
+			data.scope.childScopes.set(name, sc)
 		);
 	}
 });
