@@ -6,7 +6,7 @@ use crate::{
 	scope::{Function, Scope},
 };
 
-pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<Scope>>) -> Data {
+pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<dyn Scope>>) -> Data {
 	let scope: &RefCell<Scope> = scope_ref.borrow();
 	let scope = scope.borrow();
 

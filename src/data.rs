@@ -8,10 +8,10 @@ pub enum Data {
 	Number(isize),
 	String(String),
 	Memory {
-		scope: Rc<RefCell<Scope>>,
+		scope: Rc<RefCell<dyn Scope>>,
 		name: String,
 	},
-	Scope(Rc<RefCell<Scope>>),
+	Scope(Rc<RefCell<dyn Scope>>),
 	None,
 }
 
