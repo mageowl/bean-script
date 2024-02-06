@@ -10,7 +10,7 @@ pub mod runtime;
 pub struct Module {
 	functions: HashMap<
 		String,
-		Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<Scope>>) -> Data>,
+		Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data>,
 	>,
 	submodules: HashMap<String, Box<Module>>,
 }
@@ -30,7 +30,7 @@ impl Module {
 
 	pub fn function<F>(&mut self, name: &str, function: F) -> &mut Self
 	where
-		F: Fn(Vec<Data>, Option<Function>, Rc<RefCell<Scope>>) -> Data + 'static,
+		F: Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data + 'static,
 	{
 		self.functions.insert(String::from(name), Rc::new(function));
 		self
@@ -48,30 +48,17 @@ impl Module {
 		self.submodules.insert(String::from(name), Box::new(module));
 		self
 	}
+}
 
-	pub fn as_scope(&self) -> Scope {
-		let mut scope = Scope::new(None);
-
-		for (n, f) in &self.functions {
-			scope.set_function(
-				&n,
-				Function::BuiltIn {
-					callback: Rc::clone(f),
-				},
-			)
-		}
-
-		for (n, m) in &self.submodules {
-			scope.set_function(
-				&n,
-				Function::Variable {
-					value: Data::Scope(Rc::new(RefCell::new(m.as_scope()))),
-					constant: true,
-					name: String::from(n),
-				},
-			)
-		}
-
-		scope
+impl Scope for Module {
+	fn has_function(&self, name: &str) -> bool {
+		self.functions.contains_key(name)
 	}
+
+	fn get_function(&self, name: &str) -> Option<Function> {
+		self.functions.get(name).map(|x| Function::BuiltIn { callback: x })
+	}
+
+	fn set_function(&self, name: &str, function: Function) {}
+	fn delete_function(&self, name: &str) {}
 }

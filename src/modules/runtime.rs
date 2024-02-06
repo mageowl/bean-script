@@ -18,24 +18,19 @@ pub fn construct(module: &mut Module) {
 		.function("call", fn_call)
 		.function("exists", fn_exists);
 
-	/* SCOPE */
-	module
-		.function("p", fn_p)
-		.function("params", fn_params)
+	/* SCOPE */ module
+		.function("p", fn_p);
+		// .function("params", fn_params)
 		// .function("yield", fn_yield)
-	// .function("return", fn_return)
-	// .function("pass", fn_pass)
-	// .function("self", fn_self)
-	// .function("super", fn_super)
-	// .function("include", fn_include)
-	;
-
-	/* INTERFACE */
-	module.function("print", fn_print);
+		// .function("return", fn_return)
+		// .function("pass", fn_pass)
+		// .function("self", fn_self)
+		// .function("super", fn_super)
+		// .function("include", fn_include);
 }
 
 // MEMORY
-fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data {
+fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of function, but instead got {}.");
 	let yield_fn =
@@ -46,11 +41,7 @@ fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: Rc<RefCell<Scope>>) ->
 	Data::None
 }
 
-fn fn_let(
-	args: Vec<Data>,
-	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<Scope>>,
-) -> Data {
+fn fn_let(args: Vec<Data>, yield_fn: Option<Function>, o_scope: Rc<RefCell<Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of variable, but instead got {}.");
 	let value = yield_fn
@@ -69,11 +60,7 @@ fn fn_let(
 	Data::None
 }
 
-fn fn_const(
-	args: Vec<Data>,
-	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<Scope>>,
-) -> Data {
+fn fn_const(args: Vec<Data>, yield_fn: Option<Function>, o_scope: Rc<RefCell<Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of constant, but instead got {}.");
 	let value = yield_fn
@@ -92,7 +79,7 @@ fn fn_const(
 	Data::None
 }
 
-fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data {
+fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory for fn del, but instead got {}.");
 	scope.borrow_mut().delete_function(name);
@@ -100,11 +87,7 @@ fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data
 	Data::None
 }
 
-fn fn_call(
-	args: Vec<Data>,
-	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<Scope>>,
-) -> Data {
+fn fn_call(args: Vec<Data>, yield_fn: Option<Function>, o_scope: Rc<RefCell<Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn call, but instead got {}.");
 	let function = scope.borrow().get_function(name).unwrap_or_else(|| {
@@ -114,7 +97,7 @@ fn fn_call(
 	function.call(args[1..].to_vec(), yield_fn, o_scope)
 }
 
-fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data {
+fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn exists, but instead got {}.");
 	Data::Boolean(scope.borrow().has_function(name))
@@ -122,62 +105,5 @@ fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> D
 
 // SCOPE
 fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<Scope>>) -> Data {
-	arg_check!(&args[0], Data::Number(index) => "Expected number for fn p, but instead got {}.");
-
-	let mut data_type = DataType::Any;
-	if let Some(arg_type) = args.get(1) {
-		arg_check!(arg_type, Data::String(str_type) => "Expected type string for fn p, but instead got {}.");
-		data_type = DataType::from_string(str_type);
-	}
-
-	if let Ok(i) = (*index).try_into() {
-		let value = scope
-			.borrow()
-			.arguments
-			.get::<usize>(i)
-			.unwrap_or(&Data::None)
-			.clone();
-		if !data_type.matches(&value) {
-			panic!(
-				"Expected argument of type {}, but instead got {}.",
-				data_type.to_string(),
-				value.get_type().to_string()
-			)
-		} else {
-			value
-		}
-	} else {
-		panic!(
-			"Expected positive number for fn p, but instead got {}.",
-			index
-		)
-	}
-}
-
-fn fn_params(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<Scope>>) -> Data {
-	arg_check!(&args[0], Data::Number(index) => "Expected number for fn p, but instead got {}.");
-	if let Ok(i) = (*index).try_into() {
-		scope
-			.borrow()
-			.arguments
-			.get::<usize>(i)
-			.unwrap_or(&Data::None)
-			.clone()
-	} else {
-		panic!(
-			"Expected positive number for fn p, but instead got {}.",
-			index
-		)
-	}
-}
-
-// INTERFACE
-fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<Scope>>) -> Data {
-	let mut string = String::new();
-	for arg in args {
-		string.push_str(&arg.to_string())
-	}
-	println!("{}", string);
-
-	Data::None
+	todo!()
 }
