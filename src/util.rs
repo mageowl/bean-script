@@ -17,3 +17,13 @@ macro_rules! pat_check {
 		}
 	};
 }
+
+#[macro_export]
+macro_rules! as_type {
+	($expr: expr => $t: ty, $err: literal) => {
+		match $expr.as_any().downcast_ref::<$t>() {
+			Some(obj) => obj,
+			None => panic!($err),
+		}
+	};
+}

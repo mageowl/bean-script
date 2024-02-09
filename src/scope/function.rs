@@ -5,15 +5,25 @@ use crate::{data::Data, evaluator, parser::Node};
 
 use super::Scope;
 
-#[derive(Debug)]
-struct CallScope {
+#[derive(Debug, Clone)]
+pub struct CallScope {
 	parent: Rc<RefCell<dyn Scope>>,
-	arguments: Vec<Data>,
+	arguments: Rc<Vec<Data>>,
+	yield_fn: Rc<Option<Function>>,
+	from_scope: Rc<RefCell<dyn Scope>>,
 }
 
 impl CallScope {
-	pub fn new(parent: Rc<RefCell<dyn Scope>>, arguments: Vec<Data>) -> Self {
-		Self { parent, arguments }
+	pub fn args(&self) -> Rc<Vec<Data>> {
+		Rc::clone(&self.arguments)
+	}
+
+	pub fn yield_fn(&self) -> Rc<Option<Function>> {
+		Rc::clone(&self.yield_fn)
+	}
+
+	pub fn from_scope(&self) -> Rc<RefCell<dyn Scope>> {
+		Rc::clone(&self.from_scope)
 	}
 }
 
@@ -38,8 +48,8 @@ impl Scope for CallScope {
 		Some(Rc::clone(&self.parent) as Rc<RefCell<dyn Scope>>)
 	}
 
-	fn argument(&self, index: usize) -> Option<Data> {
-		self.arguments.get(index).map(|d| d.clone())
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
+		Some(Rc::new(RefCell::new(self.clone())))
 	}
 
 	fn as_any(&self) -> &dyn Any {
@@ -73,7 +83,12 @@ impl Function {
 	) -> Data {
 		match self {
 			Function::Custom { body, scope_ref } => {
-				let call_scope = CallScope::new(Rc::clone(scope_ref), args);
+				let call_scope = CallScope {
+					parent: Rc::clone(scope_ref),
+					arguments: Rc::new(args),
+					yield_fn: Rc::new(yield_fn),
+					from_scope: Rc::clone(&scope),
+				};
 
 				evaluator::evaluate_verbose(
 					body,

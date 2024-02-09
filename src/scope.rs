@@ -1,8 +1,6 @@
 use std::{any::Any, cell::RefCell, fmt::Debug, rc::Rc};
 
-use crate::data::Data;
-
-use self::function::Function;
+use self::function::{CallScope, Function};
 
 pub mod block_scope;
 pub mod function;
@@ -16,7 +14,7 @@ pub trait Scope: Debug {
 	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
 		None
 	}
-	fn argument(&self, index: usize) -> Option<Data>;
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>>;
 
 	fn as_any(&self) -> &dyn Any;
 }

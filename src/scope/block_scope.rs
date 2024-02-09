@@ -2,7 +2,10 @@ use std::{any::Any, borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc}
 
 use crate::data::Data;
 
-use super::{function::Function, Scope};
+use super::{
+	function::{CallScope, Function},
+	Scope,
+};
 
 #[derive(Debug)]
 pub enum IfState {
@@ -69,16 +72,14 @@ impl Scope for BlockScope {
 	}
 
 	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
-		self.parent.clone() // clones Rc
+		self.parent.as_ref().map(|x| Rc::clone(x))
 	}
-	fn argument(&self, index: usize) -> Option<Data> {
-		self.parent
-			.as_ref()
-			.map(|p| {
-				let parent: &RefCell<dyn Scope> = p.borrow();
-				parent.borrow().argument(index)
-			})
-			.unwrap_or(None)
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
+		if let Some(p) = &self.parent {
+			RefCell::borrow(&p).get_call_scope()
+		} else {
+			None
+		}
 	}
 
 	fn as_any(&self) -> &dyn Any {

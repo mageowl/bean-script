@@ -2,9 +2,12 @@ const(<block>): {
 	let(<value>): 42
 	fn(<function>): {
 		print("Hello from inside a function! param 0: ", p(0))
+		yield("hi")
 		return(false)
 	}
 }
 
 print("Getting value: ", block.value)
-block.function("test")
+block.function("test"): {
+	print("from a yield", p(0, "string"))
+}

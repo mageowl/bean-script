@@ -2,9 +2,13 @@ use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
 
 use crate::{
 	data::Data,
-	scope::{function::Function, Scope},
+	scope::{
+		function::{CallScope, Function},
+		Scope,
+	},
 };
 
+pub mod collections;
 pub mod runtime;
 
 pub struct Module {
@@ -76,7 +80,7 @@ impl Scope for Module {
 	fn set_function(&mut self, _name: &str, _function: Function) {}
 	fn delete_function(&mut self, _name: &str) {}
 
-	fn argument(&self, _i: usize) -> Option<Data> {
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
 		None
 	}
 
