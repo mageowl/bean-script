@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
 	arg_check,
 	data::{Data, DataType},
-	scope::{function::Function, Scope},
+	scope::{block_scope::BlockScope, function::Function, Scope},
 };
 
 use super::{collections::List, Module};
@@ -21,13 +21,10 @@ pub fn construct(module: &mut Module) {
 	/* SCOPE */
 	module
 		.function("p", fn_p)
-		.function("params", fn_params)
-		.function("yield", fn_yield);
-	// .function("return", fn_return)
-	// .function("pass", fn_pass)
-	// .function("self", fn_self)
-	// .function("super", fn_super)
-	// .function("include", fn_include);
+		.function("args", fn_args)
+		.function("yield", fn_yield)
+		.function("return", fn_return)
+		.function("pass", fn_pass);
 
 	/* INTERFACE */
 	module.function("print", fn_print);
@@ -165,7 +162,7 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) ->
 	}
 }
 
-fn fn_params(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
 	Data::Scope(Rc::new(RefCell::new(List::new(
 		Vec::clone(
 			&scope
@@ -192,6 +189,29 @@ fn fn_yield(
 	Option::as_ref(call_scope.yield_fn().as_ref())
 		.expect("Expected yield function.")
 		.call(args, yield_fn, call_scope.from_scope())
+}
+
+fn fn_return(
+	args: Vec<Data>,
+	_y: Option<Function>,
+	scope: Rc<RefCell<dyn Scope>>,
+) -> Data {
+	let value = args.get(0).cloned().unwrap_or(Data::None);
+	RefCell::borrow_mut(&scope).set_return_value(value.clone());
+	match RefCell::borrow_mut(&scope)
+		.as_mut()
+		.downcast_mut::<BlockScope>()
+	{
+		Some(block) => block.break_self(),
+		None => (),
+	}
+	value
+}
+
+fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	let value = args.get(0).cloned().unwrap_or(Data::None);
+	RefCell::borrow_mut(&scope).set_return_value(value.clone());
+	value
 }
 
 //

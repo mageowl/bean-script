@@ -79,12 +79,18 @@ impl Scope for Module {
 
 	fn set_function(&mut self, _name: &str, _function: Function) {}
 	fn delete_function(&mut self, _name: &str) {}
+	fn set_return_value(&mut self, _value: Data) {
+		panic!("Cannot return from module.")
+	}
 
 	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
 		None
 	}
 
 	fn as_any(&self) -> &dyn Any {
+		self
+	}
+	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
 }

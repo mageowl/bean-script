@@ -18,6 +18,7 @@ pub enum IfState {
 pub struct BlockScope {
 	local_functions: HashMap<String, Function>,
 	parent: Option<Rc<RefCell<dyn Scope>>>,
+	did_break: bool,
 	pub return_value: Data,
 	pub if_state: IfState,
 	pub match_value: Option<Data>,
@@ -29,9 +30,18 @@ impl BlockScope {
 			local_functions: HashMap::new(),
 			parent,
 			return_value: Data::None,
+			did_break: false,
 			if_state: IfState::Finished,
 			match_value: None,
 		}
+	}
+
+	pub fn break_self(&mut self) {
+		self.did_break = true;
+	}
+
+	pub fn did_break(&self) -> bool {
+		self.did_break
 	}
 }
 
@@ -74,6 +84,7 @@ impl Scope for BlockScope {
 	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
 		self.parent.as_ref().map(|x| Rc::clone(x))
 	}
+
 	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
 		if let Some(p) = &self.parent {
 			RefCell::borrow(&p).get_call_scope()
@@ -82,7 +93,14 @@ impl Scope for BlockScope {
 		}
 	}
 
+	fn set_return_value(&mut self, value: Data) {
+		self.return_value = value;
+	}
+
 	fn as_any(&self) -> &dyn Any {
+		self
+	}
+	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
 }

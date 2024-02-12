@@ -52,7 +52,12 @@ impl Scope for CallScope {
 		Some(Rc::new(RefCell::new(self.clone())))
 	}
 
+	fn set_return_value(&mut self, _value: Data) {}
+
 	fn as_any(&self) -> &dyn Any {
+		self
+	}
+	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
 }

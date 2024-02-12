@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::HashMap;
 use std::{cell::RefCell, rc::Rc};
 
@@ -60,7 +61,7 @@ impl Scope for List {
 
 	fn delete_function(&mut self, _n: &str) {}
 
-	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>>{
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
 		if let Some(p) = &self.parent {
 			RefCell::borrow(p).get_call_scope()
 		} else {
@@ -68,11 +69,16 @@ impl Scope for List {
 		}
 	}
 
+	fn set_return_value(&mut self, _value: Data) {}
+
 	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
 		self.parent.as_ref().map(|x| Rc::clone(x))
 	}
 
-	fn as_any(&self) -> &dyn std::any::Any {
+	fn as_any(&self) -> &dyn Any {
+		self
+	}
+	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
 }

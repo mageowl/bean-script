@@ -51,6 +51,9 @@ pub fn evaluate_verbose(
 
 			for n in body {
 				evaluate(n, Rc::clone(&scope_ref) as Rc<RefCell<dyn Scope>>);
+				if RefCell::borrow(&scope_ref).did_break() {
+					break;
+				}
 			}
 
 			let scope: &RefCell<BlockScope> = scope_ref.borrow();
