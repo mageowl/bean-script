@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell, fmt::Debug, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
 
 use crate::data::Data;
 use function::{CallScope, Function};
@@ -18,6 +18,7 @@ pub trait Scope: Debug {
 
 	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>>;
 	fn set_return_value(&mut self, value: Data);
+	fn get_function_list(&self) -> HashMap<String, Function>;
 
 	fn as_any(&self) -> &dyn Any;
 	fn as_mut(&mut self) -> &mut dyn Any;

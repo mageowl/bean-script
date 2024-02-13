@@ -23,7 +23,7 @@ pub enum Node {
 		call: Box<Node>,
 	},
 	Boolean(bool),
-	Number(isize),
+	Number(f64),
 	String(String),
 	Memory(String),
 	None,

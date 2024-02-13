@@ -33,7 +33,7 @@ impl List {
 					as_type!(RefCell::borrow(&list) => List, 
 					"Tried to call fn size on a non-list scope.")
 					.items
-					.len() as isize,
+					.len() as f64,
 				)
 			}),
 		);
@@ -70,6 +70,9 @@ impl Scope for List {
 	}
 
 	fn set_return_value(&mut self, _value: Data) {}
+	fn get_function_list(&self) -> HashMap<String, Function> {
+		HashMap::new()
+	}
 
 	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
 		self.parent.as_ref().map(|x| Rc::clone(x))

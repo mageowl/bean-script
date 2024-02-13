@@ -1,5 +1,5 @@
 use core::fmt::Debug;
-use std::{any::Any, cell::RefCell, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{data::Data, evaluator, parser::Node};
 
@@ -53,6 +53,9 @@ impl Scope for CallScope {
 	}
 
 	fn set_return_value(&mut self, _value: Data) {}
+	fn get_function_list(&self) -> std::collections::HashMap<String, Function> {
+		HashMap::new()
+	}
 
 	fn as_any(&self) -> &dyn Any {
 		self

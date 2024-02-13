@@ -87,6 +87,19 @@ impl Scope for Module {
 		None
 	}
 
+	fn get_function_list(&self) -> HashMap<String, Function> {
+		let mut map = HashMap::new();
+		for (k, fun) in &self.functions {
+			map.insert(
+				k.clone(),
+				Function::BuiltIn {
+					callback: Rc::clone(fun),
+				},
+			);
+		}
+		map
+	}
+
 	fn as_any(&self) -> &dyn Any {
 		self
 	}

@@ -97,6 +97,10 @@ impl Scope for BlockScope {
 		self.return_value = value;
 	}
 
+	fn get_function_list(&self) -> HashMap<String, Function> {
+		self.local_functions.clone()
+	}
+
 	fn as_any(&self) -> &dyn Any {
 		self
 	}

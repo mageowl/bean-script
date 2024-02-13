@@ -9,6 +9,7 @@ pub enum DataType {
 	Memory,
 	Scope,
 	None,
+	Or(Box<DataType>, Box<DataType>),
 	Any,
 }
 
@@ -42,6 +43,7 @@ impl DataType {
 			DataType::Scope => String::from("scope"),
 			DataType::None => String::from("none"),
 			DataType::Any => String::from("any"),
+			DataType::Or(a, b) => a.to_string() + " | " + &b.to_string(),
 		}
 	}
 
@@ -53,6 +55,7 @@ impl DataType {
 			DataType::Memory => pat_check!(Data::Memory { .. } = data),
 			DataType::Scope => pat_check!(Data::Scope(_) = data),
 			DataType::None => pat_check!(Data::None = data),
+			DataType::Or(a, b) => a.matches(data) || b.matches(data),
 			DataType::Any => true,
 		}
 	}
@@ -61,7 +64,7 @@ impl DataType {
 #[derive(Clone, Debug)]
 pub enum Data {
 	Boolean(bool),
-	Number(isize),
+	Number(f64),
 	String(String),
 	Memory {
 		scope: Rc<RefCell<dyn Scope>>,

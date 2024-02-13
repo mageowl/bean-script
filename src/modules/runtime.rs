@@ -1,9 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-	arg_check,
-	data::{Data, DataType},
-	scope::{block_scope::BlockScope, function::Function, Scope},
+	arg_check, data::{Data, DataType}, scope::{block_scope::BlockScope, function::Function, Scope}
 };
 
 use super::{collections::List, Module};
@@ -24,10 +22,38 @@ pub fn construct(module: &mut Module) {
 		.function("args", fn_args)
 		.function("yield", fn_yield)
 		.function("return", fn_return)
-		.function("pass", fn_pass);
+		.function("pass", fn_pass)
+		.function("self", fn_self)
+		.function("super", fn_super)
+		.function("include", fn_include);
 
 	/* INTERFACE */
-	module.function("print", fn_print);
+	module
+		.function("print", fn_print)
+		.function("error", fn_error);
+
+	/* MATH */
+	module
+		.function("add", fn_add)
+		.function("+", fn_add)
+		.function("sub", fn_sub)
+		.function("-", fn_sub)
+		.function("mul", fn_mul)
+		.function("*", fn_mul)
+		.function("div", fn_div)
+		.function("/", fn_div)
+		.function("pow", fn_pow)
+		.function("^", fn_pow)
+		.function("rand", fn_rand)
+		.function("abs", fn_abs)
+		.function("sin", fn_sin)
+		.function("cos", fn_cos)
+		.function("tan", fn_tan)
+		.function("atan", fn_atan)
+		.function("sqrt", fn_sqrt)
+		.function("round", fn_round)
+		.function("floor", fn_floor)
+		.function("ceil", fn_ceil);
 }
 
 //
@@ -139,26 +165,22 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) ->
 			),
 		})
 		.unwrap_or(DataType::Any);
-	let index: Result<usize, _> = (*i).try_into();
-	if index.is_ok() {
-		let arguments = scope
-			.borrow()
-			.get_call_scope()
-			.expect("Cannot call fn p outside a call scope.")
-			.borrow()
-			.args();
-		let arg = arguments.get(index.unwrap()).unwrap_or(&Data::None);
-		if !arg_type.matches(&arg) {
-			panic!(
-				"Expected argument of type {}, but instead got {}.",
-				arg_type.to_string(),
-				arg.to_string()
-			)
-		} else {
-			arg.clone()
-		}
+	let index = (*i) as usize;
+	let arguments = scope
+		.borrow()
+		.get_call_scope()
+		.expect("Cannot call fn p outside a call scope.")
+		.borrow()
+		.args();
+	let arg = arguments.get(index).unwrap_or(&Data::None);
+	if !arg_type.matches(&arg) {
+		panic!(
+			"Expected argument of type {}, but instead got {}.",
+			arg_type.to_string(),
+			arg.to_string()
+		)
 	} else {
-		panic!("Expected positive integer for fn p, but instead got {}.", i);
+		arg.clone()
 	}
 }
 
@@ -214,6 +236,32 @@ fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>)
 	value
 }
 
+fn fn_self(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	Data::Scope(Rc::clone(&scope))
+}
+
+fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	RefCell::borrow(&scope)
+		.parent()
+		.map(|s| Data::Scope(Rc::clone(&s)))
+		.unwrap_or(Data::None)
+}
+
+fn fn_include(
+	args: Vec<Data>,
+	_y: Option<Function>,
+	scope: Rc<RefCell<dyn Scope>>,
+) -> Data {
+	arg_check!(&args[0], Data::Scope(target) => "Expected scope for fn include, but instead got {}.");
+	let mut scope = scope.borrow_mut();
+
+	for (name, func) in RefCell::borrow(&target).get_function_list() {
+		scope.set_function(&name, func.clone())
+	}
+
+	Data::None
+}
+
 //
 // INTERFACE
 //
@@ -226,4 +274,119 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -
 	println!("{}", string.join(" "));
 
 	Data::None
+}
+
+fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::String(msg) => "Expected string for fn error, but instead got {}");
+	panic!("{}", msg)
+}
+
+//
+// MATH
+//
+
+fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	match args[0].get_type() {
+		DataType::String => {
+			let mut string = String::new();
+			for data in args {
+				arg_check!(data, Data::String(v) => "Expected argument to be string for fn add, but instead got {}.");
+				string.push_str(&v);
+			}
+			
+			Data::String(string)
+		}
+		DataType::Number => {
+			let mut n: f64 = 0.0;
+			for data in args {
+				arg_check!(data, Data::Number(a) => "Expected argument to be number for fn add, but instead got {}.");
+				n += a
+			}
+
+			Data::Number(n)
+		}
+		_ => panic!(
+			"Expected arguments of type string or number for fn add, but got {}.",
+			args[0].get_type().to_string()
+		),
+	}
+}
+fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn sub, but got {}.");
+	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn sub, but got {}.");
+	Data::Number(a - b)
+}
+fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn mul, but got {}.");
+	match &args[0] {
+		Data::Number(a) => Data::Number(a * b),
+		Data::String(s) => Data::String(s.repeat(*b as usize)),
+		_ => panic!("Expected argument of type number or string for fn mul, but got {} instead.", args[0].get_type().to_string()),
+	}
+}
+fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn div, but got {}.");
+	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn div, but got {}.");
+	Data::Number(a / b)
+}
+
+fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	match args.len() {
+		0 => {
+			Data::Number(rand::random())
+		}
+		1 => {
+			arg_check!(&args[0], Data::Number(max) => "Expected number for fn rand, but got {} instead.");
+			Data::Number((rand::random::<f64>() * max).floor())
+		}
+		2.. => {
+			arg_check!(&args[0], Data::Number(min) => "Expected number for fn rand, but got {} instead.");
+			arg_check!(&args[1], Data::Number(max) => "Expected number for fn rand, but got {} instead.");
+			Data::Number((rand::random::<f64>() * (max - min)).floor() + min)
+		}
+	}
+}
+fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn abs, but got {} instead.");
+	Data::Number(n.round())
+}
+
+fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(a) => "Expected number for fn pow, but got {} instead.");
+	arg_check!(&args[1], Data::Number(b) => "Expected number for fn pow, but got {} instead.");
+	Data::Number(a.powf(*b))
+}
+fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn sqrt, but got {} instead.");
+	Data::Number(n.sqrt())
+}
+
+fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn sin, but got {} instead.");
+	Data::Number(n.sin())
+}
+fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn cos, but got {} instead.");
+	Data::Number(n.cos())
+}
+fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn tan, but got {} instead.");
+	Data::Number(n.tan())
+}
+fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn atan, but got {} instead.");
+	Data::Number(n.atan())
+}
+
+fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn round, but got {} instead.");
+	Data::Number(n.round())
+}
+fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn floor, but got {} instead.");
+	Data::Number(n.floor())
+}
+fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected number for fn ceil, but got {} instead.");
+	Data::Number(n.ceil())
 }

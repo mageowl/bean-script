@@ -101,7 +101,7 @@ pub enum Token {
 	Accessor,
 
 	Boolean(bool),
-	Number(isize),
+	Number(f64),
 	String(String),
 	Memory(String),
 	None,
@@ -114,7 +114,7 @@ pub fn tokenize(code: String) -> Vec<Token> {
 	let mut tokens: Vec<Token> = Vec::new();
 
 	for chunk in chunks {
-		tokens.push(if let Ok(n) = chunk.parse::<isize>() {
+		tokens.push(if let Ok(n) = chunk.parse::<f64>() {
 			Token::Number(n)
 		} else if chunk.starts_with('"') && chunk.ends_with('"') {
 			Token::String(String::from(chunk.trim_matches('"')))
