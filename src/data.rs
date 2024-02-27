@@ -115,3 +115,9 @@ impl PartialEq for Data {
 		}
 	}
 }
+
+impl Default for Data {
+	fn default() -> Self {
+		Data::None
+	}
+}

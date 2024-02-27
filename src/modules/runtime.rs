@@ -1,7 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-	arg_check, data::{Data, DataType}, scope::{block_scope::BlockScope, function::Function, Scope}
+	arg_check,
+	data::{Data, DataType},
+	scope::{block_scope::BlockScope, function::Function, Scope},
 };
 
 use super::{collections::List, Module};
@@ -54,6 +56,23 @@ pub fn construct(module: &mut Module) {
 		.function("round", fn_round)
 		.function("floor", fn_floor)
 		.function("ceil", fn_ceil);
+
+	/* STRINGS */
+	module.function("size", fn_size).function("split", fn_split);
+
+	/* TYPES */
+	module
+		.function("str", fn_str)
+		.function("num", fn_num)
+		.function("mem", fn_mem)
+		.function("type", fn_type);
+
+	/* COLLECTIONS */
+	module
+		.function("list", fn_size)
+		.function("l", fn_split)
+		.function("map", fn_size)
+		.function("m", fn_split);
 }
 
 //
@@ -293,7 +312,7 @@ fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 				arg_check!(data, Data::String(v) => "Expected argument to be string for fn add, but instead got {}.");
 				string.push_str(&v);
 			}
-			
+
 			Data::String(string)
 		}
 		DataType::Number => {
@@ -321,7 +340,10 @@ fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 	match &args[0] {
 		Data::Number(a) => Data::Number(a * b),
 		Data::String(s) => Data::String(s.repeat(*b as usize)),
-		_ => panic!("Expected argument of type number or string for fn mul, but got {} instead.", args[0].get_type().to_string()),
+		_ => panic!(
+			"Expected argument of type number or string for fn mul, but got {} instead.",
+			args[0].get_type().to_string()
+		),
 	}
 }
 fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
@@ -332,9 +354,7 @@ fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 
 fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	match args.len() {
-		0 => {
-			Data::Number(rand::random())
-		}
+		0 => Data::Number(rand::random()),
 		1 => {
 			arg_check!(&args[0], Data::Number(max) => "Expected number for fn rand, but got {} instead.");
 			Data::Number((rand::random::<f64>() * max).floor())
@@ -389,4 +409,50 @@ fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -
 fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn ceil, but got {} instead.");
 	Data::Number(n.ceil())
+}
+
+//
+// STRING
+//
+
+fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::String(s) => "Expected string for fn size, but got {} instead.");
+	Data::Number(s.len() as f64)
+}
+
+fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::String(s) => "Expected string for fn split, but got {} instead.");
+	arg_check!(&args[1], Data::String(d) => "Expected delimiter string for fn split, but got {} instead.");
+	let vec = s.split(d).map(|c| Data::String(String::from(c))).collect();
+	Data::Scope(Rc::new(RefCell::new(List::new(vec, None))))
+}
+
+//
+// TYPES
+//
+
+fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	Data::String(args.get(0).unwrap_or(&Data::None).to_string())
+}
+
+fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	match &args[0] {
+		Data::Boolean(v) => Data::Number(if *v { 1.0 } else { 0.0 }),
+		Data::Number(v) => Data::Number(*v),
+		Data::String(s) => s.parse().map(|v| Data::Number(v)).unwrap_or(Data::None),
+		Data::Memory { .. } => Data::None,
+		Data::Scope(_) => Data::None,
+		Data::None => Data::None,
+	}
+}
+fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	arg_check!(&args[0], Data::String(name) => "Expected string for fn mem, but got {} instead.");
+	Data::Memory {
+		scope,
+		name: name.clone(),
+	}
+}
+
+fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+	Data::String(args.get(0).unwrap_or(&Data::None).get_type().to_string())
 }
