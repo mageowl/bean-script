@@ -87,7 +87,7 @@ impl Data {
 			Data::Number(v) => v.to_string(),
 			Data::String(s) => s.clone(),
 			Data::Memory { scope: _, name } => format!("<{}>", name),
-			Data::Scope(_) => String::from("[scope]"),
+			Data::Scope(scope) => RefCell::borrow(&scope).to_string(),
 			Data::None => String::from("[none]"),
 		}
 	}

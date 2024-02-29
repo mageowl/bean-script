@@ -22,4 +22,8 @@ pub trait Scope: Debug {
 
 	fn as_any(&self) -> &dyn Any;
 	fn as_mut(&mut self) -> &mut dyn Any;
+
+	fn to_string(&self) -> String {
+		String::from("[scope]")
+	}
 }

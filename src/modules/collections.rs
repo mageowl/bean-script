@@ -176,6 +176,13 @@ impl Scope for List {
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
+
+	fn to_string(&self) -> String {
+		format!("[{}]", self.items.iter().fold(
+			String::new(), 
+			|s, e| (if s.is_empty() { String::new() } else { s + ", " }) + &e.to_string()
+		))
+	}
 }
 
 #[derive(Debug)]
