@@ -10,6 +10,7 @@ pub fn evaluate_verbose(
 	node: &Node,
 	scope_ref: Rc<RefCell<dyn Scope>>,
 	return_scope: bool,
+	access_scope_ref: Option<Rc<RefCell<dyn Scope>>>,
 ) -> Data {
 	let scope: &RefCell<dyn Scope> = scope_ref.borrow();
 	let scope = scope.borrow();
@@ -30,17 +31,20 @@ pub fn evaluate_verbose(
 			}
 
 			drop(scope);
-			let return_value = function.call(
+			let return_value = function.call_from(
 				args,
 				if let Some(body) = yield_fn {
 					Some(Function::Custom {
 						body: Rc::new(body.deref().clone()),
-						scope_ref: Rc::clone(&scope_ref),
+						scope_ref: Rc::clone(
+							access_scope_ref.as_ref().unwrap_or(&scope_ref),
+						),
 					})
 				} else {
 					None
 				},
 				Rc::clone(&scope_ref),
+				access_scope_ref,
 			);
 
 			return return_value;
@@ -82,8 +86,14 @@ pub fn evaluate_verbose(
 		Node::FnAccess { target, call } => {
 			let target = evaluate(target, Rc::clone(&scope_ref));
 
-			if let Data::Scope(call_scope) = target {
-				evaluate(call, Rc::clone(&call_scope))
+			if let Data::Scope(target_scope) = target {
+				// dbg!(&scope_ref);
+				evaluate_verbose(
+					call,
+					Rc::clone(&target_scope),
+					false,
+					Some(Rc::clone(&scope_ref)),
+				)
 			} else {
 				panic!("Tried to access properties of a non-scope data type.")
 			}
@@ -100,5 +110,5 @@ pub fn evaluate_verbose(
 }
 
 pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<dyn Scope>>) -> Data {
-	evaluate_verbose(node, scope_ref, false)
+	evaluate_verbose(node, scope_ref, false, None)
 }

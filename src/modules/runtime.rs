@@ -33,6 +33,9 @@ pub fn construct(module: &mut Module) {
 	module
 		.function("print", fn_print)
 		.function("error", fn_error);
+	if cfg!(debug_assertions) {
+		module.function("__debug", fn_debug);
+	}
 
 	/* MATH */
 	module
@@ -69,10 +72,10 @@ pub fn construct(module: &mut Module) {
 
 	/* COLLECTIONS */
 	module
-		.function("list", fn_size)
-		.function("l", fn_split)
-		.function("map", fn_size)
-		.function("m", fn_split);
+		.function("list", fn_list)
+		.function("l", fn_list)
+		.function("map", fn_map)
+		.function("m", fn_map);
 }
 
 //
@@ -300,6 +303,11 @@ fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -
 	panic!("{}", msg)
 }
 
+fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	dbg!(scope);
+	Data::None
+}
+
 //
 // MATH
 //
@@ -455,4 +463,16 @@ fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) 
 
 fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
 	Data::String(args.get(0).unwrap_or(&Data::None).get_type().to_string())
+}
+
+//
+// COLLECTIONS
+//
+
+fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope)))))
+}
+
+fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+	Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope)))))
 }

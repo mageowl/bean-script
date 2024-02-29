@@ -29,11 +29,11 @@ impl CallScope {
 
 impl Scope for CallScope {
 	fn has_function(&self, name: &str) -> bool {
-		self.parent.borrow().has_function(name)
+		RefCell::borrow(&self.parent).has_function(name)
 	}
 
 	fn get_function(&self, name: &str) -> Option<Function> {
-		self.parent.borrow().get_function(name)
+		RefCell::borrow(&self.parent).get_function(name)
 	}
 
 	fn set_function(&mut self, name: &str, function: Function) {
@@ -88,20 +88,22 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: Rc<RefCell<dyn Scope>>,
 		return_scope: bool,
+		from_scope: Option<Rc<RefCell<dyn Scope>>>,
 	) -> Data {
 		match self {
 			Function::Custom { body, scope_ref } => {
 				let call_scope = CallScope {
-					parent: Rc::clone(scope_ref),
+					parent: Rc::clone(&scope_ref),
 					arguments: Rc::new(args),
 					yield_fn: Rc::new(yield_fn),
-					from_scope: Rc::clone(&scope),
+					from_scope: Rc::clone(from_scope.as_ref().unwrap_or(&scope)),
 				};
 
 				evaluator::evaluate_verbose(
 					body,
 					Rc::new(RefCell::new(call_scope)),
 					return_scope,
+					None,
 				)
 			}
 			Function::BuiltIn { callback } => callback(args, yield_fn, scope),
@@ -136,7 +138,7 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: Rc<RefCell<dyn Scope>>,
 	) -> Data {
-		self.call_verbose(args, yield_fn, scope, false)
+		self.call_verbose(args, yield_fn, scope, false, None)
 	}
 
 	pub fn call_scope(
@@ -145,28 +147,35 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: Rc<RefCell<dyn Scope>>,
 	) -> Data {
-		self.call_verbose(args, yield_fn, scope, true)
+		self.call_verbose(args, yield_fn, scope, true, None)
+	}
+
+	pub fn call_from(
+		&self,
+		args: Vec<Data>,
+		yield_fn: Option<Function>,
+		scope: Rc<RefCell<dyn Scope>>,
+		from_scope: Option<Rc<RefCell<dyn Scope>>>,
+	) -> Data {
+		self.call_verbose(args, yield_fn, scope, false, from_scope)
 	}
 }
 
 impl Debug for Function {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
-			Self::Custom { body, scope_ref } => f
-				.debug_struct("Custom")
-				.field("body", body)
-				.field("scope_ref", scope_ref)
-				.finish(),
+			Self::Custom { body, scope_ref: _ } => {
+				f.debug_struct("Custom").field("body", body).finish()
+			}
 			Self::BuiltIn { .. } => f.debug_struct("BuiltIn").finish(),
 			Self::Variable {
 				value,
 				constant,
-				name,
+				name: _,
 			} => f
 				.debug_struct("Variable")
 				.field("value", value)
 				.field("constant", constant)
-				.field("name", name)
 				.finish(),
 		}
 	}

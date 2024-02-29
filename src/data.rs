@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, hash::Hash, rc::Rc};
 
 use crate::{pat_check, scope::Scope};
 
@@ -119,5 +119,36 @@ impl PartialEq for Data {
 impl Default for Data {
 	fn default() -> Self {
 		Data::None
+	}
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct StaticData(Data);
+
+impl StaticData {
+	pub fn from(data: Data) -> Self {
+		match data {
+			Data::Memory { .. } => panic!("Tried to cast type memory as static."),
+			Data::Scope(_) => panic!("Tried to cast type scope as static."),
+			_ => Self(data),
+		}
+	}
+
+	pub fn inner(&self) -> &Data {
+		&self.0
+	}
+}
+
+impl Eq for StaticData {}
+
+impl Hash for StaticData {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.0.get_type().to_string().hash(state);
+		match &self.0 {
+			Data::Boolean(v) => v.hash(state),
+			Data::Number(v) => v.to_string().hash(state),
+			Data::String(v) => v.hash(state),
+			_ => (),
+		};
 	}
 }

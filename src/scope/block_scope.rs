@@ -1,4 +1,6 @@
-use std::{any::Any, borrow::Borrow, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+	any::Any, borrow::Borrow, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc,
+};
 
 use crate::data::Data;
 
@@ -14,7 +16,6 @@ pub enum IfState {
 	Finished,
 }
 
-#[derive(Debug)]
 pub struct BlockScope {
 	local_functions: HashMap<String, Function>,
 	parent: Option<Rc<RefCell<dyn Scope>>>,
@@ -42,6 +43,19 @@ impl BlockScope {
 
 	pub fn did_break(&self) -> bool {
 		self.did_break
+	}
+}
+
+impl Debug for BlockScope {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("BlockScope")
+			.field("local_functions", &self.local_functions)
+			.field("parent", &self.parent)
+			.field("did_break", &self.did_break)
+			.field("return_value", &self.return_value)
+			.field("if_state", &self.if_state)
+			.field("match_value", &self.match_value)
+			.finish()
 	}
 }
 

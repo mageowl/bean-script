@@ -27,3 +27,13 @@ macro_rules! as_type {
 		}
 	};
 }
+
+#[macro_export]
+macro_rules! as_mut_type {
+	($expr: expr => $t: ty, $err: literal) => {
+		match $expr.as_mut().downcast_mut::<$t>() {
+			Some(obj) => obj,
+			None => panic!($err),
+		}
+	};
+}
