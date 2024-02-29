@@ -1,5 +1,7 @@
 use std::{cell::RefCell, mem};
 
+use crate::pat_check;
+
 const SYMBOLS: [char; 7] = [':', '(', ')', '{', '}', ',', '.'];
 
 enum Context {
@@ -40,8 +42,8 @@ fn chunk(code: String) -> Vec<String> {
 					append(&char);
 					context = Context::String;
 				} else if SYMBOLS.contains(&char)
-					&& !(i == 0
-						|| (chars[i - 1].is_digit(10) && chars[i + 1].is_digit(10)))
+					&& !(char == '.'
+						&& RefCell::borrow(&current_chunk).parse::<f64>().is_ok())
 				{
 					split();
 					append(&char);
@@ -115,7 +117,14 @@ pub fn tokenize(code: String) -> Vec<Token> {
 
 	for chunk in chunks {
 		tokens.push(if let Ok(n) = chunk.parse::<f64>() {
-			Token::Number(n)
+			if tokens
+				.last()
+				.is_some_and(|x| pat_check!(Token::Accessor = x))
+			{
+				Token::FnName(chunk)
+			} else {
+				Token::Number(n)
+			}
 		} else if chunk.starts_with('"') && chunk.ends_with('"') {
 			Token::String(String::from(chunk.trim_matches('"')))
 		} else if chunk == "true" || chunk == "false" {

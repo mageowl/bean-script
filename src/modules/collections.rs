@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::collections::{HashMap, VecDeque};
+use std::mem;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::data::{Data, StaticData};
@@ -141,12 +142,24 @@ impl List {
 }
 
 impl Scope for List {
-	fn has_function(&self, _name: &str) -> bool {
-		todo!()
+	fn has_function(&self, name: &str) -> bool {
+		if let Ok(i) = name.parse() {
+			self.items.len() > i
+		} else { self.fns.contains_key(name) }
 	}
 
-	fn get_function(&self, _name: &str) -> Option<Function> {
-		todo!()
+	fn get_function(&self, name: &str) -> Option<Function> {
+		if let Ok(i) = name.parse::<usize>() {
+			Some(Function::BuiltIn {
+				callback: Rc::new(move |args, _y, scope: Rc<RefCell<dyn Scope>>| {
+					let mut binding = RefCell::borrow_mut(&scope);
+					let list = as_mut_type!(binding => List, "Tried to index a non-list scope.");
+					if args.is_empty() {
+						list.items.get(i).cloned().unwrap_or_default()
+					} else { mem::replace(&mut list.items[i], args[0].clone()) }
+				})
+			})
+		} else { self.fns.get(name).cloned() }
 	}
 
 	fn set_function(&mut self, _n: &str, _f: Function) {}
