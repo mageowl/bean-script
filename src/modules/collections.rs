@@ -122,14 +122,13 @@ impl List {
 				let yield_fn = yield_fn.expect("Expected yield block for fn for.");
 				arg_check!(&args[0], Data::Memory { scope: item_scope_ref, name: item_name } =>
 					"Expected memory for fn for, but instead got {}.");
-				let mut item_scope = RefCell::borrow_mut(&item_scope_ref);
 
 				let mut mapped: VecDeque<Data> = VecDeque::new();
 
-				for item in &as_mut_type!(RefCell::borrow_mut(&list) => List,
-						"Tried to call fn delete on a non-list scope.").items {
-					item_scope.set_function(&item_name, Function::Variable 
-						{ value: item.clone(), constant: true, name: item_name.clone() });
+				for item in &as_mut_type!(list.borrow_mut() => List,
+						"Tried to call fn for on a non-list scope.").items {
+					item_scope_ref.borrow_mut().set_function(&item_name, Function::Variable
+						{ value: item.clone(), constant: true, name: String::new() });
 					mapped.push_back(yield_fn.call(Vec::new(), None, Rc::clone(&list)))
 				}
 

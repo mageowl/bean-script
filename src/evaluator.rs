@@ -27,7 +27,10 @@ pub fn evaluate_verbose(
 
 			let mut args: Vec<Data> = Vec::new();
 			for n in parameters {
-				args.push(evaluate(n, Rc::clone(&scope_ref)));
+				args.push(evaluate(
+					n,
+					Rc::clone(access_scope_ref.as_ref().unwrap_or(&scope_ref)),
+				));
 			}
 
 			drop(scope);
@@ -87,7 +90,7 @@ pub fn evaluate_verbose(
 			let target = evaluate(target, Rc::clone(&scope_ref));
 
 			if let Data::Scope(target_scope) = target {
-				// dbg!(&scope_ref);
+				drop(scope);
 				evaluate_verbose(
 					call,
 					Rc::clone(&target_scope),

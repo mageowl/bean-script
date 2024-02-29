@@ -119,7 +119,7 @@ impl Function {
 					scope.borrow_mut().set_function(
 						name,
 						Function::Variable {
-							value: args[1].clone(),
+							value: args[0].clone(),
 							constant: false,
 							name: String::from(name),
 						},
