@@ -2,6 +2,7 @@ let(<list0>): l("car", "bus", "tree")
 list0.2("train")
 print(list0)
 
-list0.for(<transit>): {
+print(list0.for(<transit>, <i>): {
 	print("you could take the", transit)
-}
+	return(i)
+})

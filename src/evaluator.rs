@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cell::RefCell, ops::Deref, rc::Rc};
+use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 
 use crate::{
 	data::Data,
@@ -12,8 +12,7 @@ pub fn evaluate_verbose(
 	return_scope: bool,
 	access_scope_ref: Option<Rc<RefCell<dyn Scope>>>,
 ) -> Data {
-	let scope: &RefCell<dyn Scope> = scope_ref.borrow();
-	let scope = scope.borrow();
+	let scope = RefCell::borrow(&scope_ref);
 
 	match node {
 		Node::FnCall {
@@ -24,6 +23,7 @@ pub fn evaluate_verbose(
 			let function = scope
 				.get_function(&name)
 				.unwrap_or_else(|| panic!("Unknown value or function '{}'.", &name));
+			drop(scope);
 
 			let mut args: Vec<Data> = Vec::new();
 			for n in parameters {
@@ -33,12 +33,11 @@ pub fn evaluate_verbose(
 				));
 			}
 
-			drop(scope);
 			let return_value = function.call_from(
 				args,
 				if let Some(body) = yield_fn {
 					Some(Function::Custom {
-						body: Rc::new(body.deref().clone()),
+						body: Rc::new(*body.clone()),
 						scope_ref: Rc::clone(
 							access_scope_ref.as_ref().unwrap_or(&scope_ref),
 						),
@@ -72,6 +71,7 @@ pub fn evaluate_verbose(
 			};
 		}
 		Node::ParameterBlock { body } => {
+			drop(scope);
 			let mut return_value: Data = Data::None;
 			for n in body {
 				return_value = evaluate(n, Rc::clone(&scope_ref));

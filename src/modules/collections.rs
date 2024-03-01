@@ -122,17 +122,29 @@ impl List {
 				let yield_fn = yield_fn.expect("Expected yield block for fn for.");
 				arg_check!(&args[0], Data::Memory { scope: item_scope_ref, name: item_name } =>
 					"Expected memory for fn for, but instead got {}.");
-
-				let mut mapped: VecDeque<Data> = VecDeque::new();
-
-				for item in &as_mut_type!(list.borrow_mut() => List,
-						"Tried to call fn for on a non-list scope.").items {
-					item_scope_ref.borrow_mut().set_function(&item_name, Function::Variable
-						{ value: item.clone(), constant: true, name: String::new() });
-					mapped.push_back(yield_fn.call(Vec::new(), None, Rc::clone(&list)))
+				
+				let mut index_scope_ref: Option<&Rc<RefCell<dyn Scope>>> = None;
+				let mut index_name: Option<&String> = None;
+				if args.len() > 1 {
+					arg_check!(&args[1], Data::Memory { scope: i_scope_ref, name: i_name } =>
+						"Expected memory for fn for, but instead got {}.");
+					index_scope_ref = Some(i_scope_ref);
+					index_name = Some(i_name);
 				}
 
-				Data::None
+				let mut mapped: Vec<Data> = Vec::new();
+
+				for (i, item) in &mut as_mut_type!(list.borrow_mut() => List,
+						"Tried to call fn for on a non-list scope.").items.iter().enumerate() {
+					item_scope_ref.borrow_mut().set_function(&item_name, Function::Variable
+						{ value: item.clone(), constant: true, name: String::new() });
+					index_scope_ref.map(|s| s.borrow_mut().set_function(&index_name.unwrap(), Function::Variable
+						{ value: Data::Number(i as f64), constant: true, name: String::new() }));
+					
+					mapped.push(yield_fn.call(Vec::new(), None, Rc::clone(&list)))
+				}
+
+				Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))
 			})
 		);
 
