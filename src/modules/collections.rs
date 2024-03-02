@@ -4,19 +4,20 @@ use std::mem;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::data::{Data, StaticData};
+use crate::scope::ScopeRef;
 use crate::{arg_check, as_mut_type, as_type};
 use crate::scope::function::CallScope;
 use crate::scope::{function::Function, Scope};
 
 #[derive(Debug)]
 pub struct List {
-	parent: Option<Rc<RefCell<dyn Scope>>>,
+	parent: Option<ScopeRef>,
 	fns: HashMap<String, Function>,
 	pub items: VecDeque<Data>,
 }
 
 impl List {
-	pub fn new(list: Vec<Data>, parent: Option<Rc<RefCell<dyn Scope>>>) -> Self {
+	pub fn new(list: Vec<Data>, parent: Option<ScopeRef>) -> Self {
 		let mut list = List {
 			parent,
 			fns: HashMap::new(),
@@ -29,7 +30,7 @@ impl List {
 
 		make(
 			"size",
-			Rc::new(|_a, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|_a, _y, list: ScopeRef| {
 				Data::Number(
 					as_type!(RefCell::borrow(&list) => List, 
 					"Tried to call fn size on a non-list scope.")
@@ -40,13 +41,13 @@ impl List {
 		);
 		make(
 			"empty",
-			Rc::new(|_a, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|_a, _y, list: ScopeRef| {
 				Data::Boolean(as_type!(RefCell::borrow(&list) => List, "Tried to call fn empty on a non-list scope.").items.is_empty())
 			}),
 		);
 		make(
 			"has",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 				Data::Boolean(
 					as_type!(RefCell::borrow(&list) => List, 
 						"Tried to call fn has on a non-list scope.")
@@ -56,7 +57,7 @@ impl List {
 		);
 		make(
 			"at",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 					arg_check!(&args[0], Data::Number(i) => "Expected a number for fn at, but instead got {}.");
 					as_type!(RefCell::borrow(&list) => List, 
 						"Tried to call fn has on a non-list scope.")
@@ -66,7 +67,7 @@ impl List {
 		);
 		make(
 			"push",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 				as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn push on a non-list scope.")
 					.items
@@ -75,7 +76,7 @@ impl List {
 			}),
 		);
 		make("concat",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 				arg_check!(&args[0], Data::Scope(list2) => "Expected scope for fn concat, but instead got {}.");
 				as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn concat on a non-list scope.")
@@ -87,7 +88,7 @@ impl List {
 		);
 		make(
 			"pop",
-			Rc::new(|_a, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|_a, _y, list: ScopeRef| {
 				as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn pop on a non-list scope.")
 					.items
@@ -96,7 +97,7 @@ impl List {
 		);
 		make(
 			"delete",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 				arg_check!(&args[0], Data::Number(i) => "Expected number for fn delete, but instead got {}.");
 				as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn delete on a non-list scope.")
@@ -106,7 +107,7 @@ impl List {
 		);
 		make(
 			"insert",
-			Rc::new(|args, _y, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, list: ScopeRef| {
 				arg_check!(&args[0], Data::Number(i) => "Expected number for fn insert, but instead got {}.");
 				as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn delete on a non-list scope.")
@@ -118,12 +119,12 @@ impl List {
 
 		make(
 			"for",
-			Rc::new(|args, yield_fn, list: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, yield_fn, list: ScopeRef| {
 				let yield_fn = yield_fn.expect("Expected yield block for fn for.");
 				arg_check!(&args[0], Data::Memory { scope: item_scope_ref, name: item_name } =>
 					"Expected memory for fn for, but instead got {}.");
 				
-				let mut index_scope_ref: Option<&Rc<RefCell<dyn Scope>>> = None;
+				let mut index_scope_ref: Option<&ScopeRef> = None;
 				let mut index_name: Option<&String> = None;
 				if args.len() > 1 {
 					arg_check!(&args[1], Data::Memory { scope: i_scope_ref, name: i_name } =>
@@ -162,7 +163,7 @@ impl Scope for List {
 	fn get_function(&self, name: &str) -> Option<Function> {
 		if let Ok(i) = name.parse::<usize>() {
 			Some(Function::BuiltIn {
-				callback: Rc::new(move |args, _y, scope: Rc<RefCell<dyn Scope>>| {
+				callback: Rc::new(move |args, _y, scope: ScopeRef| {
 					let mut binding = RefCell::borrow_mut(&scope);
 					let list = as_mut_type!(binding => List, "Tried to index a non-list scope.");
 					if args.is_empty() {
@@ -190,7 +191,7 @@ impl Scope for List {
 		HashMap::new()
 	}
 
-	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
+	fn parent(&self) -> Option<ScopeRef> {
 		self.parent.as_ref().map(|x| Rc::clone(x))
 	}
 
@@ -211,13 +212,13 @@ impl Scope for List {
 
 #[derive(Debug)]
 pub struct Map {
-	parent: Option<Rc<RefCell<dyn Scope>>>,
+	parent: Option<ScopeRef>,
 	fns: HashMap<String, Function>,
 	pub hash: HashMap<StaticData, Data>,
 }
 
 impl Map {
-	pub fn new(kv_pairs: Vec<Data>, parent: Option<Rc<RefCell<dyn Scope>>>) -> Self {
+	pub fn new(kv_pairs: Vec<Data>, parent: Option<ScopeRef>) -> Self {
 		let mut map = Map {
 			parent,
 			fns: HashMap::new(),
@@ -236,7 +237,7 @@ impl Map {
 
 		make(
 			"size",
-			Rc::new(|_a, _y, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|_a, _y, map: ScopeRef| {
 				Data::Number(
 					as_type!(RefCell::borrow(&map) => Map, 
 					"Tried to call fn size on a non-map scope.")
@@ -247,7 +248,7 @@ impl Map {
 		);
 		make(
 			"empty",
-			Rc::new(|_a, _y, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|_a, _y, map: ScopeRef| {
 				Data::Boolean(
 					as_type!(RefCell::borrow(&map) => Map, 
 					"Tried to call fn size on a non-map scope.")
@@ -258,19 +259,19 @@ impl Map {
 		);
 		make(
 			"has",
-			Rc::new(|args, _y, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, map: ScopeRef| {
 				Data::Boolean(as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.contains_key(&StaticData::from(args[0].clone())))
 			}),
 		);
 		make(
 			"get",
-			Rc::new(|args, _y, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, map: ScopeRef| {
 				as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.get(&StaticData::from(args[0].clone())).cloned().unwrap_or_default()
 			}),
 		);
 		make(
 			"set",
-			Rc::new(|args, yield_fn, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, yield_fn, map: ScopeRef| {
 				as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.")
 					.hash.insert(
 						StaticData::from(args[0].clone()),
@@ -285,7 +286,7 @@ impl Map {
 		);
 		make(
 			"del",
-			Rc::new(|args, _y, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, _y, map: ScopeRef| {
 				as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.")
 					.hash.remove(&StaticData::from(args[0].clone()));
 				Data::None
@@ -293,14 +294,14 @@ impl Map {
 		);
 		make(
 			"for",
-			Rc::new(|args, yield_fn, map: Rc<RefCell<dyn Scope>>| {
+			Rc::new(|args, yield_fn, map: ScopeRef| {
 				let yield_fn = yield_fn.expect("Expected yield block for fn for.");
 				arg_check!(&args[0], Data::Memory { scope: key_scope_ref, name: key_name } =>
 					"Expected memory for fn for, but instead got {}.");
 				arg_check!(&args[1], Data::Memory { scope: value_scope_ref, name: value_name } =>
 					"Expected memory for fn for, but instead got {}.");
 				
-				let mut index_scope_ref: Option<&Rc<RefCell<dyn Scope>>> = None;
+				let mut index_scope_ref: Option<&ScopeRef> = None;
 				let mut index_name: Option<&String> = None;
 				if args.len() > 2 {
 					arg_check!(&args[2], Data::Memory { scope: i_scope_ref, name: i_name } =>
@@ -342,7 +343,7 @@ impl Scope for Map {
 		} else {
 			let key = StaticData::from(Data::String(String::from(name)));
 			Some(Function::BuiltIn {
-				callback: Rc::new(move |args, _y, scope: Rc<RefCell<dyn Scope>>| {
+				callback: Rc::new(move |args, _y, scope: ScopeRef| {
 					let mut binding = RefCell::borrow_mut(&scope);
 					let map = as_mut_type!(binding => Map, "Tried to index a non-list scope.");
 					if args.is_empty() {
@@ -377,7 +378,7 @@ impl Scope for Map {
 		self
 	}
 	
-	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
+	fn parent(&self) -> Option<ScopeRef> {
 		self.parent.as_ref().map(|s| Rc::clone(s))
 	}
 	

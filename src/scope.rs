@@ -6,13 +6,15 @@ use function::{CallScope, Function};
 pub mod block_scope;
 pub mod function;
 
+pub type ScopeRef = Rc<RefCell<dyn Scope>>;
+
 pub trait Scope: Debug {
 	fn has_function(&self, name: &str) -> bool;
 	fn get_function(&self, name: &str) -> Option<Function>;
 	fn set_function(&mut self, name: &str, function: Function);
 	fn delete_function(&mut self, name: &str);
 
-	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
+	fn parent(&self) -> Option<ScopeRef> {
 		None
 	}
 

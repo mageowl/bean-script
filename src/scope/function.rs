@@ -3,14 +3,14 @@ use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{data::Data, evaluator, parser::Node};
 
-use super::Scope;
+use super::{Scope, ScopeRef};
 
 #[derive(Debug, Clone)]
 pub struct CallScope {
-	parent: Rc<RefCell<dyn Scope>>,
+	parent: ScopeRef,
 	arguments: Rc<Vec<Data>>,
 	yield_fn: Rc<Option<Function>>,
-	from_scope: Rc<RefCell<dyn Scope>>,
+	from_scope: ScopeRef,
 }
 
 impl CallScope {
@@ -22,7 +22,7 @@ impl CallScope {
 		Rc::clone(&self.yield_fn)
 	}
 
-	pub fn from_scope(&self) -> Rc<RefCell<dyn Scope>> {
+	pub fn from_scope(&self) -> ScopeRef {
 		Rc::clone(&self.from_scope)
 	}
 }
@@ -44,8 +44,8 @@ impl Scope for CallScope {
 		self.parent.borrow_mut().delete_function(name)
 	}
 
-	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
-		Some(Rc::clone(&self.parent) as Rc<RefCell<dyn Scope>>)
+	fn parent(&self) -> Option<ScopeRef> {
+		Some(Rc::clone(&self.parent) as ScopeRef)
 	}
 
 	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
@@ -69,10 +69,10 @@ impl Scope for CallScope {
 pub enum Function {
 	Custom {
 		body: Rc<Node>,
-		scope_ref: Rc<RefCell<dyn Scope>>,
+		scope_ref: ScopeRef,
 	},
 	BuiltIn {
-		callback: Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data>,
+		callback: Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>,
 	},
 	Variable {
 		value: Data,
@@ -86,9 +86,9 @@ impl Function {
 		&self,
 		args: Vec<Data>,
 		yield_fn: Option<Function>,
-		scope: Rc<RefCell<dyn Scope>>,
+		scope: ScopeRef,
 		return_scope: bool,
-		from_scope: Option<Rc<RefCell<dyn Scope>>>,
+		from_scope: Option<ScopeRef>,
 	) -> Data {
 		match self {
 			Function::Custom { body, scope_ref } => {
@@ -136,7 +136,7 @@ impl Function {
 		&self,
 		args: Vec<Data>,
 		yield_fn: Option<Function>,
-		scope: Rc<RefCell<dyn Scope>>,
+		scope: ScopeRef,
 	) -> Data {
 		self.call_verbose(args, yield_fn, scope, false, None)
 	}
@@ -145,7 +145,7 @@ impl Function {
 		&self,
 		args: Vec<Data>,
 		yield_fn: Option<Function>,
-		scope: Rc<RefCell<dyn Scope>>,
+		scope: ScopeRef,
 	) -> Data {
 		self.call_verbose(args, yield_fn, scope, true, None)
 	}
@@ -154,8 +154,8 @@ impl Function {
 		&self,
 		args: Vec<Data>,
 		yield_fn: Option<Function>,
-		scope: Rc<RefCell<dyn Scope>>,
-		from_scope: Option<Rc<RefCell<dyn Scope>>>,
+		scope: ScopeRef,
+		from_scope: Option<ScopeRef>,
 	) -> Data {
 		self.call_verbose(args, yield_fn, scope, false, from_scope)
 	}

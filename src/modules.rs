@@ -4,7 +4,7 @@ use crate::{
 	data::Data,
 	scope::{
 		function::{CallScope, Function},
-		Scope,
+		Scope, ScopeRef,
 	},
 };
 
@@ -12,10 +12,7 @@ pub mod collections;
 pub mod runtime;
 
 pub struct Module {
-	functions: HashMap<
-		String,
-		Rc<dyn Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data>,
-	>,
+	functions: HashMap<String, Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>>,
 	submodules: HashMap<String, Rc<RefCell<Module>>>,
 }
 
@@ -34,7 +31,7 @@ impl Module {
 
 	pub fn function<F>(&mut self, name: &str, function: F) -> &mut Self
 	where
-		F: Fn(Vec<Data>, Option<Function>, Rc<RefCell<dyn Scope>>) -> Data + 'static,
+		F: Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data + 'static,
 	{
 		self.functions.insert(String::from(name), Rc::new(function));
 		self
@@ -69,7 +66,7 @@ impl Scope for Module {
 			.or_else(|| {
 				self.submodules.get(name).map(|x: &Rc<RefCell<Module>>| {
 					Function::Variable {
-						value: Data::Scope(Rc::clone(x) as Rc<RefCell<dyn Scope>>),
+						value: Data::Scope(Rc::clone(x) as ScopeRef),
 						constant: true,
 						name: String::new(),
 					}

@@ -1,6 +1,9 @@
 use std::{cell::RefCell, hash::Hash, rc::Rc};
 
-use crate::{pat_check, scope::Scope};
+use crate::{
+	pat_check,
+	scope::{Scope, ScopeRef},
+};
 
 pub enum DataType {
 	Boolean,
@@ -66,11 +69,8 @@ pub enum Data {
 	Boolean(bool),
 	Number(f64),
 	String(String),
-	Memory {
-		scope: Rc<RefCell<dyn Scope>>,
-		name: String,
-	},
-	Scope(Rc<RefCell<dyn Scope>>),
+	Memory { scope: ScopeRef, name: String },
+	Scope(ScopeRef),
 	None,
 }
 

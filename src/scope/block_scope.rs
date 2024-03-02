@@ -6,7 +6,7 @@ use crate::data::Data;
 
 use super::{
 	function::{CallScope, Function},
-	Scope,
+	Scope, ScopeRef,
 };
 
 #[derive(Debug)]
@@ -18,7 +18,7 @@ pub enum IfState {
 
 pub struct BlockScope {
 	local_functions: HashMap<String, Function>,
-	parent: Option<Rc<RefCell<dyn Scope>>>,
+	parent: Option<ScopeRef>,
 	did_break: bool,
 	pub return_value: Data,
 	pub if_state: IfState,
@@ -26,7 +26,7 @@ pub struct BlockScope {
 }
 
 impl BlockScope {
-	pub fn new(parent: Option<Rc<RefCell<dyn Scope>>>) -> Self {
+	pub fn new(parent: Option<ScopeRef>) -> Self {
 		Self {
 			local_functions: HashMap::new(),
 			parent,
@@ -95,7 +95,7 @@ impl Scope for BlockScope {
 		self.local_functions.remove(name);
 	}
 
-	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
+	fn parent(&self) -> Option<ScopeRef> {
 		self.parent.as_ref().map(|x| Rc::clone(x))
 	}
 

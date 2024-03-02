@@ -3,14 +3,14 @@ use std::{borrow::Borrow, cell::RefCell, rc::Rc};
 use crate::{
 	data::Data,
 	parser::Node,
-	scope::{block_scope::BlockScope, function::Function, Scope},
+	scope::{block_scope::BlockScope, function::Function, ScopeRef},
 };
 
 pub fn evaluate_verbose(
 	node: &Node,
-	scope_ref: Rc<RefCell<dyn Scope>>,
+	scope_ref: ScopeRef,
 	return_scope: bool,
-	access_scope_ref: Option<Rc<RefCell<dyn Scope>>>,
+	access_scope_ref: Option<ScopeRef>,
 ) -> Data {
 	let scope = RefCell::borrow(&scope_ref);
 
@@ -56,7 +56,7 @@ pub fn evaluate_verbose(
 			let scope_ref = Rc::new(RefCell::new(scope));
 
 			for n in body {
-				evaluate(n, Rc::clone(&scope_ref) as Rc<RefCell<dyn Scope>>);
+				evaluate(n, Rc::clone(&scope_ref) as ScopeRef);
 				if RefCell::borrow(&scope_ref).did_break() {
 					break;
 				}
@@ -112,6 +112,6 @@ pub fn evaluate_verbose(
 	}
 }
 
-pub fn evaluate(node: &Node, scope_ref: Rc<RefCell<dyn Scope>>) -> Data {
+pub fn evaluate(node: &Node, scope_ref: ScopeRef) -> Data {
 	evaluate_verbose(node, scope_ref, false, None)
 }

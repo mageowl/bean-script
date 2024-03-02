@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
 	arg_check,
 	data::{Data, DataType},
-	scope::{block_scope::BlockScope, function::Function, Scope},
+	scope::{block_scope::BlockScope, function::Function, ScopeRef},
 };
 
 use super::{collections::{List, Map}, Module};
@@ -85,7 +85,7 @@ pub fn construct(module: &mut Module) {
 fn fn_fn(
 	args: Vec<Data>,
 	yield_fn: Option<Function>,
-	_s: Rc<RefCell<dyn Scope>>,
+	_s: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of function, but instead got {}.");
@@ -100,7 +100,7 @@ fn fn_fn(
 fn fn_let(
 	args: Vec<Data>,
 	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<dyn Scope>>,
+	o_scope: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of variable, but instead got {}.");
@@ -123,7 +123,7 @@ fn fn_let(
 fn fn_const(
 	args: Vec<Data>,
 	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<dyn Scope>>,
+	o_scope: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory as name of constant, but instead got {}.");
@@ -143,7 +143,7 @@ fn fn_const(
 	Data::None
 }
 
-fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory for fn del, but instead got {}.");
 	scope.borrow_mut().delete_function(name);
@@ -154,7 +154,7 @@ fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 fn fn_call(
 	args: Vec<Data>,
 	yield_fn: Option<Function>,
-	o_scope: Rc<RefCell<dyn Scope>>,
+	o_scope: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn call, but instead got {}.");
@@ -165,7 +165,7 @@ fn fn_call(
 	function.call(args[1..].to_vec(), yield_fn, o_scope)
 }
 
-fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn exists, but instead got {}.");
 	Data::Boolean(scope.borrow().has_function(name))
@@ -175,7 +175,7 @@ fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) 
 // SCOPE
 //
 
-fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(i) => "Expected integer for fn p, but instead got {}.");
 	let arg_type = args
 		.get(1)
@@ -206,7 +206,7 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) ->
 	}
 }
 
-fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	Data::Scope(Rc::new(RefCell::new(List::new(
 		Vec::clone(
 			&scope
@@ -223,7 +223,7 @@ fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -
 fn fn_yield(
 	args: Vec<Data>,
 	yield_fn: Option<Function>,
-	scope: Rc<RefCell<dyn Scope>>,
+	scope: ScopeRef,
 ) -> Data {
 	let call_scope = &scope
 		.borrow()
@@ -238,7 +238,7 @@ fn fn_yield(
 fn fn_return(
 	args: Vec<Data>,
 	_y: Option<Function>,
-	scope: Rc<RefCell<dyn Scope>>,
+	scope: ScopeRef,
 ) -> Data {
 	let value = args.get(0).cloned().unwrap_or(Data::None);
 	RefCell::borrow_mut(&scope).set_return_value(value.clone());
@@ -252,17 +252,17 @@ fn fn_return(
 	value
 }
 
-fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	let value = args.get(0).cloned().unwrap_or(Data::None);
 	RefCell::borrow_mut(&scope).set_return_value(value.clone());
 	value
 }
 
-fn fn_self(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_self(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	Data::Scope(Rc::clone(&scope))
 }
 
-fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	RefCell::borrow(&scope)
 		.parent()
 		.map(|s| Data::Scope(Rc::clone(&s)))
@@ -272,7 +272,7 @@ fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) 
 fn fn_include(
 	args: Vec<Data>,
 	_y: Option<Function>,
-	scope: Rc<RefCell<dyn Scope>>,
+	scope: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Scope(target) => "Expected scope for fn include, but instead got {}.");
 	let mut scope = scope.borrow_mut();
@@ -288,7 +288,7 @@ fn fn_include(
 // INTERFACE
 //
 
-fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	let mut string = Vec::new();
 	for data in args {
 		string.push(data.to_string());
@@ -298,12 +298,12 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -
 	Data::None
 }
 
-fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::String(msg) => "Expected string for fn error, but instead got {}");
 	panic!("{}", msg)
 }
 
-fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	dbg!(scope);
 	Data::None
 }
@@ -312,7 +312,7 @@ fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) 
 // MATH
 //
 
-fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	match args[0].get_type() {
 		DataType::String => {
 			let mut string = String::new();
@@ -338,12 +338,12 @@ fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 		),
 	}
 }
-fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn sub, but got {}.");
 	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn sub, but got {}.");
 	Data::Number(a - b)
 }
-fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn mul, but got {}.");
 	match &args[0] {
 		Data::Number(a) => Data::Number(a * b),
@@ -354,13 +354,13 @@ fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 		),
 	}
 }
-fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn div, but got {}.");
 	arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn div, but got {}.");
 	Data::Number(a / b)
 }
 
-fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	match args.len() {
 		0 => Data::Number(rand::random()),
 		1 => {
@@ -374,47 +374,47 @@ fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) ->
 		}
 	}
 }
-fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn abs, but got {} instead.");
 	Data::Number(n.round())
 }
 
-fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(a) => "Expected number for fn pow, but got {} instead.");
 	arg_check!(&args[1], Data::Number(b) => "Expected number for fn pow, but got {} instead.");
 	Data::Number(a.powf(*b))
 }
-fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn sqrt, but got {} instead.");
 	Data::Number(n.sqrt())
 }
 
-fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn sin, but got {} instead.");
 	Data::Number(n.sin())
 }
-fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn cos, but got {} instead.");
 	Data::Number(n.cos())
 }
-fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn tan, but got {} instead.");
 	Data::Number(n.tan())
 }
-fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn atan, but got {} instead.");
 	Data::Number(n.atan())
 }
 
-fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn round, but got {} instead.");
 	Data::Number(n.round())
 }
-fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn floor, but got {} instead.");
 	Data::Number(n.floor())
 }
-fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Number(n) => "Expected number for fn ceil, but got {} instead.");
 	Data::Number(n.ceil())
 }
@@ -423,12 +423,12 @@ fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) ->
 // STRING
 //
 
-fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::String(s) => "Expected string for fn size, but got {} instead.");
 	Data::Number(s.len() as f64)
 }
 
-fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::String(s) => "Expected string for fn split, but got {} instead.");
 	arg_check!(&args[1], Data::String(d) => "Expected delimiter string for fn split, but got {} instead.");
 	let vec = s.split(d).map(|c| Data::String(String::from(c))).collect();
@@ -439,11 +439,11 @@ fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -
 // TYPES
 //
 
-fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	Data::String(args.get(0).unwrap_or(&Data::None).to_string())
 }
 
-fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	match &args[0] {
 		Data::Boolean(v) => Data::Number(if *v { 1.0 } else { 0.0 }),
 		Data::Number(v) => Data::Number(*v),
@@ -453,7 +453,7 @@ fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> 
 		Data::None => Data::None,
 	}
 }
-fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::String(name) => "Expected string for fn mem, but got {} instead.");
 	Data::Memory {
 		scope,
@@ -461,7 +461,7 @@ fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) 
 	}
 }
 
-fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	Data::String(args.get(0).unwrap_or(&Data::None).get_type().to_string())
 }
 
@@ -469,10 +469,10 @@ fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: Rc<RefCell<dyn Scope>>) ->
 // COLLECTIONS
 //
 
-fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope)))))
 }
 
-fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
+fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	Data::Scope(Rc::new(RefCell::new(Map::new(args, Some(scope)))))
 }
