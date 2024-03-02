@@ -1,9 +1,6 @@
-use std::{cell::RefCell, hash::Hash, rc::Rc};
+use std::{cell::RefCell, hash::Hash};
 
-use crate::{
-	pat_check,
-	scope::{Scope, ScopeRef},
-};
+use crate::{pat_check, scope::ScopeRef};
 
 pub enum DataType {
 	Boolean,
