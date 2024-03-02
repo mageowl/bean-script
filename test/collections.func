@@ -1,8 +1,21 @@
-let(<list0>): l("car", "bus", "tree")
-list0.2("train")
-print(list0)
+let(<my_list>): l("car", "bus", "tree")
+my_list.2("train")
+print(my_list)
 
-print(list0.for(<transit>, <i>): {
+print(my_list.for(<transit>, <i>): {
 	print("you could take the", transit)
 	return(i)
 })
+
+let(<my_map>): m(
+	"car",   20,
+	"bus",   40,
+	"train", 15,
+	"tree",  200,
+)
+
+my_map.set("bullet train"): 1
+my_map.del("tree")
+my_map.for(<transit>, <time>): {
+	print("you could take the", transit, "and it would take", str(time), "minutes.")
+}

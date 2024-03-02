@@ -6,7 +6,7 @@ use crate::{
 	scope::{block_scope::BlockScope, function::Function, Scope},
 };
 
-use super::{collections::List, Module};
+use super::{collections::{List, Map}, Module};
 
 pub fn construct(module: &mut Module) {
 	/* MEMORY */
@@ -474,5 +474,5 @@ fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>)
 }
 
 fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: Rc<RefCell<dyn Scope>>) -> Data {
-	Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope)))))
+	Data::Scope(Rc::new(RefCell::new(Map::new(args, Some(scope)))))
 }

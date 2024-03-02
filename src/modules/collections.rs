@@ -211,17 +211,17 @@ impl Scope for List {
 
 #[derive(Debug)]
 pub struct Map {
-	pub parent: Option<Rc<RefCell<dyn Scope>>>,
+	parent: Option<Rc<RefCell<dyn Scope>>>,
 	fns: HashMap<String, Function>,
 	pub hash: HashMap<StaticData, Data>,
 }
 
 impl Map {
-	pub fn new(list: Vec<Data>, parent: Option<Rc<RefCell<dyn Scope>>>) -> Self {
+	pub fn new(kv_pairs: Vec<Data>, parent: Option<Rc<RefCell<dyn Scope>>>) -> Self {
 		let mut map = Map {
 			parent,
 			fns: HashMap::new(),
-			hash: list.chunks(2)
+			hash: kv_pairs.chunks(2)
 					.map(|pair| 
 						(
 							StaticData::from(pair.get(0).expect("Number of arguments must be even for fn map.").clone()),
@@ -262,7 +262,126 @@ impl Map {
 				Data::Boolean(as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.contains_key(&StaticData::from(args[0].clone())))
 			}),
 		);
+		make(
+			"get",
+			Rc::new(|args, _y, map: Rc<RefCell<dyn Scope>>| {
+				as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.get(&StaticData::from(args[0].clone())).cloned().unwrap_or_default()
+			}),
+		);
+		make(
+			"set",
+			Rc::new(|args, yield_fn, map: Rc<RefCell<dyn Scope>>| {
+				as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.")
+					.hash.insert(
+						StaticData::from(args[0].clone()),
+						yield_fn.expect("Expected yield function for fn set.").call(
+							Vec::new(),
+							None,
+							Rc::clone(&map)
+						)
+					);
+				Data::None
+			})
+		);
+		make(
+			"del",
+			Rc::new(|args, _y, map: Rc<RefCell<dyn Scope>>| {
+				as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.")
+					.hash.remove(&StaticData::from(args[0].clone()));
+				Data::None
+			})
+		);
+		make(
+			"for",
+			Rc::new(|args, yield_fn, map: Rc<RefCell<dyn Scope>>| {
+				let yield_fn = yield_fn.expect("Expected yield block for fn for.");
+				arg_check!(&args[0], Data::Memory { scope: key_scope_ref, name: key_name } =>
+					"Expected memory for fn for, but instead got {}.");
+				arg_check!(&args[1], Data::Memory { scope: value_scope_ref, name: value_name } =>
+					"Expected memory for fn for, but instead got {}.");
+				
+				let mut index_scope_ref: Option<&Rc<RefCell<dyn Scope>>> = None;
+				let mut index_name: Option<&String> = None;
+				if args.len() > 2 {
+					arg_check!(&args[2], Data::Memory { scope: i_scope_ref, name: i_name } =>
+						"Expected memory for fn for, but instead got {}.");
+					index_scope_ref = Some(i_scope_ref);
+					index_name = Some(i_name);
+				}
+
+				let mut mapped: Vec<Data> = Vec::new();
+
+				for (i, (key, value)) in &mut as_mut_type!(map.borrow_mut() => Map,
+						"Tried to call fn for on a non-list scope.").hash.iter().enumerate() {
+					key_scope_ref.borrow_mut().set_function(&key_name, Function::Variable
+						{ value: key.inner().clone(), constant: true, name: String::new() });
+					value_scope_ref.borrow_mut().set_function(&value_name, Function::Variable
+						{ value: value.clone(), constant: true, name: String::new() });
+					index_scope_ref.map(|s| s.borrow_mut().set_function(&index_name.unwrap(), Function::Variable
+						{ value: Data::Number(i as f64), constant: true, name: String::new() }));
+					
+					mapped.push(yield_fn.call(Vec::new(), None, Rc::clone(&map)))
+				}
+
+				Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))
+			})
+		);
 
 		map
+	}
+}
+
+impl Scope for Map {
+	fn has_function(&self, name: &str) -> bool {
+		self.fns.contains_key(name) || self.hash.contains_key(&StaticData::from(Data::String(String::from(name))))
+	}
+
+	fn get_function(&self, name: &str) -> Option<Function> {
+		let builtin = self.fns.get(name);
+		if builtin.is_some() { builtin.cloned()
+		} else {
+			let key = StaticData::from(Data::String(String::from(name)));
+			Some(Function::BuiltIn {
+				callback: Rc::new(move |args, _y, scope: Rc<RefCell<dyn Scope>>| {
+					let mut binding = RefCell::borrow_mut(&scope);
+					let map = as_mut_type!(binding => Map, "Tried to index a non-list scope.");
+					if args.is_empty() {
+						map.hash.get(&key).cloned().unwrap_or_default()
+					} else {
+						mem::replace(&mut map.hash.get_mut(&key).unwrap(), args[0].clone())
+					}
+				})
+			})
+		}
+	}
+
+	fn set_function(&mut self, _name: &str, _function: Function) {}
+	fn delete_function(&mut self, _name: &str) {}
+
+	fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
+		if let Some(p) = &self.parent {
+			RefCell::borrow(p).get_call_scope()
+		} else {
+			None
+		}
+	}
+
+	fn set_return_value(&mut self, _value: Data) {}
+	fn get_function_list(&self) -> HashMap<String, Function> { HashMap::new() }
+
+	fn as_any(&self) -> &dyn Any {
+		self
+	}
+
+	fn as_mut(&mut self) -> &mut dyn Any {
+		self
+	}
+	
+	fn parent(&self) -> Option<Rc<RefCell<dyn Scope>>> {
+		self.parent.as_ref().map(|s| Rc::clone(s))
+	}
+	
+	fn to_string(&self) -> String {
+		format!("{{{}}}", self.hash.iter().fold(String::new(), |s, e| if s.is_empty() { String::new() } else { s + ", " } + &e.0.inner().to_string() + ": " + &e.1.to_string()))
 	}
 }
