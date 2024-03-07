@@ -77,6 +77,16 @@ pub fn construct(module: &mut Module) {
 		.function("l", fn_list)
 		.function("map", fn_map)
 		.function("m", fn_map);
+
+	/* LOGIC */
+	module
+		.function("eq", fn_eq)
+		.function("lt", fn_lt)
+		.function("gt", fn_gt)
+		.function("not", fn_not)
+		.function("and", fn_and)
+		.function("or", fn_or);
+
 }
 
 //
@@ -484,4 +494,41 @@ fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 
 fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 	Data::Scope(Rc::new(RefCell::new(Map::new(args, Some(scope)))))
+}
+
+//
+// LOGIC
+//
+
+fn fn_eq(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	Data::Boolean(&args[0] == &args[1])
+}
+
+fn fn_gt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Number(a) => "Expected number for fn gt, but instead got {}.");
+	arg_check!(&args[1], Data::Number(b) => "Expected number for fn gt, but instead got {}.");
+	Data::Boolean(a > b)
+}
+
+fn fn_lt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Number(a) => "Expected number for fn lt, but instead got {}.");
+	arg_check!(&args[1], Data::Number(b) => "Expected number for fn lt, but instead got {}.");
+	Data::Boolean(a < b)
+}
+
+fn fn_not(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn not, but instead got {}.");
+	Data::Boolean(!v)
+}
+
+fn fn_and(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(a) => "Expected boolean for fn and, but instead got {}.");
+	arg_check!(&args[1], Data::Boolean(b) => "Expected boolean for fn and, but instead got {}.");
+	Data::Boolean(*a && *b)
+}
+
+fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(a) => "Expected boolean for fn or, but instead got {}.");
+	arg_check!(&args[1], Data::Boolean(b) => "Expected boolean for fn or, but instead got {}.");
+	Data::Boolean(*a || *b)
 }
