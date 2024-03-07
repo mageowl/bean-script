@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, thread, time::Duration};
 
 use crate::{
 	arg_check,
@@ -32,7 +32,8 @@ pub fn construct(module: &mut Module) {
 	/* INTERFACE */
 	module
 		.function("print", fn_print)
-		.function("error", fn_error);
+		.function("error", fn_error)
+		.function("sleep", fn_sleep);
 	if cfg!(debug_assertions) {
 		module.function("__debug", fn_debug);
 	}
@@ -299,8 +300,16 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 }
 
 fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-	arg_check!(&args[0], Data::String(msg) => "Expected string for fn error, but instead got {}");
+	arg_check!(&args[0], Data::String(msg) => "Expected string for fn error, but instead got {}.");
 	panic!("{}", msg)
+}
+
+
+fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Number(ms) => "Expected number for fn sleep, but instead got {}.");
+	thread::sleep(Duration::from_millis(*ms as u64));
+
+	Data::None
 }
 
 fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
