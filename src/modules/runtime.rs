@@ -1,9 +1,7 @@
 use std::{cell::RefCell, rc::Rc, thread, time::Duration};
 
 use crate::{
-	arg_check,
-	data::{Data, DataType},
-	scope::{block_scope::BlockScope, function::Function, ScopeRef},
+	arg_check, as_mut_type, data::{Data, DataType}, scope::{block_scope::{BlockScope, IfState}, function::Function, ScopeRef}
 };
 
 use super::{collections::{List, Map}, Module};
@@ -87,6 +85,14 @@ pub fn construct(module: &mut Module) {
 		.function("and", fn_and)
 		.function("or", fn_or);
 
+	/* CONTROL BLOCKS */
+	module
+		.function("if", fn_if)
+		.function("else_if", fn_else_if)
+		.function("else", fn_else)
+		.function("ifv", fn_ifv)
+		.function("repeat", fn_repeat);
+		// .function("match", fn_match);
 }
 
 //
@@ -531,4 +537,88 @@ fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Boolean(a) => "Expected boolean for fn or, but instead got {}.");
 	arg_check!(&args[1], Data::Boolean(b) => "Expected boolean for fn or, but instead got {}.");
 	Data::Boolean(*a || *b)
+}
+
+//
+// CONDITIONS
+//
+
+fn fn_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn if, but instead got {}.");
+	
+	let state: IfState = if *v {
+		yield_fn
+			.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+			.call_scope(Vec::new(), None, Rc::clone(&scope));
+		IfState::Captured
+	} else { IfState::Started };
+
+	as_mut_type!(scope.borrow_mut() => BlockScope, 
+		"Cannot use if conditionals on a non-block scope.")
+		.if_state = state;
+
+	Data::None
+}
+
+fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn else_if, but instead got {}.");
+
+	let mut binding = scope.borrow_mut();
+	let block_scope = as_mut_type!(binding => BlockScope, 
+		"Cannot use if conditionals on a non-block scope.");
+
+	match block_scope.if_state {
+		IfState::Started => {
+			if *v {
+				block_scope.if_state = IfState::Captured;
+				drop(binding);
+				yield_fn
+					.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+					.call_scope(Vec::new(), None, Rc::clone(&scope));
+			} else {
+				block_scope.if_state = IfState::Started;
+			};
+		}
+		IfState::Captured => (),
+		IfState::Finished => panic!("Tried to call else_if before calling if."),
+	}
+
+	Data::None
+}
+
+fn fn_else(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	let mut binding = scope.borrow_mut();
+	let block_scope = as_mut_type!(binding => BlockScope, 
+		"Cannot use if conditionals on a non-block scope.");
+
+	match block_scope.if_state {
+		IfState::Started => {
+			block_scope.if_state = IfState::Finished;
+			drop(binding);
+			yield_fn
+				.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+				.call_scope(Vec::new(), None, Rc::clone(&scope));
+		}
+		IfState::Captured => block_scope.if_state = IfState::Finished,
+		IfState::Finished => panic!("Tried to call else before calling if."),
+	}
+
+	Data::None
+}
+
+fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn ifv, but instead got {}.");
+	
+	if *v { args[1].clone() } else { args[2].clone() }
+}
+
+fn fn_repeat(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	arg_check!(&args[0], Data::Number(n) => "Expected integer for fn repeat, but instead got {}.");
+	let yield_fn = yield_fn.unwrap_or_else(|| panic!("Expected yield block for fn repeat."));
+
+	for _ in 0..(*n as usize) {
+		yield_fn.call_scope(Vec::new(), None, Rc::clone(&scope));
+	}
+
+	Data::None
 }

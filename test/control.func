@@ -1,0 +1,9 @@
+repeat(10): {
+	let(<n>): rand
+	let(<n2>): /(round(*(n, 100)), 100)
+	if(lt(n, 0.5)): {
+		print("The number", str(n2), "is less than 0.5")
+	} else: {
+		print("The number", str(n2), "is greater than 0.5")
+	}
+}
