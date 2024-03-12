@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc, thread, time::Duration};
 
 use crate::{
-	arg_check, as_mut_type, data::{Data, DataType}, scope::{block_scope::{BlockScope, IfState}, function::Function, ScopeRef}
+	arg_check, as_mut_type, data::{Data, DataType}, scope::{block_scope::{BlockScope, IfState}, function::Function, Scope, ScopeRef}
 };
 
 use super::{collections::{List, Map}, Module};
@@ -91,8 +91,8 @@ pub fn construct(module: &mut Module) {
 		.function("else_if", fn_else_if)
 		.function("else", fn_else)
 		.function("ifv", fn_ifv)
-		.function("repeat", fn_repeat);
-		// .function("match", fn_match);
+		.function("repeat", fn_repeat)
+		.function("match", fn_match);
 }
 
 //
@@ -109,7 +109,7 @@ fn fn_fn(
 	let yield_fn =
 		yield_fn.unwrap_or_else(|| panic!("To define a function, add a yield block."));
 
-	scope.borrow_mut().set_function(name, yield_fn);
+	RefCell::borrow_mut(&scope).set_function(name, yield_fn);
 
 	Data::None
 }
@@ -125,7 +125,7 @@ fn fn_let(
 		.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
 		.call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
-	scope.borrow_mut().set_function(
+	RefCell::borrow_mut(scope).set_function(
 		name,
 		Function::Variable {
 			value,
@@ -148,7 +148,7 @@ fn fn_const(
 		.unwrap_or_else(|| panic!("To define a constant, add a yield block."))
 		.call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
-	scope.borrow_mut().set_function(
+	RefCell::borrow_mut(scope).set_function(
 		name,
 		Function::Variable {
 			value,
@@ -163,7 +163,7 @@ fn fn_const(
 fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Memory { scope, name } => 
 		"Expected memory for fn del, but instead got {}.");
-	scope.borrow_mut().delete_function(name);
+	RefCell::borrow_mut(scope).delete_function(name);
 
 	Data::None
 }
@@ -292,7 +292,7 @@ fn fn_include(
 	scope: ScopeRef,
 ) -> Data {
 	arg_check!(&args[0], Data::Scope(target) => "Expected scope for fn include, but instead got {}.");
-	let mut scope = scope.borrow_mut();
+	let mut scope = RefCell::borrow_mut(&scope);
 
 	for (name, func) in RefCell::borrow(&target).get_function_list() {
 		scope.set_function(&name, func.clone())
@@ -548,12 +548,12 @@ fn fn_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
 	
 	let state: IfState = if *v {
 		yield_fn
-			.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
-			.call_scope(Vec::new(), None, Rc::clone(&scope));
+			.expect("Expected yield block for if statement")
+			.call_direct(Vec::new(), None, Rc::clone(&scope));
 		IfState::Captured
 	} else { IfState::Started };
 
-	as_mut_type!(scope.borrow_mut() => BlockScope, 
+	as_mut_type!(RefCell::borrow_mut(&scope) => BlockScope, 
 		"Cannot use if conditionals on a non-block scope.")
 		.if_state = state;
 
@@ -563,7 +563,7 @@ fn fn_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
 fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
 	arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn else_if, but instead got {}.");
 
-	let mut binding = scope.borrow_mut();
+	let mut binding = RefCell::borrow_mut(&scope);
 	let block_scope = as_mut_type!(binding => BlockScope, 
 		"Cannot use if conditionals on a non-block scope.");
 
@@ -574,7 +574,7 @@ fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> D
 				drop(binding);
 				yield_fn
 					.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
-					.call_scope(Vec::new(), None, Rc::clone(&scope));
+					.call_direct(Vec::new(), None, Rc::clone(&scope));
 			} else {
 				block_scope.if_state = IfState::Started;
 			};
@@ -587,7 +587,7 @@ fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> D
 }
 
 fn fn_else(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
-	let mut binding = scope.borrow_mut();
+	let mut binding = RefCell::borrow_mut(&scope);
 	let block_scope = as_mut_type!(binding => BlockScope, 
 		"Cannot use if conditionals on a non-block scope.");
 
@@ -597,7 +597,7 @@ fn fn_else(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
 			drop(binding);
 			yield_fn
 				.unwrap_or_else(|| panic!("To define a variable, add a yield block."))
-				.call_scope(Vec::new(), None, Rc::clone(&scope));
+				.call_direct(Vec::new(), None, Rc::clone(&scope));
 		}
 		IfState::Captured => block_scope.if_state = IfState::Finished,
 		IfState::Finished => panic!("Tried to call else before calling if."),
@@ -617,8 +617,90 @@ fn fn_repeat(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Da
 	let yield_fn = yield_fn.unwrap_or_else(|| panic!("Expected yield block for fn repeat."));
 
 	for _ in 0..(*n as usize) {
-		yield_fn.call_scope(Vec::new(), None, Rc::clone(&scope));
+		yield_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
 	}
 
 	Data::None
+}
+
+#[derive(Debug)]
+struct MatchScope {
+	parent: ScopeRef,
+	value: Data,
+}
+
+impl Scope for MatchScope {
+	fn has_function(&self, name: &str) -> bool {
+		if name == "case" || name == "default" {
+			true
+		} else {
+			RefCell::borrow(&self.parent).has_function(name)
+		}
+	}
+
+	fn get_function(&self, name: &str) -> Option<Function> {
+		if name == "case" {
+			let match_value = self.value.clone();
+			Some(Function::BuiltIn {
+				callback: Rc::new(move |args, yield_fn, scope| {
+					if match_value == args[0] {
+						let mut scope_m = RefCell::borrow_mut(&scope);
+						scope_m.set_return_value( 
+							yield_fn.expect("Expected yield block for function case.")
+							.call(Vec::new(), None, Rc::clone(&scope)));
+						as_mut_type!(scope_m => BlockScope, "Tried to call case in a non-block scope.").break_self();
+					}
+					Data::None
+				})
+			})
+		} else if name == "default" {
+			Some(Function::BuiltIn {
+				callback: Rc::new(move |_a, yield_fn, scope| {
+					RefCell::borrow_mut(&scope).set_return_value( 
+						yield_fn.expect("Expected yield block for function default.")
+						.call(Vec::new(), None, Rc::clone(&scope)));
+					Data::None
+				})
+			})
+		} else {
+			RefCell::borrow(&self.parent).get_function(name)
+		}
+	}
+
+	fn set_function(&mut self, name: &str, function: Function) {
+		RefCell::borrow_mut(&self.parent).set_function(name, function)
+	}
+
+	fn delete_function(&mut self, name: &str) {
+		RefCell::borrow_mut(&self.parent).delete_function(name)
+	}
+
+	fn get_call_scope(&self) -> Option<Rc<RefCell<crate::scope::function::CallScope>>> {
+		RefCell::borrow(&self.parent).get_call_scope()
+	}
+
+	fn set_return_value(&mut self, _value: Data) {}
+
+	fn get_function_list(&self) -> std::collections::HashMap<String, Function> {
+		RefCell::borrow(&self.parent).get_function_list()
+	}
+
+	fn as_any(&self) -> &dyn std::any::Any {
+		self
+	}
+
+	fn as_mut(&mut self) -> &mut dyn std::any::Any {
+		self
+	}
+}
+
+fn fn_match(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	let match_scope = Rc::new(RefCell::new(MatchScope {
+		parent: Rc::clone(&scope),
+		value: args[0].clone(),
+	}));
+
+	yield_fn
+		.expect("Expected yield for fn match")
+		.call_direct(Vec::new(), None, Rc::clone(&match_scope) as ScopeRef)
 }

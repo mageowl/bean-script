@@ -7,3 +7,9 @@ repeat(10): {
 		print("The number", str(n2), "is greater than 0.5")
 	}
 }
+
+print(match("joe"): {
+	case("joe"): "its joe"
+	case("maddy"): "its maddy"
+	default: "its not joe or maddy"
+})

@@ -9,7 +9,7 @@ use super::{
 	Scope, ScopeRef,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum IfState {
 	Started,
 	Captured,

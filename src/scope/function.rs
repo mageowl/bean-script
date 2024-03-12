@@ -88,6 +88,7 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: ScopeRef,
 		return_scope: bool,
+		abstract_call_scope: bool,
 		from_scope: Option<ScopeRef>,
 	) -> Data {
 		match self {
@@ -101,7 +102,11 @@ impl Function {
 
 				evaluator::evaluate_verbose(
 					body,
-					Rc::new(RefCell::new(call_scope)),
+					if abstract_call_scope {
+						Rc::new(RefCell::new(call_scope))
+					} else {
+						scope
+					},
 					return_scope,
 					None,
 				)
@@ -138,7 +143,7 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: ScopeRef,
 	) -> Data {
-		self.call_verbose(args, yield_fn, scope, false, None)
+		self.call_verbose(args, yield_fn, scope, false, true, None)
 	}
 
 	pub fn call_scope(
@@ -147,7 +152,7 @@ impl Function {
 		yield_fn: Option<Function>,
 		scope: ScopeRef,
 	) -> Data {
-		self.call_verbose(args, yield_fn, scope, true, None)
+		self.call_verbose(args, yield_fn, scope, true, false, None)
 	}
 
 	pub fn call_from(
@@ -157,7 +162,16 @@ impl Function {
 		scope: ScopeRef,
 		from_scope: Option<ScopeRef>,
 	) -> Data {
-		self.call_verbose(args, yield_fn, scope, false, from_scope)
+		self.call_verbose(args, yield_fn, scope, false, true, from_scope)
+	}
+
+	pub fn call_direct(
+		&self,
+		args: Vec<Data>,
+		yield_fn: Option<Function>,
+		scope: ScopeRef,
+	) -> Data {
+		self.call_verbose(args, yield_fn, scope, false, false, None)
 	}
 }
 
