@@ -37,3 +37,10 @@ macro_rules! as_mut_type {
 		}
 	};
 }
+
+#[macro_export]
+macro_rules! scope_ref {
+	($scope: expr) => {
+		Rc::new(RefCell::new($scope))
+	};
+}

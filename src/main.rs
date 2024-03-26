@@ -10,6 +10,7 @@ use f_script::{
 	modules::{runtime, Module},
 	parser,
 	scope::{block_scope::BlockScope, ScopeRef},
+	scope_ref,
 };
 
 const HELP_MSG: &str = "Function-based language interpreter.
@@ -48,12 +49,9 @@ fn main() {
 			return;
 		}
 
-		let runtime = Module::new(runtime::construct);
-		let runtime_scope = Rc::new(RefCell::new(runtime));
-		let scope_ref = Rc::new(RefCell::new(BlockScope::new(Some(
-			runtime_scope as ScopeRef,
-		))));
-		evaluator::evaluate(&tree, scope_ref);
+		let runtime: ScopeRef = scope_ref!(Module::new(runtime::construct));
+		let program_scope = BlockScope::new(Some(runtime));
+		evaluator::evaluate(&tree, scope_ref!(program_scope));
 	}
 }
 
