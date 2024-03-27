@@ -1,8 +1,6 @@
 use std::{
-	cell::RefCell,
 	env::{self, Args},
 	fs,
-	rc::Rc,
 };
 
 use f_script::{
@@ -10,7 +8,7 @@ use f_script::{
 	modules::{runtime, Module},
 	parser,
 	scope::{block_scope::BlockScope, ScopeRef},
-	scope_ref,
+	util::make_ref,
 };
 
 const HELP_MSG: &str = "Function-based language interpreter.
@@ -49,9 +47,9 @@ fn main() {
 			return;
 		}
 
-		let runtime: ScopeRef = scope_ref!(Module::new(runtime::construct));
+		let runtime: ScopeRef = make_ref(Module::new(runtime::construct));
 		let program_scope = BlockScope::new(Some(runtime));
-		evaluator::evaluate(&tree, scope_ref!(program_scope));
+		evaluator::evaluate(&tree, make_ref(program_scope));
 	}
 }
 

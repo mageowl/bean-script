@@ -17,10 +17,7 @@ pub struct Module {
 }
 
 impl Module {
-	pub fn new<F>(constructor: F) -> Self
-	where
-		F: FnOnce(&mut Module),
-	{
+	pub fn new(constructor: fn(&mut Module)) -> Self {
 		let mut module = Module {
 			functions: HashMap::new(),
 			submodules: HashMap::new(),
