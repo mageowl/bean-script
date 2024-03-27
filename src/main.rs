@@ -11,19 +11,23 @@ use f_script::{
 	util::make_ref,
 };
 
+mod interactive_terminal;
+
 const HELP_MSG: &str = "Function-based language interpreter.
 Usage: f-script [OPTIONS] [PATH]
 
 Options:
 	-p, --parse     Parse file without evaluating it.
 	-l, --tokenize  Tokenize file without parsing it.
-	-h, --help      Print this message and exit.";
+	-h, --help      Print this message and exit.
+	-i, --stdin     Interpret input from stdin";
 
 struct CliArgs {
 	no_args: bool,
 	f_help: bool,
 	f_parse: bool,
 	f_tokenize: bool,
+	f_stdin: bool,
 	path: Option<String>,
 }
 
@@ -31,6 +35,11 @@ fn main() {
 	let args = parse_args(env::args());
 	if args.no_args || args.f_help {
 		println!("{}", HELP_MSG);
+	} else if args.f_stdin {
+		let result = interactive_terminal::open();
+		if let rustyline::Result::Err(err) = result {
+			panic!("Failed to parse stdin: {:?}", err)
+		}
 	} else {
 		let file = fs::read_to_string(args.path.expect("Expected path to file."))
 			.expect("Failed to open file");
@@ -76,5 +85,7 @@ fn parse_args(mut args: Args) -> CliArgs {
 			|| flags.contains(&String::from("-p")),
 		f_tokenize: flags.contains(&String::from("--tokenize"))
 			|| flags.contains(&String::from("-l")),
+		f_stdin: flags.contains(&String::from("--stdin"))
+			|| flags.contains(&String::from("-i")),
 	}
 }

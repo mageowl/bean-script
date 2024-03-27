@@ -13,3 +13,8 @@ print(match("joe"): {
 	case("maddy"): "its maddy"
 	default: "its not joe or maddy"
 })
+
+while: {
+	print("looping")
+	return(gt(rand, 0.5))
+}

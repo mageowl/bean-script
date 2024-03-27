@@ -92,6 +92,7 @@ pub fn construct(module: &mut Module) {
 		.function("else", fn_else)
 		.function("ifv", fn_ifv)
 		.function("repeat", fn_repeat)
+		.function("while", fn_while)
 		.function("match", fn_match);
 }
 
@@ -618,6 +619,23 @@ fn fn_repeat(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Da
 
 	for _ in 0..(*n as usize) {
 		yield_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
+	}
+
+	Data::None
+}
+
+fn fn_while(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+	let yield_fn = yield_fn.unwrap_or_else(|| panic!("Expected yield block for fn repeat."));
+
+	loop {
+		let v = yield_fn.call_direct(
+			Vec::new(),
+			None,
+			Rc::clone(&scope)
+		);
+		if Data::Boolean(false) == v {
+			break;
+		}
 	}
 
 	Data::None
