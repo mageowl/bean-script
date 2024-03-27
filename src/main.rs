@@ -3,7 +3,7 @@ use std::{
 	fs,
 };
 
-use f_script::{
+use bean_script::{
 	evaluator, lexer,
 	modules::{runtime, Module},
 	parser,
@@ -14,7 +14,7 @@ use f_script::{
 mod interactive_terminal;
 
 const HELP_MSG: &str = "Function-based language interpreter.
-Usage: f-script [OPTIONS] [PATH]
+Usage: beans [OPTIONS] [PATH]
 
 Options:
 	-p, --parse     Parse file without evaluating it.

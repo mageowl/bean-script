@@ -1,6 +1,6 @@
 use std::{panic::catch_unwind, rc::Rc, sync::Mutex};
 
-use f_script::{
+use bean_script::{
 	data::Data,
 	evaluator, lexer,
 	modules::{runtime, Module},

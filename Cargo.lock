@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "bean-script"
+version = "0.1.1"
+dependencies = [
+ "rand",
+ "rustyline",
+]
+
+[[package]]
 name = "bitflags"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -50,14 +58,6 @@ name = "error-code"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0474425d51df81997e2f90a21591180b38eccf27292d755f3e30750225c175b"
-
-[[package]]
-name = "f-script"
-version = "0.1.0"
-dependencies = [
- "rand",
- "rustyline",
-]
 
 [[package]]
 name = "fd-lock"
