@@ -4,6 +4,7 @@ use crate::{
     arg_check,
     as_mut_type,
     data::{ Data, DataType },
+    modules::CustomModule,
     scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
 };
 
@@ -18,6 +19,8 @@ pub fn construct(module: &mut Module) {
         .function("del", fn_del)
         .function("call", fn_call)
         .function("exists", fn_exists)
+        .function("export", fn_export)
+        .function("submod", fn_submod)
         .function("use", fn_use);
 
     /* SCOPE */
@@ -166,6 +169,47 @@ fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Memory { scope, name } =>
 		"Expected memory for fn exists, but instead got {}.");
     Data::Boolean(scope.borrow().has_function(name))
+}
+
+fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data {
+    let mut binding = RefCell::borrow_mut(&to_scope);
+    let module = as_mut_type!(binding => CustomModule, "Tried to export from a non-module scope.");
+    arg_check!(&args[0], Data::Memory { scope, name } => "Expected memory for fn export, but instead got {}.");
+
+    let target = RefCell::borrow(scope)
+        .get_function(name)
+        .unwrap_or_else(|| panic!("Tried to export empty memory {}.", name));
+
+    if let Function::Variable { constant: false, .. } = target {
+        panic!("Tried to export non-constant value {}.", name);
+    }
+
+    module.exported_functions.insert(
+        args
+            .get(1)
+            .map(|a| {
+                match a {
+                    Data::String(s) => s,
+                    _ =>
+                        panic!(
+                            "Expected string for fn export, but instead got {}.",
+                            a.get_type().to_string()
+                        ),
+                }
+            })
+            .unwrap_or(name)
+            .clone(),
+        target
+    );
+    Data::None
+}
+
+fn fn_submod(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+    Data::None
+}
+
+fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+    Data::None
 }
 
 //

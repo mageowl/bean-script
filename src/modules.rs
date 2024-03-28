@@ -102,17 +102,22 @@ impl Debug for Module {
     }
 }
 
+#[derive(Debug)]
 pub struct CustomModule {
     local_functions: HashMap<String, Function>,
+    runtime: ScopeRef,
+    pub file_path: String,
     pub if_state: IfState,
     pub exported_functions: HashMap<String, Function>,
     pub submodules: HashMap<String, CustomModule>,
 }
 
 impl CustomModule {
-    pub fn new() {
+    pub fn new(runtime: ScopeRef, file_path: String) -> Self {
         CustomModule {
             local_functions: HashMap::new(),
+            runtime,
+            file_path,
             if_state: IfState::Captured,
             exported_functions: HashMap::new(),
             submodules: HashMap::new(),
@@ -122,29 +127,12 @@ impl CustomModule {
 
 impl Scope for CustomModule {
     fn has_function(&self, name: &str) -> bool {
-        if self.local_functions.contains_key(name) {
-            true
-        } else if let Some(parent) = &self.parent {
-            let borrow: &RefCell<dyn Scope> = parent.borrow();
-            borrow.borrow().has_function(name)
-        } else {
-            false
-        }
+        self.local_functions.contains_key(name)
     }
 
     fn get_function(&self, name: &str) -> Option<Function> {
         let function = self.local_functions.get(name);
-        if function.is_some() {
-            function.map(|x| x.clone())
-        } else if let Some(parent) = &self.parent {
-            let borrow: &RefCell<dyn Scope> = parent.borrow();
-            borrow
-                .borrow()
-                .get_function(name)
-                .map(|x| x.clone())
-        } else {
-            None
-        }
+        function.map(|x| x.clone()).or_else(|| RefCell::borrow(&self.runtime).get_function(name))
     }
 
     fn set_function(&mut self, name: &str, function: Function) {
@@ -160,15 +148,15 @@ impl Scope for CustomModule {
     }
 
     fn parent(&self) -> Option<ScopeRef> {
-        self.parent.as_ref().map(|x| Rc::clone(x))
+        None
     }
 
     fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
-        if let Some(p) = &self.parent { RefCell::borrow(&p).get_call_scope() } else { None }
+        None
     }
 
-    fn set_return_value(&mut self, value: Data) {
-        self.return_value = value;
+    fn set_return_value(&mut self, _v: Data) {
+        panic!("Attempted to return from root scope.");
     }
 
     fn get_function_list(&self) -> HashMap<String, Function> {

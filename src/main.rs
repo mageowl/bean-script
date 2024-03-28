@@ -1,11 +1,11 @@
-use std::{ env::{ self, Args }, fs };
+use std::{ env::{ self, Args }, fs, path::PathBuf };
 
 use bean_script::{
     evaluator,
     lexer,
-    modules::{ runtime, Module },
+    modules::{ runtime, CustomModule, Module },
     parser,
-    scope::{ block_scope::BlockScope, ScopeRef },
+    scope::ScopeRef,
     util::make_ref,
 };
 
@@ -40,9 +40,8 @@ fn main() {
             panic!("Failed to parse stdin: {:?}", err)
         }
     } else {
-        let file = fs
-            ::read_to_string(args.path.expect("Expected path to file."))
-            .expect("Failed to open file");
+        let path_str = args.path.expect("Expected path to file.");
+        let file = fs::read_to_string(path_str.clone()).expect("Failed to open file");
 
         let tokens = lexer::tokenize(file);
         if args.f_tokenize {
@@ -56,8 +55,14 @@ fn main() {
             return;
         }
 
+        let mut dir_path = PathBuf::from(path_str);
+        dir_path.pop();
+
         let runtime: ScopeRef = make_ref(Module::new(runtime::construct));
-        let program_scope = BlockScope::new(Some(runtime));
+        let program_scope = CustomModule::new(
+            runtime,
+            dir_path.to_str().expect("Invalid unicode in path.").to_string()
+        );
         evaluator::evaluate(&tree, make_ref(program_scope));
     }
 }
