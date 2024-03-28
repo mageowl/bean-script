@@ -17,7 +17,8 @@ pub fn construct(module: &mut Module) {
         .function("const", fn_const)
         .function("del", fn_del)
         .function("call", fn_call)
-        .function("exists", fn_exists);
+        .function("exists", fn_exists)
+        .function("use", fn_use);
 
     /* SCOPE */
     module

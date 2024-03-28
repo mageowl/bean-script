@@ -1,6 +1,9 @@
 use std::{ any::Any, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc };
 
-use crate::{ data::Data, scope::{ function::{ CallScope, Function }, Scope, ScopeRef } };
+use crate::{
+    data::Data,
+    scope::{ block_scope::IfState, function::{ CallScope, Function }, Scope, ScopeRef },
+};
 
 pub mod collections;
 pub mod runtime;
@@ -98,3 +101,23 @@ impl Debug for Module {
             .finish()
     }
 }
+
+pub struct CustomModule {
+    local_functions: HashMap<String, Function>,
+    pub if_state: IfState,
+    pub match_value: Option<Data>,
+    pub exported_functions: HashMap<String, Function>,
+    pub submodules: HashMap<String, CustomModule>,
+}
+
+impl CustomModule {
+    pub fn new() {
+        CustomModule {
+            local_functions: HashMap::new(),
+            if_state: IfState::Captured,
+            match_value: None,
+        }
+    }
+}
+
+impl Scope for CustomModule {}
