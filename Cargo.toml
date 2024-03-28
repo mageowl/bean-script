@@ -1,6 +1,14 @@
 [package]
 name = "bean-script"
 version = "0.1.1"
+authors = ["mageowl"]
+description = "Simple scripting language for easy use in other projects."
+readme = "README.md"
+homepage = "https://mageowlstudios.com/bean-script"
+repository = "https://github.com/mageowl/bean-script"
+license = "MIT"
+keywords = ["language"]
+categories = ["parser-implementations"]
 edition = "2021"
 
 [[bin]]
