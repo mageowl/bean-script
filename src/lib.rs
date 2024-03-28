@@ -8,5 +8,5 @@ pub mod lexer;
 pub mod parser;
 
 pub fn interpret() {
-	todo!()
+    todo!()
 }
