@@ -17,7 +17,6 @@ pub struct BlockScope {
     did_break: bool,
     pub return_value: Data,
     pub if_state: IfState,
-    pub match_value: Option<Data>,
 }
 
 impl BlockScope {
@@ -28,7 +27,6 @@ impl BlockScope {
             return_value: Data::None,
             did_break: false,
             if_state: IfState::Finished,
-            match_value: None,
         }
     }
 
@@ -49,7 +47,6 @@ impl Debug for BlockScope {
             .field("did_break", &self.did_break)
             .field("return_value", &self.return_value)
             .field("if_state", &self.if_state)
-            .field("match_value", &self.match_value)
             .finish()
     }
 }
