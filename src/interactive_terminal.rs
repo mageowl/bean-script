@@ -4,7 +4,7 @@ use bean_script::{
     data::Data,
     evaluator,
     lexer,
-    modules::{ runtime, Module },
+    modules::{ runtime, BuiltinModule },
     parser::{ self, Node },
     scope::{ block_scope::BlockScope, ScopeRef },
     util::make_ref,
@@ -12,7 +12,7 @@ use bean_script::{
 use rustyline::{ error::ReadlineError, DefaultEditor };
 
 pub fn open() -> rustyline::Result<()> {
-    let runtime: ScopeRef = make_ref(Module::new(runtime::construct));
+    let runtime: ScopeRef = make_ref(BuiltinModule::new(runtime::construct));
     let program_scope: ScopeRef = make_ref(BlockScope::new(Some(runtime)));
     let mutex = Mutex::new(program_scope);
     let mut rl = DefaultEditor::new()?;

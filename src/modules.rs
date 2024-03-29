@@ -1,4 +1,4 @@
-use std::{ any::Any, cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc };
+use std::{ any::Any, cell::RefCell, collections::HashMap, fmt::Debug, path::PathBuf, rc::Rc };
 
 use crate::{
     data::Data,
@@ -7,15 +7,18 @@ use crate::{
 
 pub mod collections;
 pub mod runtime;
+pub mod registry;
 
-pub struct Module {
+pub trait Module: Scope {}
+
+pub struct BuiltinModule {
     functions: HashMap<String, Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>>,
-    submodules: HashMap<String, Rc<RefCell<Module>>>,
+    submodules: HashMap<String, Rc<RefCell<BuiltinModule>>>,
 }
 
-impl Module {
-    pub fn new(constructor: fn(&mut Module)) -> Self {
-        let mut module = Module {
+impl BuiltinModule {
+    pub fn new(constructor: fn(&mut BuiltinModule)) -> Self {
+        let mut module = BuiltinModule {
             functions: HashMap::new(),
             submodules: HashMap::new(),
         };
@@ -31,9 +34,9 @@ impl Module {
     }
 
     pub fn submodule<F>(&mut self, name: &str, constructor: F) -> &mut Self
-        where F: FnOnce(&mut Module)
+        where F: FnOnce(&mut BuiltinModule)
     {
-        let mut module = Module {
+        let mut module = BuiltinModule {
             functions: HashMap::new(),
             submodules: HashMap::new(),
         };
@@ -43,7 +46,7 @@ impl Module {
     }
 }
 
-impl Scope for Module {
+impl Scope for BuiltinModule {
     fn has_function(&self, name: &str) -> bool {
         self.functions.contains_key(name) || self.submodules.contains_key(name)
     }
@@ -55,7 +58,7 @@ impl Scope for Module {
                 callback: Rc::clone(x),
             })
             .or_else(|| {
-                self.submodules.get(name).map(|x: &Rc<RefCell<Module>>| {
+                self.submodules.get(name).map(|x: &Rc<RefCell<BuiltinModule>>| {
                     Function::Variable {
                         value: Data::Scope(Rc::clone(x) as ScopeRef),
                         constant: true,
@@ -93,7 +96,7 @@ impl Scope for Module {
     }
 }
 
-impl Debug for Module {
+impl Debug for BuiltinModule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Module")
             .field("functions", &self.functions.keys())
@@ -102,18 +105,20 @@ impl Debug for Module {
     }
 }
 
+impl Module for BuiltinModule {}
+
 #[derive(Debug)]
 pub struct CustomModule {
     local_functions: HashMap<String, Function>,
     runtime: ScopeRef,
-    pub file_path: String,
+    pub file_path: PathBuf,
     pub if_state: IfState,
     pub exported_functions: HashMap<String, Function>,
     pub submodules: HashMap<String, CustomModule>,
 }
 
 impl CustomModule {
-    pub fn new(runtime: ScopeRef, file_path: String) -> Self {
+    pub fn new(runtime: ScopeRef, file_path: PathBuf) -> Self {
         CustomModule {
             local_functions: HashMap::new(),
             runtime,
@@ -170,3 +175,5 @@ impl Scope for CustomModule {
         self
     }
 }
+
+impl Module for CustomModule {}

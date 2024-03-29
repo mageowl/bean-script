@@ -3,7 +3,7 @@ use std::{ env::{ self, Args }, fs, path::PathBuf };
 use bean_script::{
     evaluator,
     lexer,
-    modules::{ runtime, CustomModule, Module },
+    modules::{ runtime, CustomModule, BuiltinModule },
     parser,
     scope::ScopeRef,
     util::make_ref,
@@ -58,11 +58,8 @@ fn main() {
         let mut dir_path = PathBuf::from(path_str);
         dir_path.pop();
 
-        let runtime: ScopeRef = make_ref(Module::new(runtime::construct));
-        let program_scope = CustomModule::new(
-            runtime,
-            dir_path.to_str().expect("Invalid unicode in path.").to_string()
-        );
+        let runtime: ScopeRef = make_ref(BuiltinModule::new(runtime::construct));
+        let program_scope = CustomModule::new(runtime, dir_path);
         evaluator::evaluate(&tree, make_ref(program_scope));
     }
 }

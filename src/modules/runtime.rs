@@ -8,9 +8,9 @@ use crate::{
     scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
 };
 
-use super::{ collections::{ List, Map }, Module };
+use super::{ collections::{ List, Map }, BuiltinModule };
 
-pub fn construct(module: &mut Module) {
+pub fn construct(module: &mut BuiltinModule) {
     /* MEMORY */
     module
         .function("fn", fn_fn)
