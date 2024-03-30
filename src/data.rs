@@ -75,19 +75,6 @@ pub enum Data {
 }
 
 impl Data {
-    pub fn to_string(&self) -> String {
-        match self {
-            Data::Boolean(v) => {
-                if *v { String::from("true") } else { String::from("false") }
-            }
-            Data::Number(v) => v.to_string(),
-            Data::String(s) => s.clone(),
-            Data::Memory { scope: _, name } => format!("<{}>", name),
-            Data::Scope(scope) => RefCell::borrow(&scope).to_string(),
-            Data::None => String::from("[none]"),
-        }
-    }
-
     pub fn get_type(&self) -> DataType {
         match self {
             Data::Boolean(_) => DataType::Boolean,
@@ -115,6 +102,21 @@ impl PartialEq for Data {
 impl Default for Data {
     fn default() -> Self {
         Data::None
+    }
+}
+
+impl ToString for Data {
+    fn to_string(&self) -> String {
+        match self {
+            Data::Boolean(v) => {
+                if *v { String::from("true") } else { String::from("false") }
+            }
+            Data::Number(v) => v.to_string(),
+            Data::String(s) => s.clone(),
+            Data::Memory { scope: _, name } => format!("<{}>", name),
+            Data::Scope(scope) => RefCell::borrow(&scope).to_string(),
+            Data::None => String::from("[none]"),
+        }
     }
 }
 

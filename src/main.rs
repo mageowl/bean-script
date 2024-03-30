@@ -1,13 +1,6 @@
 use std::{ env::{ self, Args }, fs, path::PathBuf };
 
-use bean_script::{
-    evaluator,
-    lexer,
-    modules::{ runtime, CustomModule, BuiltinModule },
-    parser,
-    scope::ScopeRef,
-    util::make_ref,
-};
+use bean_script::{ evaluator, lexer, modules::{ registry, CustomModule }, parser, util::make_ref };
 
 mod interactive_terminal;
 
@@ -58,7 +51,7 @@ fn main() {
         let mut dir_path = PathBuf::from(path_str);
         dir_path.pop();
 
-        let runtime: ScopeRef = make_ref(BuiltinModule::new(runtime::construct));
+        let runtime = registry::instance().runtime();
         let program_scope = CustomModule::new(runtime, dir_path);
         evaluator::evaluate(&tree, make_ref(program_scope));
     }

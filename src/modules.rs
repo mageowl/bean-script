@@ -3,14 +3,17 @@ use std::{ any::Any, cell::RefCell, collections::HashMap, fmt::Debug, path::Path
 use crate::{
     data::Data,
     scope::{ block_scope::IfState, function::{ CallScope, Function }, Scope, ScopeRef },
+    util::MutRc,
 };
 
-pub mod collections;
-pub mod runtime;
+pub mod bean_std;
 pub mod registry;
 
-pub trait Module: Scope {}
+pub trait Module: Scope {
+    fn get_submodule(&self, name: &str) -> Option<MutRc<dyn Module>>;
+}
 
+#[derive(Clone)]
 pub struct BuiltinModule {
     functions: HashMap<String, Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>>,
     submodules: HashMap<String, Rc<RefCell<BuiltinModule>>>,
@@ -105,21 +108,25 @@ impl Debug for BuiltinModule {
     }
 }
 
-impl Module for BuiltinModule {}
+impl Module for BuiltinModule {
+    fn get_submodule(&self, name: &str) -> Option<MutRc<dyn Module>> {
+        self.submodules.get(name).map(|rc| Rc::clone(rc) as MutRc<dyn Module>)
+    }
+}
 
 #[derive(Debug)]
 pub struct CustomModule {
     local_functions: HashMap<String, Function>,
-    runtime: ScopeRef,
+    runtime: Rc<RefCell<BuiltinModule>>,
     pub file_path: PathBuf,
     pub if_state: IfState,
     pub exported_functions: HashMap<String, Function>,
-    pub submodules: HashMap<String, CustomModule>,
+    pub submodules: HashMap<String, MutRc<CustomModule>>,
 }
 
 impl CustomModule {
-    pub fn new(runtime: ScopeRef, file_path: PathBuf) -> Self {
-        CustomModule {
+    pub fn new(runtime: Rc<RefCell<BuiltinModule>>, file_path: PathBuf) -> Self {
+        Self {
             local_functions: HashMap::new(),
             runtime,
             file_path,
@@ -127,6 +134,11 @@ impl CustomModule {
             exported_functions: HashMap::new(),
             submodules: HashMap::new(),
         }
+    }
+
+    // courtesy of [stack overflow](https://stackoverflow.com/a/64400756)
+    fn to_scope(it: Rc<RefCell<Self>>) -> ScopeRef {
+        it
     }
 }
 
@@ -176,4 +188,8 @@ impl Scope for CustomModule {
     }
 }
 
-impl Module for CustomModule {}
+impl Module for CustomModule {
+    fn get_submodule(&self, name: &str) -> Option<Rc<RefCell<dyn Module>>> {
+        self.submodules.get(name).map(|rc| Rc::clone(rc) as MutRc<dyn Module>)
+    }
+}

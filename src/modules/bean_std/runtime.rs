@@ -8,7 +8,7 @@ use crate::{
     scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
 };
 
-use super::{ collections::{ List, Map }, BuiltinModule };
+use super::{ collections::{ List, Map }, super::BuiltinModule };
 
 pub fn construct(module: &mut BuiltinModule) {
     /* MEMORY */

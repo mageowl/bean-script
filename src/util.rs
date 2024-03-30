@@ -45,3 +45,5 @@ macro_rules! as_mut_type {
 pub fn make_ref<T: Scope + 'static>(scope: T) -> ScopeRef {
     Rc::new(RefCell::new(scope))
 }
+
+pub type MutRc<T> = Rc<RefCell<T>>;

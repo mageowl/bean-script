@@ -10,5 +10,7 @@
 		"tab.activeBorder": "#6b00be"
 	},
 	"peacock.remoteColor": "#4e008b",
-	"cSpell.words": ["rustyline"]
+	"cSpell.words": ["rustyline"],
+	"rust-analyzer.linkedProjects": ["./Cargo.toml", "./Cargo.toml"],
+	"rust-analyzer.showUnlinkedFileNotification": false
 }

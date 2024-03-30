@@ -4,7 +4,7 @@ use bean_script::{
     data::Data,
     evaluator,
     lexer,
-    modules::{ runtime, BuiltinModule },
+    modules::{ registry, BuiltinModule },
     parser::{ self, Node },
     scope::{ block_scope::BlockScope, ScopeRef },
     util::make_ref,
