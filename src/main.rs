@@ -1,6 +1,12 @@
 use std::{ env::{ self, Args }, fs, path::PathBuf };
 
-use bean_script::{ evaluator, lexer, modules::{ registry, CustomModule }, parser, util::make_ref };
+use bean_script::{
+    evaluator,
+    lexer,
+    modules::{ registry::ModuleRegistry, CustomModule },
+    parser,
+    util::make_ref,
+};
 
 mod interactive_terminal;
 
@@ -51,8 +57,8 @@ fn main() {
         let mut dir_path = PathBuf::from(path_str);
         dir_path.pop();
 
-        let runtime = registry::instance().runtime();
-        let program_scope = CustomModule::new(runtime, dir_path);
+        let registry = make_ref(ModuleRegistry::new());
+        let program_scope = CustomModule::new(registry, dir_path);
         evaluator::evaluate(&tree, make_ref(program_scope));
     }
 }

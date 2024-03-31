@@ -18,7 +18,9 @@ pub trait Scope: Debug {
         None
     }
 
-    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>>;
+    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
+        self.parent().map_or(None, |p| p.borrow().get_call_scope())
+    }
     fn set_return_value(&mut self, value: Data);
     fn get_function_list(&self) -> HashMap<String, Function>;
 

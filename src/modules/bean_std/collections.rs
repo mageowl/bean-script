@@ -6,7 +6,6 @@ use std::{ cell::RefCell, rc::Rc };
 use crate::data::{ Data, StaticData };
 use crate::scope::ScopeRef;
 use crate::{ arg_check, as_mut_type, as_type };
-use crate::scope::function::CallScope;
 use crate::scope::{ function::Function, Scope };
 
 #[derive(Debug)]
@@ -194,10 +193,6 @@ impl Scope for List {
     fn set_function(&mut self, _n: &str, _f: Function) {}
 
     fn delete_function(&mut self, _n: &str) {}
-
-    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
-        if let Some(p) = &self.parent { RefCell::borrow(p).get_call_scope() } else { None }
-    }
 
     fn set_return_value(&mut self, _value: Data) {}
     fn get_function_list(&self) -> HashMap<String, Function> {
@@ -396,10 +391,6 @@ impl Scope for Map {
 
     fn set_function(&mut self, _name: &str, _function: Function) {}
     fn delete_function(&mut self, _name: &str) {}
-
-    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
-        if let Some(p) = &self.parent { RefCell::borrow(p).get_call_scope() } else { None }
-    }
 
     fn set_return_value(&mut self, _value: Data) {}
     fn get_function_list(&self) -> HashMap<String, Function> {

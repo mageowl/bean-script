@@ -2,7 +2,7 @@ use std::{ any::Any, borrow::Borrow, cell::RefCell, collections::HashMap, fmt::D
 
 use crate::data::Data;
 
-use super::{ function::{ CallScope, Function }, Scope, ScopeRef };
+use super::{ function::Function, Scope, ScopeRef };
 
 #[derive(Debug, Clone, Copy)]
 pub enum IfState {
@@ -92,10 +92,6 @@ impl Scope for BlockScope {
 
     fn parent(&self) -> Option<ScopeRef> {
         self.parent.as_ref().map(|x| Rc::clone(x))
-    }
-
-    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
-        if let Some(p) = &self.parent { RefCell::borrow(&p).get_call_scope() } else { None }
     }
 
     fn set_return_value(&mut self, value: Data) {

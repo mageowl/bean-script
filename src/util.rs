@@ -1,7 +1,5 @@
 use std::{ cell::RefCell, rc::Rc };
 
-use crate::scope::{ Scope, ScopeRef };
-
 #[macro_export]
 macro_rules! arg_check {
     ($arg:expr, $t:pat => $e:literal) => {
@@ -42,7 +40,7 @@ macro_rules! as_mut_type {
     };
 }
 
-pub fn make_ref<T: Scope + 'static>(scope: T) -> ScopeRef {
+pub fn make_ref<T>(scope: T) -> MutRc<T> {
     Rc::new(RefCell::new(scope))
 }
 

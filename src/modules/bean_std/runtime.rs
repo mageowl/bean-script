@@ -728,8 +728,8 @@ impl Scope for MatchScope {
         RefCell::borrow_mut(&self.parent).delete_function(name)
     }
 
-    fn get_call_scope(&self) -> Option<Rc<RefCell<crate::scope::function::CallScope>>> {
-        RefCell::borrow(&self.parent).get_call_scope()
+    fn parent(&self) -> Option<ScopeRef> {
+        Some(Rc::clone(&self.parent))
     }
 
     fn set_return_value(&mut self, _value: Data) {}

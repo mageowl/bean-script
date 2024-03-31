@@ -6,8 +6,11 @@ use crate::{
     util::MutRc,
 };
 
+use self::registry::ModuleRegistry;
+
 pub mod bean_std;
 pub mod registry;
+pub mod loader;
 
 pub trait Module: Scope {
     fn get_submodule(&self, name: &str) -> Option<MutRc<dyn Module>>;
@@ -77,10 +80,6 @@ impl Scope for BuiltinModule {
         panic!("Cannot return from module.")
     }
 
-    fn get_call_scope(&self) -> Option<Rc<RefCell<CallScope>>> {
-        None
-    }
-
     fn get_function_list(&self) -> HashMap<String, Function> {
         let mut map = HashMap::new();
         for (k, fun) in &self.functions {
@@ -117,7 +116,7 @@ impl Module for BuiltinModule {
 #[derive(Debug)]
 pub struct CustomModule {
     local_functions: HashMap<String, Function>,
-    runtime: Rc<RefCell<BuiltinModule>>,
+    registry: MutRc<ModuleRegistry>,
     pub file_path: PathBuf,
     pub if_state: IfState,
     pub exported_functions: HashMap<String, Function>,
@@ -125,10 +124,10 @@ pub struct CustomModule {
 }
 
 impl CustomModule {
-    pub fn new(runtime: Rc<RefCell<BuiltinModule>>, file_path: PathBuf) -> Self {
+    pub fn new(registry: MutRc<ModuleRegistry>, file_path: PathBuf) -> Self {
         Self {
             local_functions: HashMap::new(),
-            runtime,
+            registry,
             file_path,
             if_state: IfState::Captured,
             exported_functions: HashMap::new(),
@@ -149,7 +148,9 @@ impl Scope for CustomModule {
 
     fn get_function(&self, name: &str) -> Option<Function> {
         let function = self.local_functions.get(name);
-        function.map(|x| x.clone()).or_else(|| RefCell::borrow(&self.runtime).get_function(name))
+        function
+            .map(|x| x.clone())
+            .or_else(|| RefCell::borrow(&self.registry.borrow().runtime()).get_function(name))
     }
 
     fn set_function(&mut self, name: &str, function: Function) {
