@@ -1,4 +1,4 @@
-let(<my_list>): l("car", "bus", "tree")
+let(<my_list>): list("car", "bus", "tree")
 my_list.2("train")
 print(my_list)
 
@@ -7,7 +7,7 @@ print(my_list.for(<transit>, <i>): {
 	return(i)
 })
 
-let(<my_map>): m(
+let(<my_map>): map(
 	"car",   20,
 	"bus",   40,
 	"train", 15,

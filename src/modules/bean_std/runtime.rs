@@ -76,9 +76,7 @@ pub fn construct(module: &mut BuiltinModule) {
     /* COLLECTIONS */
     module
         .function("list", fn_list)
-        .function("l", fn_list)
-        .function("map", fn_map)
-        .function("m", fn_map);
+        .function("map", fn_map);
 
     /* LOGIC */
     module

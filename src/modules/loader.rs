@@ -19,7 +19,7 @@ pub fn get(
 		get_local(
 			&registry.borrow().local,
 			Rc::clone(&registry),
-			PathBuf::from(path.clone().trim_start_matches("./")),
+			PathBuf::from(path.clone() + ".bean"),
 		)
 		.map(|m| m as MutRc<dyn Module>)
 	} else {
