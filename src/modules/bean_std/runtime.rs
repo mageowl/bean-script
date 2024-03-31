@@ -27,7 +27,7 @@ pub fn construct(module: &mut BuiltinModule) {
     module
         .function("p", fn_p)
         .function("args", fn_args)
-        .function("yield", fn_yield)
+        .function("body", fn_body)
         .function("return", fn_return)
         .function("pass", fn_pass)
         .function("self", fn_self)
@@ -70,7 +70,7 @@ pub fn construct(module: &mut BuiltinModule) {
     module
         .function("str", fn_str)
         .function("num", fn_num)
-        .function("mem", fn_mem)
+        .function("name", fn_name)
         .function("type", fn_type);
 
     /* COLLECTIONS */
@@ -102,21 +102,21 @@ pub fn construct(module: &mut BuiltinModule) {
 // NAME
 //
 
-fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: ScopeRef) -> Data {
+fn fn_fn(args: Vec<Data>, body_fn: Option<Function>, _s: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Name { scope, name } => 
 		"Expected name as name of function, but instead got {}.");
-    let yield_fn = yield_fn.unwrap_or_else(|| panic!("To define a function, add a yield block."));
+    let body_fn = body_fn.unwrap_or_else(|| panic!("To define a function, add a body block."));
 
-    RefCell::borrow_mut(&scope).set_function(name, yield_fn);
+    RefCell::borrow_mut(&scope).set_function(name, body_fn);
 
     Data::None
 }
 
-fn fn_let(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
+fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Name { scope, name } => 
 		"Expected name as name of variable, but instead got {}.");
-    let value = yield_fn
-        .unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+    let value = body_fn
+        .unwrap_or_else(|| panic!("To define a variable, add a body block."))
         .call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
     RefCell::borrow_mut(scope).set_function(name, Function::Variable {
@@ -128,11 +128,11 @@ fn fn_let(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Dat
     Data::None
 }
 
-fn fn_const(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
+fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Name { scope, name } => 
 		"Expected name as name of constant, but instead got {}.");
-    let value = yield_fn
-        .unwrap_or_else(|| panic!("To define a constant, add a yield block."))
+    let value = body_fn
+        .unwrap_or_else(|| panic!("To define a constant, add a body block."))
         .call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
     RefCell::borrow_mut(scope).set_function(name, Function::Variable {
@@ -152,7 +152,7 @@ fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
     Data::None
 }
 
-fn fn_call(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
+fn fn_call(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Name { scope, name } =>
 		"Expected name for fn call, but instead got {}.");
     let function = scope
@@ -160,7 +160,7 @@ fn fn_call(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Da
         .get_function(name)
         .unwrap_or_else(|| { panic!("Unknown value or function for fn call '<{}>'.", &name) });
 
-    function.call(args[1..].to_vec(), yield_fn, o_scope)
+    function.call(args[1..].to_vec(), body_fn, o_scope)
 }
 
 fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
@@ -268,15 +268,15 @@ fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     )
 }
 
-fn fn_yield(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_body(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     let call_scope = &scope
         .borrow()
         .get_call_scope()
-        .expect("Cannot call fn yield outside a call scope.");
+        .expect("Cannot call fn body outside a call scope.");
     let call_scope = RefCell::borrow(&call_scope);
-    Option::as_ref(call_scope.yield_fn().as_ref())
-        .expect("Expected yield function.")
-        .call(args, yield_fn, call_scope.from_scope())
+    Option::as_ref(call_scope.body_fn().as_ref())
+        .expect("Expected body function.")
+        .call(args, body_fn, call_scope.from_scope())
 }
 
 fn fn_return(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
@@ -502,7 +502,7 @@ fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
         Data::None => Data::None,
     }
 }
-fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_name(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::String(name) => "Expected string for fn mem, but got {} instead.");
     Data::Name {
         scope,
@@ -567,12 +567,12 @@ fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
 // CONDITIONS
 //
 
-fn fn_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn if, but instead got {}.");
 
     let state: IfState = if *v {
-        yield_fn
-            .expect("Expected yield block for if statement")
+        body_fn
+            .expect("Expected body block for if statement")
             .call_direct(Vec::new(), None, Rc::clone(&scope));
         IfState::Captured
     } else {
@@ -586,7 +586,7 @@ fn fn_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
     Data::None
 }
 
-fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn else_if, but instead got {}.");
 
     let mut binding = RefCell::borrow_mut(&scope);
@@ -599,8 +599,8 @@ fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> D
             if *v {
                 block_scope.if_state = IfState::Captured;
                 drop(binding);
-                yield_fn
-                    .unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+                body_fn
+                    .unwrap_or_else(|| panic!("To define a variable, add a body block."))
                     .call_direct(Vec::new(), None, Rc::clone(&scope));
             } else {
                 block_scope.if_state = IfState::Started;
@@ -613,7 +613,7 @@ fn fn_else_if(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> D
     Data::None
 }
 
-fn fn_else(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     let mut binding = RefCell::borrow_mut(&scope);
     let block_scope =
         as_mut_type!(binding => BlockScope, 
@@ -623,8 +623,8 @@ fn fn_else(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
         IfState::Started => {
             block_scope.if_state = IfState::Finished;
             drop(binding);
-            yield_fn
-                .unwrap_or_else(|| panic!("To define a variable, add a yield block."))
+            body_fn
+                .unwrap_or_else(|| panic!("To define a variable, add a body block."))
                 .call_direct(Vec::new(), None, Rc::clone(&scope));
         }
         IfState::Captured => {
@@ -646,22 +646,22 @@ fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
     }
 }
 
-fn fn_repeat(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_repeat(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::Number(n) => "Expected integer for fn repeat, but instead got {}.");
-    let yield_fn = yield_fn.unwrap_or_else(|| panic!("Expected yield block for fn repeat."));
+    let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
 
     for _ in 0..*n as usize {
-        yield_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
+        body_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
     }
 
     Data::None
 }
 
-fn fn_while(_a: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
-    let yield_fn = yield_fn.unwrap_or_else(|| panic!("Expected yield block for fn repeat."));
+fn fn_while(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
+    let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
 
     loop {
-        let v = yield_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
+        let v = body_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
         if Data::Boolean(false) == v {
             break;
         }
@@ -689,12 +689,12 @@ impl Scope for MatchScope {
         if name == "case" {
             let match_value = self.value.clone();
             Some(Function::BuiltIn {
-                callback: Rc::new(move |args, yield_fn, scope| {
+                callback: Rc::new(move |args, body_fn, scope| {
                     if match_value == args[0] {
                         let mut scope_m = RefCell::borrow_mut(&scope);
                         scope_m.set_return_value(
-                            yield_fn
-                                .expect("Expected yield block for function case.")
+                            body_fn
+                                .expect("Expected body block for function case.")
                                 .call(Vec::new(), None, Rc::clone(&scope))
                         );
                         as_mut_type!(scope_m => BlockScope, "Tried to call case in a non-block scope.").break_self();
@@ -704,10 +704,10 @@ impl Scope for MatchScope {
             })
         } else if name == "default" {
             Some(Function::BuiltIn {
-                callback: Rc::new(move |_a, yield_fn, scope| {
+                callback: Rc::new(move |_a, body_fn, scope| {
                     RefCell::borrow_mut(&scope).set_return_value(
-                        yield_fn
-                            .expect("Expected yield block for function default.")
+                        body_fn
+                            .expect("Expected body block for function default.")
                             .call(Vec::new(), None, Rc::clone(&scope))
                     );
                     Data::None
@@ -745,7 +745,7 @@ impl Scope for MatchScope {
     }
 }
 
-fn fn_match(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_match(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
     let match_scope = Rc::new(
         RefCell::new(MatchScope {
             parent: Rc::clone(&scope),
@@ -753,7 +753,7 @@ fn fn_match(args: Vec<Data>, yield_fn: Option<Function>, scope: ScopeRef) -> Dat
         })
     );
 
-    yield_fn
-        .expect("Expected yield for fn match")
+    body_fn
+        .expect("Expected body for fn match")
         .call_direct(Vec::new(), None, Rc::clone(&match_scope) as ScopeRef)
 }

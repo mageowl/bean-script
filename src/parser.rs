@@ -7,7 +7,7 @@ pub enum Node {
 	FnCall {
 		name: String,
 		parameters: Vec<Box<Node>>,
-		yield_fn: Option<Box<Node>>,
+		body_fn: Option<Box<Node>>,
 	},
 	Scope {
 		body: Vec<Box<Node>>,
@@ -44,7 +44,7 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 		let node: Node = match token {
 			Token::FnName(name) => {
 				let mut parameters = Vec::new();
-				let mut yield_fn = None;
+				let mut body_fn = None;
 
 				if let Token::ArgOpen = peek() {
 					next();
@@ -78,9 +78,9 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					}
 				}
 
-				if let Token::FnYield = peek() {
+				if let Token::FnBody = peek() {
 					next();
-					yield_fn = Some(Box::new(parse_token(next(), &next, &peek)));
+					body_fn = Some(Box::new(parse_token(next(), &next, &peek)));
 				}
 
 				if let Token::Accessor = peek() {
@@ -90,7 +90,7 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 						target: Box::new(Node::FnCall {
 							name: name.clone(),
 							parameters,
-							yield_fn,
+							body_fn,
 						}),
 						call: Box::new(parse_token(next(), &next, &peek)),
 					}
@@ -98,11 +98,11 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					Node::FnCall {
 						name: name.clone(),
 						parameters,
-						yield_fn,
+						body_fn,
 					}
 				}
 			}
-			Token::FnYield => panic!("Unexpected yield symbol. (':')"),
+			Token::FnBody => panic!("Unexpected body symbol. (':')"),
 			Token::ArgSeparator => {
 				panic!("Unexpected argument separator. (',')")
 			}

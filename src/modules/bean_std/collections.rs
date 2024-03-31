@@ -120,8 +120,8 @@ impl List {
 
         make(
             "for",
-            Rc::new(|args, yield_fn, list: ScopeRef| {
-                let yield_fn = yield_fn.expect("Expected yield block for fn for.");
+            Rc::new(|args, body_fn, list: ScopeRef| {
+                let body_fn = body_fn.expect("Expected body block for fn for.");
                 arg_check!(&args[0], Data::Name { scope: item_scope_ref, name: item_name } =>
 					"Expected name for fn for, but instead got {}.");
 
@@ -156,7 +156,7 @@ impl List {
                         })
                     );
 
-                    mapped.push(yield_fn.call(Vec::new(), None, Rc::clone(&list)));
+                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&list)));
                 }
 
                 Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))
@@ -288,11 +288,11 @@ impl Map {
         );
         make(
             "set",
-            Rc::new(|args, yield_fn, map: ScopeRef| {
+            Rc::new(|args, body_fn, map: ScopeRef| {
                 as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.").hash.insert(
                     StaticData::from(args[0].clone()),
-                    yield_fn
-                        .expect("Expected yield function for fn set.")
+                    body_fn
+                        .expect("Expected body function for fn set.")
                         .call(Vec::new(), None, Rc::clone(&map))
                 );
                 Data::None
@@ -309,8 +309,8 @@ impl Map {
         );
         make(
             "for",
-            Rc::new(|args, yield_fn, map: ScopeRef| {
-                let yield_fn = yield_fn.expect("Expected yield block for fn for.");
+            Rc::new(|args, body_fn, map: ScopeRef| {
+                let body_fn = body_fn.expect("Expected body block for fn for.");
                 arg_check!(&args[0], Data::Name { scope: key_scope_ref, name: key_name } =>
 					"Expected name for fn for, but instead got {}.");
                 arg_check!(&args[1], Data::Name { scope: value_scope_ref, name: value_name } =>
@@ -352,7 +352,7 @@ impl Map {
                         })
                     );
 
-                    mapped.push(yield_fn.call(Vec::new(), None, Rc::clone(&map)));
+                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&map)));
                 }
 
                 Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))

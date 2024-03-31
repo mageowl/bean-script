@@ -1,1 +1,7 @@
-submod("my_module")
+use("./my_module")
+
+print(my_module.value)
+my_module.function()
+print(my_module.value)
+
+export(<my_module>)

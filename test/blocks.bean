@@ -3,7 +3,7 @@ const(<block>): {
 	
 	fn(<function>): {
 		print("Hello from inside a function! param 0:", p(0))
-		yield("hi")
+		body("hi")
 	}
 }
 
@@ -12,6 +12,6 @@ const(<block>): {
 	print("Getting value:", block.value)
 	block.function("test"): {
 		// __debug
-		print("from a yield", x)
+		print("from a body", x)
 	}
 }

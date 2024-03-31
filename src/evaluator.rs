@@ -18,7 +18,7 @@ pub fn evaluate_verbose(
 		Node::FnCall {
 			name,
 			parameters,
-			yield_fn,
+			body_fn,
 		} => {
 			let function = scope
 				.get_function(&name)
@@ -35,7 +35,7 @@ pub fn evaluate_verbose(
 
 			let return_value = function.call_from(
 				args,
-				if let Some(body) = yield_fn {
+				if let Some(body) = body_fn {
 					Some(Function::Custom {
 						body: Rc::new(*body.clone()),
 						scope_ref: Rc::clone(

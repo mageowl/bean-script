@@ -57,7 +57,7 @@ fn chunk(code: String) -> Vec<String> {
 				}
 			}
 			Context::String => {
-				if char == '"' {
+				if char == '"' && chars[i - 1] != '\\' {
 					append(&char);
 					split();
 					context = Context::Program;
@@ -94,7 +94,7 @@ fn chunk(code: String) -> Vec<String> {
 #[derive(Debug)]
 pub enum Token {
 	FnName(String),
-	FnYield,
+	FnBody,
 	ArgSeparator,
 	ArgOpen,
 	ArgClose,
@@ -134,7 +134,7 @@ pub fn tokenize(code: String) -> Vec<Token> {
 		} else if chunk.starts_with('<') && chunk.ends_with('>') {
 			Token::Name(String::from(chunk.trim_matches(['<', '>'])))
 		} else if chunk == ":" {
-			Token::FnYield
+			Token::FnBody
 		} else if chunk == "," {
 			Token::ArgSeparator
 		} else if chunk == "(" {
