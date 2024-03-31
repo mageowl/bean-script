@@ -122,14 +122,14 @@ impl List {
             "for",
             Rc::new(|args, yield_fn, list: ScopeRef| {
                 let yield_fn = yield_fn.expect("Expected yield block for fn for.");
-                arg_check!(&args[0], Data::Memory { scope: item_scope_ref, name: item_name } =>
-					"Expected memory for fn for, but instead got {}.");
+                arg_check!(&args[0], Data::Name { scope: item_scope_ref, name: item_name } =>
+					"Expected name for fn for, but instead got {}.");
 
                 let mut index_scope_ref: Option<&ScopeRef> = None;
                 let mut index_name: Option<&String> = None;
                 if args.len() > 1 {
-                    arg_check!(&args[1], Data::Memory { scope: i_scope_ref, name: i_name } =>
-						"Expected memory for fn for, but instead got {}.");
+                    arg_check!(&args[1], Data::Name { scope: i_scope_ref, name: i_name } =>
+						"Expected name for fn for, but instead got {}.");
                     index_scope_ref = Some(i_scope_ref);
                     index_name = Some(i_name);
                 }
@@ -311,16 +311,16 @@ impl Map {
             "for",
             Rc::new(|args, yield_fn, map: ScopeRef| {
                 let yield_fn = yield_fn.expect("Expected yield block for fn for.");
-                arg_check!(&args[0], Data::Memory { scope: key_scope_ref, name: key_name } =>
-					"Expected memory for fn for, but instead got {}.");
-                arg_check!(&args[1], Data::Memory { scope: value_scope_ref, name: value_name } =>
-					"Expected memory for fn for, but instead got {}.");
+                arg_check!(&args[0], Data::Name { scope: key_scope_ref, name: key_name } =>
+					"Expected name for fn for, but instead got {}.");
+                arg_check!(&args[1], Data::Name { scope: value_scope_ref, name: value_name } =>
+					"Expected name for fn for, but instead got {}.");
 
                 let mut index_scope_ref: Option<&ScopeRef> = None;
                 let mut index_name: Option<&String> = None;
                 if args.len() > 2 {
-                    arg_check!(&args[2], Data::Memory { scope: i_scope_ref, name: i_name } =>
-						"Expected memory for fn for, but instead got {}.");
+                    arg_check!(&args[2], Data::Name { scope: i_scope_ref, name: i_name } =>
+						"Expected name for fn for, but instead got {}.");
                     index_scope_ref = Some(i_scope_ref);
                     index_name = Some(i_name);
                 }

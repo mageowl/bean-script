@@ -11,7 +11,7 @@ use crate::{
 use super::{ collections::{ List, Map }, super::BuiltinModule };
 
 pub fn construct(module: &mut BuiltinModule) {
-    /* MEMORY */
+    /* NAME */
     module
         .function("fn", fn_fn)
         .function("let", fn_let)
@@ -99,12 +99,12 @@ pub fn construct(module: &mut BuiltinModule) {
 }
 
 //
-// MEMORY
+// NAME
 //
 
 fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } => 
-		"Expected memory as name of function, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } => 
+		"Expected name as name of function, but instead got {}.");
     let yield_fn = yield_fn.unwrap_or_else(|| panic!("To define a function, add a yield block."));
 
     RefCell::borrow_mut(&scope).set_function(name, yield_fn);
@@ -113,8 +113,8 @@ fn fn_fn(args: Vec<Data>, yield_fn: Option<Function>, _s: ScopeRef) -> Data {
 }
 
 fn fn_let(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } => 
-		"Expected memory as name of variable, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } => 
+		"Expected name as name of variable, but instead got {}.");
     let value = yield_fn
         .unwrap_or_else(|| panic!("To define a variable, add a yield block."))
         .call_scope(Vec::new(), None, Rc::clone(&o_scope));
@@ -129,8 +129,8 @@ fn fn_let(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Dat
 }
 
 fn fn_const(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } => 
-		"Expected memory as name of constant, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } => 
+		"Expected name as name of constant, but instead got {}.");
     let value = yield_fn
         .unwrap_or_else(|| panic!("To define a constant, add a yield block."))
         .call_scope(Vec::new(), None, Rc::clone(&o_scope));
@@ -145,16 +145,16 @@ fn fn_const(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> D
 }
 
 fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } => 
-		"Expected memory for fn del, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } => 
+		"Expected name for fn del, but instead got {}.");
     RefCell::borrow_mut(scope).delete_function(name);
 
     Data::None
 }
 
 fn fn_call(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } =>
-		"Expected memory for fn call, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } =>
+		"Expected name for fn call, but instead got {}.");
     let function = scope
         .borrow()
         .get_function(name)
@@ -164,19 +164,19 @@ fn fn_call(args: Vec<Data>, yield_fn: Option<Function>, o_scope: ScopeRef) -> Da
 }
 
 fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Memory { scope, name } =>
-		"Expected memory for fn exists, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } =>
+		"Expected name for fn exists, but instead got {}.");
     Data::Boolean(scope.borrow().has_function(name))
 }
 
 fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data {
     let mut binding = RefCell::borrow_mut(&to_scope);
     let module = as_mut_type!(binding => CustomModule, "Tried to export from a non-module scope.");
-    arg_check!(&args[0], Data::Memory { scope, name } => "Expected memory for fn export, but instead got {}.");
+    arg_check!(&args[0], Data::Name { scope, name } => "Expected name for fn export, but instead got {}.");
 
     let target = RefCell::borrow(scope)
         .get_function(name)
-        .unwrap_or_else(|| panic!("Tried to export empty memory {}.", name));
+        .unwrap_or_else(|| panic!("Tried to export empty name {}.", name));
 
     if let Function::Variable { constant: false, .. } = target {
         panic!("Tried to export non-constant value {}.", name);
@@ -497,14 +497,14 @@ fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
                 .parse()
                 .map(|v| Data::Number(v))
                 .unwrap_or(Data::None),
-        Data::Memory { .. } => Data::None,
+        Data::Name { .. } => Data::None,
         Data::Scope(_) => Data::None,
         Data::None => Data::None,
     }
 }
 fn fn_mem(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     arg_check!(&args[0], Data::String(name) => "Expected string for fn mem, but got {} instead.");
-    Data::Memory {
+    Data::Name {
         scope,
         name: name.clone(),
     }
