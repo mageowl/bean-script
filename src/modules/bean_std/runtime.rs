@@ -3,8 +3,9 @@ use std::{ cell::RefCell, rc::Rc, thread, time::Duration };
 use crate::{
     arg_check,
     as_mut_type,
+    as_type,
     data::{ Data, DataType },
-    modules::CustomModule,
+    modules::{ loader, CustomModule },
     scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
 };
 
@@ -20,7 +21,6 @@ pub fn construct(module: &mut BuiltinModule) {
         .function("call", fn_call)
         .function("exists", fn_exists)
         .function("export", fn_export)
-        .function("submod", fn_submod)
         .function("use", fn_use);
 
     /* SCOPE */
@@ -74,9 +74,7 @@ pub fn construct(module: &mut BuiltinModule) {
         .function("type", fn_type);
 
     /* COLLECTIONS */
-    module
-        .function("list", fn_list)
-        .function("map", fn_map);
+    module.function("list", fn_list).function("map", fn_map);
 
     /* LOGIC */
     module
@@ -202,12 +200,61 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
     Data::None
 }
 
-fn fn_submod(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::None
-}
-
 fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::None
+    let registry =
+        as_type!(
+        scope
+            .borrow()
+            .get_file_module()
+            .expect(
+                "Cannot import modules outside of a module. Are you using the interactive terminal?"
+            )
+            .borrow() => CustomModule, "Fail ??"
+    ).registry.clone();
+    arg_check!(&args[0], Data::String(mod_id) => "Expected string for fn use, but instead got {}.");
+    let (path_str, target) = {
+        let mut iter = mod_id.split(":");
+        (iter.next().expect("Tried to import from blank path."), iter.next())
+    };
+    let path: Vec<&str> = path_str.split("/").collect();
+
+	let name_str;
+    let name = if args.len() > 1 {
+        match &args[1] {
+            Data::Name { name, .. } => {
+				name_str = String::from(name);
+				args[1].clone()
+			}
+            _ =>
+                panic!(
+                    "Expected name for fn use, but instead got {}.",
+                    &args[1].get_type().to_string()
+                ),
+        }
+    } else {
+		let d = Data::Name {
+            scope: Rc::clone(&scope),
+            name: String::from(target.unwrap_or(*path.last().unwrap())),
+        };
+		name_str = String::from(target.unwrap_or(*path.last().unwrap()));
+		d
+    };
+
+    let module = loader::get(registry, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
+
+	if name_str == "*" {
+		let mut scope = RefCell::borrow_mut(&scope);
+
+		for (name, func) in RefCell::borrow(&module).get_function_list() {
+			scope.set_function(&name, func.clone());
+		}
+
+		Data::None
+	} else if name_str == "" {
+		Data::Scope(module)
+	} else {
+		Data::None
+	}
 }
 
 //

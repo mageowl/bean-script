@@ -1,6 +1,8 @@
-let(export(<value>)): "initial value"
+let(<value>): "initial value"
 
-fn(export(<function>)): {
+fn(<function>): {
 	print("updated value = 'second value'")
 	value: "second value"
 }
+
+export(<value>, <function>)

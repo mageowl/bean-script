@@ -117,21 +117,23 @@ impl Function {
 				constant,
 				name,
 			} => {
-				if args.len() == 0 {
-					value.clone()
-				} else if !*constant {
-					let pass = value.clone();
-					scope.borrow_mut().set_function(
-						name,
-						Function::Variable {
-							value: args[0].clone(),
-							constant: false,
-							name: String::from(name),
-						},
-					);
-					pass
+				if let Some(v) = body_fn {
+					if !*constant {
+						let pass = value.clone();
+						scope.borrow_mut().set_function(
+							name,
+							Function::Variable {
+								value: v.call(Vec::new(), None, Rc::clone(&scope)),
+								constant: false,
+								name: String::from(name),
+							},
+						);
+						pass
+					} else {
+						panic!("Tried to assign value to constant variable.")
+					}
 				} else {
-					panic!("Tried to assign value to constant variable.")
+					value.clone()
 				}
 			}
 		}
