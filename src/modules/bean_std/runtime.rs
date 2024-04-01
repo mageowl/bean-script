@@ -251,7 +251,8 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 
 		Data::None
 	} else if name_str == "" {
-		Data::Scope(module)
+		// Data::Scope(module)
+		Data::None
 	} else {
 		Data::None
 	}

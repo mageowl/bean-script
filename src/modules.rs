@@ -4,11 +4,7 @@ use std::{
 
 use crate::{
 	data::Data,
-	scope::{
-		block_scope::IfState,
-		function::{CallScope, Function},
-		Scope, ScopeRef,
-	},
+	scope::{block_scope::IfState, function::Function, Scope, ScopeRef},
 	util::MutRc,
 };
 
