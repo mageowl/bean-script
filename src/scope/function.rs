@@ -76,8 +76,11 @@ pub enum Function {
 	},
 	Variable {
 		value: Data,
-		constant: bool,
+		scope_ref: ScopeRef,
 		name: String,
+	},
+	Constant {
+		value: Data,
 	},
 }
 
@@ -114,24 +117,27 @@ impl Function {
 			Function::BuiltIn { callback } => callback(args, body_fn, scope),
 			Function::Variable {
 				value,
-				constant,
 				name,
+				scope_ref,
 			} => {
 				if let Some(v) = body_fn {
-					if !*constant {
-						let pass = value.clone();
-						scope.borrow_mut().set_function(
-							name,
-							Function::Variable {
-								value: v.call(Vec::new(), None, Rc::clone(&scope)),
-								constant: false,
-								name: String::from(name),
-							},
-						);
-						pass
-					} else {
-						panic!("Tried to assign value to constant variable.")
-					}
+					let pass = value.clone();
+					scope_ref.borrow_mut().set_function(
+						name,
+						Function::Variable {
+							value: v.call(Vec::new(), None, Rc::clone(&scope)),
+							scope_ref: Rc::clone(scope_ref),
+							name: String::from(name),
+						},
+					);
+					pass
+				} else {
+					value.clone()
+				}
+			}
+			Function::Constant { value } => {
+				if let Some(_) = body_fn {
+					panic!("Tried to update constant.")
 				} else {
 					value.clone()
 				}
@@ -186,13 +192,12 @@ impl Debug for Function {
 			Self::BuiltIn { .. } => f.debug_struct("BuiltIn").finish(),
 			Self::Variable {
 				value,
-				constant,
+				scope_ref: _,
 				name: _,
-			} => f
-				.debug_struct("Variable")
-				.field("value", value)
-				.field("constant", constant)
-				.finish(),
+			} => f.debug_struct("Variable").field("value", value).finish(),
+			Self::Constant { value } => {
+				f.debug_struct("Constant").field("value", value).finish()
+			}
 		}
 	}
 }

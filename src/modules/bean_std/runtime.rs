@@ -119,7 +119,7 @@ fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data
 
     RefCell::borrow_mut(scope).set_function(name, Function::Variable {
         value,
-        constant: false,
+        scope_ref: Rc::clone(scope),
         name: String::from(name),
     });
 
@@ -133,11 +133,7 @@ fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Da
         .unwrap_or_else(|| panic!("To define a constant, add a body block."))
         .call_scope(Vec::new(), None, Rc::clone(&o_scope));
 
-    RefCell::borrow_mut(scope).set_function(name, Function::Variable {
-        value,
-        constant: true,
-        name: String::from(name),
-    });
+    RefCell::borrow_mut(scope).set_function(name, Function::Constant { value });
 
     Data::None
 }
@@ -180,7 +176,7 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
         |s| s.get_function(name).unwrap_or_else(|| panic!("Tried to export empty name {}.", name))
     );
 
-    if let Function::Variable { constant: false, .. } = target {
+    if let Function::Variable { .. } = target {
         panic!("Tried to export non-constant value {}.", name);
     }
 
@@ -255,11 +251,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     } else {
         name_scope
             .borrow_mut()
-            .set_function(name_str, Function::Variable {
-                value: Data::Scope(module),
-                constant: true,
-                name: String::new(),
-            });
+            .set_function(name_str, Function::Constant { value: Data::Scope(module) });
         Data::None
     }
 }

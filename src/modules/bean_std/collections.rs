@@ -143,16 +143,12 @@ impl List {
 						"Tried to call fn for on a non-list scope.").items
                     .iter()
                     .enumerate() {
-                    item_scope_ref.borrow_mut().set_function(&item_name, Function::Variable {
+                    item_scope_ref.borrow_mut().set_function(&item_name, Function::Constant {
                         value: item.clone(),
-                        constant: true,
-                        name: String::new(),
                     });
                     index_scope_ref.map(|s|
-                        s.borrow_mut().set_function(&index_name.unwrap(), Function::Variable {
+                        s.borrow_mut().set_function(&index_name.unwrap(), Function::Constant {
                             value: Data::Number(i as f64),
-                            constant: true,
-                            name: String::new(),
                         })
                     );
 
@@ -334,22 +330,10 @@ impl Map {
 						"Tried to call fn for on a non-list scope.").hash
                     .iter()
                     .enumerate() {
-                    key_scope_ref.borrow_mut().set_function(&key_name, Function::Variable {
-                        value: key.inner().clone(),
-                        constant: true,
-                        name: String::new(),
-                    });
-                    value_scope_ref.borrow_mut().set_function(&value_name, Function::Variable {
-                        value: value.clone(),
-                        constant: true,
-                        name: String::new(),
-                    });
+                    key_scope_ref.borrow_mut().set_function(&key_name, Function::Constant { value: key.inner().clone() });
+                    value_scope_ref.borrow_mut().set_function(&value_name, Function::Constant { value: value.clone() });
                     index_scope_ref.map(|s|
-                        s.borrow_mut().set_function(&index_name.unwrap(), Function::Variable {
-                            value: Data::Number(i as f64),
-                            constant: true,
-                            name: String::new(),
-                        })
+                        s.borrow_mut().set_function(&index_name.unwrap(), Function::Constant { value: Data::Number(i as f64) })
                     );
 
                     mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&map)));

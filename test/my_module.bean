@@ -1,13 +1,9 @@
 let(<i_value>): "intial value" // I is for internal
-fn(<value>): {
-	print("i am print")
-	return(i_value)
-}
+fn(<value>): i_value
 
 fn(<function>): {
 	print("updated value = 'second value'")
 	i_value: "second value"
-	print(i_value)
 }
 
 export(<value>) export(<function>)
