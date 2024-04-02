@@ -1,6 +1,6 @@
 [package]
 name = "bean-script"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["mageowl"]
 description = "Simple scripting language for easy use in other projects."
 readme = "README.md"
