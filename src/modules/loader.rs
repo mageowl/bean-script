@@ -1,8 +1,11 @@
-use std::{collections::HashMap, fs, path::PathBuf, rc::Rc};
+use core::panic;
+use std::{any::Any, collections::HashMap, fs, path::PathBuf, rc::Rc};
 
 use crate::{
+	data::Data,
 	error::BeanError,
 	evaluator, lexer, parser,
+	scope::{function::Function, Scope},
 	util::{make_ref, MutRc},
 };
 
@@ -11,24 +14,58 @@ use super::{
 	CustomModule, Module,
 };
 
+#[derive(Debug)]
+pub struct ModuleWrapper(MutRc<dyn Module>);
+
+impl Scope for ModuleWrapper {
+	fn has_function(&self, name: &str) -> bool {
+		self.0.borrow().has_pub_function(name)
+	}
+
+	fn get_function(&self, name: &str) -> Option<Function> {
+		self.0.borrow().get_pub_function(name)
+	}
+
+	fn set_function(&mut self, _name: &str, _function: Function) {
+		panic!("Tried to set function inside external module.")
+	}
+
+	fn delete_function(&mut self, _name: &str) {
+		panic!("Tried to delete function inside external module.")
+	}
+
+	fn set_return_value(&mut self, _value: Data) {}
+
+	fn get_function_list(&self) -> HashMap<String, Function> {
+		self.0.borrow().get_function_list()
+	}
+
+	fn as_any(&self) -> &dyn Any {
+		panic!("INTERNAL! tried to cast ModuleWrapper")
+	}
+	fn as_mut(&mut self) -> &mut dyn Any {
+		self
+	}
+}
+
 pub fn get(
 	registry: MutRc<ModuleRegistry>,
 	path: String,
-) -> Result<MutRc<dyn Module>, BeanError> {
+) -> Result<MutRc<ModuleWrapper>, BeanError> {
 	if path.starts_with("./") {
 		get_local(
 			&registry.borrow().local,
 			Rc::clone(&registry),
 			PathBuf::from(path.clone() + ".bean"),
 		)
-		.map(|m| m as MutRc<dyn Module>)
+		.map(|m| make_ref(ModuleWrapper(m)))
 	} else {
 		get_reg(&mut registry.borrow_mut().registered, path.clone()).map_or(
 			Err(BeanError::new(
 				&format!("Module {} does not exist.", path),
 				None,
 			)),
-			|s| Ok(s),
+			|s| Ok(make_ref(ModuleWrapper(s))),
 		)
 	}
 }

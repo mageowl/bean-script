@@ -180,7 +180,7 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
         panic!("Tried to export non-constant value {}.", name);
     }
 
-    module.exported_functions.insert(
+    module.exported_functions.borrow_mut().insert(
         args
             .get(1)
             .map(|a| {
@@ -219,11 +219,12 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     let path: Vec<&str> = path_str.split("/").collect();
 
 	let name_str;
-    let name = if args.len() > 1 {
+	let name_scope;
+    if args.len() > 1 {
         match &args[1] {
-            Data::Name { name, .. } => {
-				name_str = String::from(name);
-				args[1].clone()
+            Data::Name { name, scope } => {
+				name_str = name as &str;
+				name_scope = Rc::clone(scope);
 			}
             _ =>
                 panic!(
@@ -232,12 +233,8 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
                 ),
         }
     } else {
-		let d = Data::Name {
-            scope: Rc::clone(&scope),
-            name: String::from(target.unwrap_or(*path.last().unwrap())),
-        };
-		name_str = String::from(target.unwrap_or(*path.last().unwrap()));
-		d
+		name_scope = Rc::clone(&scope);
+		name_str = target.unwrap_or(*path.last().unwrap());
     };
 
     let module = loader::get(registry, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
@@ -251,9 +248,9 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 
 		Data::None
 	} else if name_str == "" {
-		// Data::Scope(module)
-		Data::None
+		Data::Scope(module)
 	} else {
+		name_scope.borrow_mut().set_function(name_str, Function::Variable { value: Data::Scope(module), constant: true, name: String::new() });
 		Data::None
 	}
 }

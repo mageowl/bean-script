@@ -5,7 +5,7 @@ use std::{
 use crate::{
 	data::Data,
 	scope::{block_scope::IfState, function::Function, Scope, ScopeRef},
-	util::MutRc,
+	util::{make_ref, MutRc},
 };
 
 use self::registry::ModuleRegistry;
@@ -16,6 +16,9 @@ pub mod registry;
 
 pub trait Module: Scope {
 	fn get_submodule(&self, name: &str) -> Option<MutRc<dyn Module>>;
+
+	fn has_pub_function(&self, name: &str) -> bool;
+	fn get_pub_function(&self, name: &str) -> Option<Function>;
 }
 
 #[derive(Clone)]
@@ -55,32 +58,17 @@ impl BuiltinModule {
 			.insert(String::from(name), Rc::new(RefCell::new(module)));
 		self
 	}
-
-	fn to_scope(it: MutRc<Self>) -> ScopeRef {
-		it
-	}
 }
 
 impl Scope for BuiltinModule {
 	fn has_function(&self, name: &str) -> bool {
-		self.functions.contains_key(name) || self.submodules.contains_key(name)
+		self.functions.contains_key(name)
 	}
 
 	fn get_function(&self, name: &str) -> Option<Function> {
-		self.functions
-			.get(name)
-			.map(|x| Function::BuiltIn {
-				callback: Rc::clone(x),
-			})
-			.or_else(|| {
-				self.submodules
-					.get(name)
-					.map(|x: &Rc<RefCell<BuiltinModule>>| Function::Variable {
-						value: Data::Scope(Rc::clone(x) as ScopeRef),
-						constant: true,
-						name: String::new(),
-					})
-			})
+		self.functions.get(name).map(|x| Function::BuiltIn {
+			callback: Rc::clone(x),
+		})
 	}
 
 	fn set_function(&mut self, _name: &str, _function: Function) {}
@@ -125,27 +113,35 @@ impl Module for BuiltinModule {
 			.get(name)
 			.map(|rc| Rc::clone(rc) as MutRc<dyn Module>)
 	}
+
+	fn has_pub_function(&self, name: &str) -> bool {
+		self.has_function(name)
+	}
+
+	fn get_pub_function(&self, name: &str) -> Option<Function> {
+		self.get_function(name)
+	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CustomModule {
-	local_functions: HashMap<String, Function>,
+	local_functions: MutRc<HashMap<String, Function>>,
 	registry: MutRc<ModuleRegistry>,
 	pub file_path: PathBuf,
 	pub if_state: IfState,
-	pub exported_functions: HashMap<String, Function>,
-	pub submodules: HashMap<String, MutRc<CustomModule>>,
+	pub exported_functions: MutRc<HashMap<String, Function>>,
+	pub submodules: MutRc<HashMap<String, MutRc<CustomModule>>>,
 }
 
 impl CustomModule {
 	pub fn new(registry: MutRc<ModuleRegistry>, file_path: PathBuf) -> Self {
 		Self {
-			local_functions: HashMap::new(),
+			local_functions: make_ref(HashMap::new()),
 			registry,
 			file_path,
 			if_state: IfState::Captured,
-			exported_functions: HashMap::new(),
-			submodules: HashMap::new(),
+			exported_functions: make_ref(HashMap::new()),
+			submodules: make_ref(HashMap::new()),
 		}
 	}
 
@@ -157,26 +153,23 @@ impl CustomModule {
 
 impl Scope for CustomModule {
 	fn has_function(&self, name: &str) -> bool {
-		self.local_functions.contains_key(name)
+		self.local_functions.borrow().contains_key(name)
 	}
 
 	fn get_function(&self, name: &str) -> Option<Function> {
-		let function = self.local_functions.get(name);
+		let binding = RefCell::borrow(&self.local_functions);
+		let function = binding.get(name);
 		function.map(|x| x.clone()).or_else(|| {
 			RefCell::borrow(&self.registry.borrow().runtime()).get_function(name)
 		})
 	}
 
 	fn set_function(&mut self, name: &str, function: Function) {
-		if self.local_functions.contains_key(name) {
-			*self.local_functions.get_mut(name).unwrap() = function;
-		} else {
-			self.local_functions.insert(String::from(name), function);
-		}
+		RefCell::borrow_mut(&self.local_functions).insert(String::from(name), function);
 	}
 
 	fn delete_function(&mut self, name: &str) {
-		self.local_functions.remove(name);
+		RefCell::borrow_mut(&self.local_functions).remove(name);
 	}
 
 	fn parent(&self) -> Option<ScopeRef> {
@@ -188,7 +181,7 @@ impl Scope for CustomModule {
 	}
 
 	fn get_function_list(&self) -> HashMap<String, Function> {
-		self.local_functions.clone()
+		self.exported_functions.borrow().clone()
 	}
 
 	fn as_any(&self) -> &dyn Any {
@@ -202,7 +195,16 @@ impl Scope for CustomModule {
 impl Module for CustomModule {
 	fn get_submodule(&self, name: &str) -> Option<Rc<RefCell<dyn Module>>> {
 		self.submodules
+			.borrow()
 			.get(name)
 			.map(|rc| Rc::clone(rc) as MutRc<dyn Module>)
+	}
+
+	fn has_pub_function(&self, name: &str) -> bool {
+		self.exported_functions.borrow().contains_key(name)
+	}
+
+	fn get_pub_function(&self, name: &str) -> Option<Function> {
+		self.exported_functions.borrow().get(name).cloned()
 	}
 }

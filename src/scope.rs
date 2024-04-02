@@ -22,6 +22,7 @@ pub trait Scope: Debug {
 		self.parent().map_or(None, |p| p.borrow().get_call_scope())
 	}
 	fn get_file_module(&self) -> Option<ScopeRef> {
+		dbg!(&self);
 		self.parent().map_or(None, |p| {
 			let parent = p.borrow();
 			match parent.as_any().downcast_ref::<CustomModule>() {
