@@ -1,7 +1,10 @@
 use("./my_module")
+use("./my_module/submod:fn1")
 
 print(my_module.value)
 my_module.function()
 print(my_module.value)
+print(fn1)
+print(use("./my_module/submod:").fn2)
 
 export(<my_module>)

@@ -1,0 +1,4 @@
+fn(<fn1>): "Response 1"
+fn(<fn2>): "response 2"
+
+export(<fn1>) export(<fn2>)

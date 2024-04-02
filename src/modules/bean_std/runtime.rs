@@ -238,7 +238,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 
     let module = loader::get(file_module, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
 
-    if name_str == "*" {
+    if target == Some("*") {
         let mut scope = RefCell::borrow_mut(&scope);
 
         for (name, func) in RefCell::borrow(&module).get_function_list() {
@@ -246,14 +246,24 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
         }
 
         Data::None
-    } else if name_str == "" {
+    } else if target == Some("") {
         Data::Scope(module)
-    } else {
+    } else if let Some(t) = target {
         name_scope
+            .borrow_mut()
+            .set_function(name_str, 
+				module
+					.borrow()
+					.get_function(t)
+					.unwrap_or_else(|| panic!("Tried to import non-existent function {} from module {}.", t, path_str))
+			);
+		Data::None
+    } else {
+		name_scope
             .borrow_mut()
             .set_function(name_str, Function::Constant { value: Data::Scope(module) });
         Data::None
-    }
+	}
 }
 
 //
