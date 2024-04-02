@@ -184,6 +184,10 @@ impl Scope for CustomModule {
 		self.exported_functions.borrow().clone()
 	}
 
+	fn get_file_module(&self) -> Option<ScopeRef> {
+		Some(make_ref(self.clone()))
+	}
+
 	fn as_any(&self) -> &dyn Any {
 		self
 	}

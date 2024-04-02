@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap, fs, path::PathBuf, rc::Rc};
 
 use crate::{
 	data::Data,
-	error::BeanError,
+	error::Error,
 	evaluator, lexer, parser,
 	scope::{function::Function, Scope},
 	util::{make_ref, MutRc},
@@ -48,20 +48,17 @@ impl Scope for ModuleWrapper {
 	}
 }
 
-pub fn get(
-	registry: MutRc<ModuleRegistry>,
-	path: String,
-) -> Result<MutRc<ModuleWrapper>, BeanError> {
+pub fn get(module: &CustomModule, path: String) -> Result<MutRc<ModuleWrapper>, Error> {
+	let registry = module.registry.clone();
+
 	if path.starts_with("./") {
-		get_local(
-			&registry.borrow().local,
-			Rc::clone(&registry),
-			PathBuf::from(path.clone() + ".bean"),
-		)
-		.map(|m| make_ref(ModuleWrapper(m)))
+		let mut path_buf = module.file_path.clone();
+		path_buf.push(path.clone() + ".bean");
+
+		get_local(Rc::clone(&registry), path_buf).map(|m| make_ref(ModuleWrapper(m)))
 	} else {
 		get_reg(&mut registry.borrow_mut().registered, path.clone()).map_or(
-			Err(BeanError::new(
+			Err(Error::new(
 				&format!("Module {} does not exist.", path),
 				None,
 			)),
@@ -86,37 +83,39 @@ fn get_reg(
 }
 
 fn get_local(
-	local: &HashMap<PathBuf, MutRc<CustomModule>>,
 	registry: MutRc<ModuleRegistry>,
 	path: PathBuf,
-) -> Result<MutRc<CustomModule>, BeanError> {
+) -> Result<MutRc<CustomModule>, Error> {
 	if registry.borrow().loading.contains(&path) {
-		return Err(BeanError::new(
+		return Err(Error::new(
 			"Trying to load from a file that is currently being loaded.",
 			None,
 		));
 	}
-	match local.get(&path) {
-		None => {
-			let file = fs::read_to_string(path.clone()).map_err(|e| {
-				BeanError::new(
-					&(String::from("Error reading file ")
-						+ path.to_str().unwrap_or("")
-						+ ":" + &e.to_string()),
-					None,
-				)
-			})?;
+	let exists = registry.borrow().local.get(&path).is_none();
+	if exists {
+		let file = fs::read_to_string(path.clone()).map_err(|e| {
+			Error::new(
+				&(String::from("Error reading file ")
+					+ path.to_str().unwrap_or("")
+					+ ": " + &e.to_string()),
+				None,
+			)
+		})?;
 
-			let tokens = lexer::tokenize(file);
-			let tree = parser::parse(tokens);
+		let tokens = lexer::tokenize(file);
+		let tree = parser::parse(tokens);
 
-			let module = CustomModule::new(Rc::clone(&registry), path.clone());
-			let module_ref = make_ref(module);
-			evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)));
-			registry.borrow_mut().local.insert(path.clone(), module_ref);
-		}
-		Some(_) => (),
+		let module = CustomModule::new(Rc::clone(&registry), path.clone());
+		let module_ref = make_ref(module);
+		registry.borrow_mut().loading.push(path.clone());
+
+		evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)));
+
+		let mut registry_mut = registry.borrow_mut();
+		registry_mut.local.insert(path.clone(), module_ref);
+		registry_mut.loading.pop();
 	}
 
-	Ok(local.get(&path).unwrap().clone())
+	Ok(Rc::clone(registry.borrow().local.get(&path).unwrap()))
 }

@@ -172,9 +172,13 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
     let module = as_mut_type!(binding => CustomModule, "Tried to export from a non-module scope.");
     arg_check!(&args[0], Data::Name { scope, name } => "Expected name for fn export, but instead got {}.");
 
-    let target = RefCell::borrow(scope)
-        .get_function(name)
-        .unwrap_or_else(|| panic!("Tried to export empty name {}.", name));
+    let target = scope.try_borrow().map_or_else(
+        |_|
+            module
+                .get_function(name)
+                .unwrap_or_else(|| panic!("Tried to export empty name {}.", name)),
+        |s| s.get_function(name).unwrap_or_else(|| panic!("Tried to export empty name {}.", name))
+    );
 
     if let Function::Variable { constant: false, .. } = target {
         panic!("Tried to export non-constant value {}.", name);
@@ -201,16 +205,15 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
 }
 
 fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    let registry =
-        as_type!(
-        scope
-            .borrow()
-            .get_file_module()
-            .expect(
-                "Cannot import modules outside of a module. Are you using the interactive terminal?"
-            )
-            .borrow() => CustomModule, "Fail ??"
-    ).registry.clone();
+    let binding = scope
+        .borrow()
+        .get_file_module()
+        .expect(
+            "Cannot import modules outside of a module. Are you using the interactive terminal?"
+        );
+    let borrowed = binding.borrow();
+    let file_module = as_type!(borrowed => CustomModule, "Fail ??");
+
     arg_check!(&args[0], Data::String(mod_id) => "Expected string for fn use, but instead got {}.");
     let (path_str, target) = {
         let mut iter = mod_id.split(":");
@@ -218,14 +221,14 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     };
     let path: Vec<&str> = path_str.split("/").collect();
 
-	let name_str;
-	let name_scope;
+    let name_str;
+    let name_scope;
     if args.len() > 1 {
         match &args[1] {
             Data::Name { name, scope } => {
-				name_str = name as &str;
-				name_scope = Rc::clone(scope);
-			}
+                name_str = name as &str;
+                name_scope = Rc::clone(scope);
+            }
             _ =>
                 panic!(
                     "Expected name for fn use, but instead got {}.",
@@ -233,26 +236,32 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
                 ),
         }
     } else {
-		name_scope = Rc::clone(&scope);
-		name_str = target.unwrap_or(*path.last().unwrap());
-    };
+        name_scope = Rc::clone(&scope);
+        name_str = target.unwrap_or(*path.last().unwrap());
+    }
 
-    let module = loader::get(registry, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
+    let module = loader::get(file_module, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
 
-	if name_str == "*" {
-		let mut scope = RefCell::borrow_mut(&scope);
+    if name_str == "*" {
+        let mut scope = RefCell::borrow_mut(&scope);
 
-		for (name, func) in RefCell::borrow(&module).get_function_list() {
-			scope.set_function(&name, func.clone());
-		}
+        for (name, func) in RefCell::borrow(&module).get_function_list() {
+            scope.set_function(&name, func.clone());
+        }
 
-		Data::None
-	} else if name_str == "" {
-		Data::Scope(module)
-	} else {
-		name_scope.borrow_mut().set_function(name_str, Function::Variable { value: Data::Scope(module), constant: true, name: String::new() });
-		Data::None
-	}
+        Data::None
+    } else if name_str == "" {
+        Data::Scope(module)
+    } else {
+        name_scope
+            .borrow_mut()
+            .set_function(name_str, Function::Variable {
+                value: Data::Scope(module),
+                constant: true,
+                name: String::new(),
+            });
+        Data::None
+    }
 }
 
 //
