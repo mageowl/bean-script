@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap, fs, path::PathBuf, rc::Rc};
 
 use crate::{
 	data::Data,
-	error::Error,
+	error::{Error, ErrorSource},
 	evaluator, lexer, parser,
 	scope::{function::Function, Scope},
 	util::{make_ref, MutRc},
@@ -60,7 +60,7 @@ pub fn get(module: &CustomModule, path: String) -> Result<MutRc<ModuleWrapper>, 
 		get_reg(&mut registry.borrow_mut().registered, path.clone()).map_or(
 			Err(Error::new(
 				&format!("Module {} does not exist.", path),
-				None,
+				ErrorSource::Unknown,
 			)),
 			|s| Ok(make_ref(ModuleWrapper(s))),
 		)
@@ -89,7 +89,7 @@ fn get_local(
 	if registry.borrow().loading.contains(&path) {
 		return Err(Error::new(
 			"Trying to load from a file that is currently being loaded.",
-			None,
+			ErrorSource::Unknown,
 		));
 	}
 	let exists = registry.borrow().local.get(&path).is_none();
@@ -99,7 +99,7 @@ fn get_local(
 				&(String::from("Error reading file ")
 					+ path.to_str().unwrap_or("")
 					+ ": " + &e.to_string()),
-				None,
+				ErrorSource::Unknown,
 			)
 		})?;
 
