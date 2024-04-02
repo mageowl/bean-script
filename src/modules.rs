@@ -4,6 +4,7 @@ use std::{
 
 use crate::{
 	data::Data,
+	error::Error,
 	scope::{block_scope::IfState, function::Function, Scope, ScopeRef},
 	util::{make_ref, MutRc},
 };
@@ -23,7 +24,10 @@ pub trait Module: Scope {
 
 #[derive(Clone)]
 pub struct BuiltinModule {
-	functions: HashMap<String, Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>>,
+	functions: HashMap<
+		String,
+		Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error>>,
+	>,
 	submodules: HashMap<String, Rc<RefCell<BuiltinModule>>>,
 }
 
@@ -39,7 +43,7 @@ impl BuiltinModule {
 
 	pub fn function<F>(&mut self, name: &str, function: F) -> &mut Self
 	where
-		F: Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data + 'static,
+		F: Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error> + 'static,
 	{
 		self.functions.insert(String::from(name), Rc::new(function));
 		self

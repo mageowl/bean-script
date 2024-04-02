@@ -1,7 +1,12 @@
 use core::fmt::Debug;
 use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{data::Data, evaluator, parser::Node};
+use crate::{
+	data::Data,
+	error::{Error, ErrorSource},
+	evaluator,
+	parser::PosNode,
+};
 
 use super::{Scope, ScopeRef};
 
@@ -68,11 +73,12 @@ impl Scope for CallScope {
 #[derive(Clone)]
 pub enum Function {
 	Custom {
-		body: Rc<Node>,
+		body: Rc<PosNode>,
 		scope_ref: ScopeRef,
 	},
 	BuiltIn {
-		callback: Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Data>,
+		callback:
+			Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error>>,
 	},
 	Variable {
 		value: Data,
@@ -93,7 +99,7 @@ impl Function {
 		return_scope: bool,
 		abstract_call_scope: bool,
 		from_scope: Option<ScopeRef>,
-	) -> Data {
+	) -> Result<Data, Error> {
 		match self {
 			Function::Custom { body, scope_ref } => {
 				let call_scope = CallScope {
@@ -125,21 +131,21 @@ impl Function {
 					scope_ref.borrow_mut().set_function(
 						name,
 						Function::Variable {
-							value: v.call(Vec::new(), None, Rc::clone(&scope)),
+							value: v.call(Vec::new(), None, Rc::clone(&scope))?,
 							scope_ref: Rc::clone(scope_ref),
 							name: String::from(name),
 						},
 					);
-					pass
+					Ok(pass)
 				} else {
-					value.clone()
+					Ok(value.clone())
 				}
 			}
 			Function::Constant { value } => {
 				if let Some(_) = body_fn {
-					panic!("Tried to update constant.")
+					Err(Error::new("Tried to edit constant.", ErrorSource::Internal))
 				} else {
-					value.clone()
+					Ok(value.clone())
 				}
 			}
 		}
@@ -150,7 +156,7 @@ impl Function {
 		args: Vec<Data>,
 		body_fn: Option<Function>,
 		scope: ScopeRef,
-	) -> Data {
+	) -> Result<Data, Error> {
 		self.call_verbose(args, body_fn, scope, false, true, None)
 	}
 
@@ -159,7 +165,7 @@ impl Function {
 		args: Vec<Data>,
 		body_fn: Option<Function>,
 		scope: ScopeRef,
-	) -> Data {
+	) -> Result<Data, Error> {
 		self.call_verbose(args, body_fn, scope, true, false, None)
 	}
 
@@ -169,7 +175,7 @@ impl Function {
 		body_fn: Option<Function>,
 		scope: ScopeRef,
 		from_scope: Option<ScopeRef>,
-	) -> Data {
+	) -> Result<Data, Error> {
 		self.call_verbose(args, body_fn, scope, false, true, from_scope)
 	}
 
@@ -178,7 +184,7 @@ impl Function {
 		args: Vec<Data>,
 		body_fn: Option<Function>,
 		scope: ScopeRef,
-	) -> Data {
+	) -> Result<Data, Error> {
 		self.call_verbose(args, body_fn, scope, false, false, None)
 	}
 }

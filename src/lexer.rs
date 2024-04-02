@@ -29,7 +29,11 @@ fn chunk(code: String) -> Vec<String> {
 	for (i, char) in code.chars().enumerate() {
 		match context {
 			Context::Program => {
-				if char == ' ' || char == '\t' || char == '\n' {
+				if char == ' ' || char == '\t' {
+					split();
+				} else if char == '\n' {
+					split();
+					append(&char);
 					split();
 				} else if char == '/' && chars[i + 1] == '/' {
 					split();
@@ -108,6 +112,7 @@ pub enum Token {
 	Name(String),
 	None,
 
+	LineBreak,
 	EOF,
 }
 
@@ -116,7 +121,9 @@ pub fn tokenize(code: String) -> Vec<Token> {
 	let mut tokens: Vec<Token> = Vec::new();
 
 	for chunk in chunks {
-		tokens.push(if let Ok(n) = chunk.parse::<f64>() {
+		tokens.push(if chunk == "\n" {
+			Token::LineBreak
+		} else if let Ok(n) = chunk.parse::<f64>() {
 			if tokens
 				.last()
 				.is_some_and(|x| pat_check!(Token::Accessor = x))

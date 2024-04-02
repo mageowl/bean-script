@@ -60,7 +60,7 @@ pub fn get(module: &CustomModule, path: String) -> Result<MutRc<ModuleWrapper>, 
 		get_reg(&mut registry.borrow_mut().registered, path.clone()).map_or(
 			Err(Error::new(
 				&format!("Module {} does not exist.", path),
-				ErrorSource::Unknown,
+				ErrorSource::Internal,
 			)),
 			|s| Ok(make_ref(ModuleWrapper(s))),
 		)
@@ -89,7 +89,7 @@ fn get_local(
 	if registry.borrow().loading.contains(&path) {
 		return Err(Error::new(
 			"Trying to load from a file that is currently being loaded.",
-			ErrorSource::Unknown,
+			ErrorSource::Internal,
 		));
 	}
 	let exists = registry.borrow().local.get(&path).is_none();
@@ -99,18 +99,18 @@ fn get_local(
 				&(String::from("Error reading file ")
 					+ path.to_str().unwrap_or("")
 					+ ": " + &e.to_string()),
-				ErrorSource::Unknown,
+				ErrorSource::Internal,
 			)
 		})?;
 
 		let tokens = lexer::tokenize(file);
-		let tree = parser::parse(tokens);
+		let tree = parser::parse(tokens)?;
 
 		let module = CustomModule::new(Rc::clone(&registry), path.clone());
 		let module_ref = make_ref(module);
 		registry.borrow_mut().loading.push(path.clone());
 
-		evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)));
+		evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)))?;
 
 		let mut registry_mut = registry.borrow_mut();
 		registry_mut.local.insert(path.clone(), module_ref);

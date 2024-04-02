@@ -1,10 +1,10 @@
-use std::{panic::catch_unwind, rc::Rc, sync::Mutex};
+use std::{rc::Rc, sync::Mutex};
 
 use bean_script::{
 	data::Data,
 	evaluator, lexer,
 	modules::registry::ModuleRegistry,
-	parser::{self, Node},
+	parser::{self, Node, PosNode},
 	scope::{block_scope::BlockScope, ScopeRef},
 	util::make_ref,
 };
@@ -28,21 +28,31 @@ pub fn open() -> rustyline::Result<()> {
 
 				let _ = rl.add_history_entry(line.as_str());
 
-				let result = catch_unwind(|| {
-					let scope_ref = Rc::clone(&mutex.lock().unwrap());
+				let scope_ref = Rc::clone(&mutex.lock().unwrap());
 
-					let mut tree = parser::parse(lexer::tokenize(line));
+				let tree = parser::parse(lexer::tokenize(line));
+				if let Err(error) = tree {
+					println!("error: {}", error);
+					continue;
+				}
+				let mut tree = tree.unwrap();
 
-					if let Node::Program { body } = tree {
-						if body.len() == 1 {
-							tree = *body[0].clone();
-						} else {
-							tree = Node::Program { body };
-						}
+				if let PosNode {
+					node: Node::Program { body },
+					..
+				} = tree
+				{
+					if body.len() == 1 {
+						tree = *body[0].clone();
+					} else {
+						tree = PosNode {
+							node: Node::Program { body },
+							ln: 0,
+						};
 					}
+				}
 
-					evaluator::evaluate(&tree, scope_ref)
-				});
+				let result = evaluator::evaluate(&tree, scope_ref);
 
 				if let Ok(data) = result {
 					match data {

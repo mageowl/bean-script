@@ -7,6 +7,7 @@ use crate::{
     data::{ Data, DataType },
     modules::{ loader, CustomModule },
     scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
+	error::{Error, ErrorSource}
 };
 
 use super::{ collections::{ List, Map }, super::BuiltinModule };
@@ -100,22 +101,22 @@ pub fn construct(module: &mut BuiltinModule) {
 // NAME
 //
 
-fn fn_fn(args: Vec<Data>, body_fn: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } => 
-		"Expected name as name of function, but instead got {}.");
+fn fn_fn(args: Vec<Data>, body_fn: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name as name of function, but instead got {}.", "function");
     let body_fn = body_fn.unwrap_or_else(|| panic!("To define a function, add a body block."));
 
     RefCell::borrow_mut(&scope).set_function(name, body_fn);
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } => 
-		"Expected name as name of variable, but instead got {}.");
+fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name as name of variable, but instead got {}.", "let");
     let value = body_fn
         .unwrap_or_else(|| panic!("To define a variable, add a body block."))
-        .call_scope(Vec::new(), None, Rc::clone(&o_scope));
+        .call_scope(Vec::new(), None, Rc::clone(&o_scope))?;
 
     RefCell::borrow_mut(scope).set_function(name, Function::Variable {
         value,
@@ -123,50 +124,52 @@ fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data
         name: String::from(name),
     });
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } => 
-		"Expected name as name of constant, but instead got {}.");
+fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name as name of constant, but instead got {}.", "constant");
     let value = body_fn
         .unwrap_or_else(|| panic!("To define a constant, add a body block."))
-        .call_scope(Vec::new(), None, Rc::clone(&o_scope));
+        .call_scope(Vec::new(), None, Rc::clone(&o_scope))?;
 
     RefCell::borrow_mut(scope).set_function(name, Function::Constant { value });
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } => 
-		"Expected name for fn del, but instead got {}.");
+fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name to delete, but instead got {}.", "delete");
     RefCell::borrow_mut(scope).delete_function(name);
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_call(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } =>
-		"Expected name for fn call, but instead got {}.");
+fn fn_call(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name to call, but instead got {}.", "call");
     let function = scope
         .borrow()
-        .get_function(name)
-        .unwrap_or_else(|| { panic!("Unknown value or function for fn call '<{}>'.", &name) });
+        .get_function(name);
+	if let None = function {
+		return Err(Error::new(&format!("Unknown value or function {}", name), ErrorSource::Builtin(String::from("call"))));
+	}
 
-    function.call(args[1..].to_vec(), body_fn, o_scope)
+    function.unwrap().call(args[1..].to_vec(), body_fn, o_scope)
 }
 
-fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Name { scope, name } =>
-		"Expected name for fn exists, but instead got {}.");
-    Data::Boolean(scope.borrow().has_function(name))
+fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Name { scope, name },
+		"Expected name, but instead got {}.", "exists");
+    Ok(Data::Boolean(scope.borrow().has_function(name)))
 }
 
-fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data {
+fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Result<Data, Error> {
     let mut binding = RefCell::borrow_mut(&to_scope);
     let module = as_mut_type!(binding => CustomModule, "Tried to export from a non-module scope.");
-    arg_check!(&args[0], Data::Name { scope, name } => "Expected name for fn export, but instead got {}.");
+    arg_check!(&args[0] => Data::Name { scope, name }, "Expected name, but instead got {}.", "export");
 
     let target = scope.try_borrow().map_or_else(
         |_|
@@ -177,7 +180,7 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
     );
 
     if let Function::Variable { .. } = target {
-        panic!("Tried to export non-constant value {}.", name);
+        return Err(Error::new("Cannot export a variable.", ErrorSource::Builtin(String::from("export"))));
     }
 
     module.exported_functions.borrow_mut().insert(
@@ -188,7 +191,7 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
                     Data::String(s) => s,
                     _ =>
                         panic!(
-                            "Expected string for fn export, but instead got {}.",
+                            "Expected string export, but instead got {}.",
                             a.get_type().to_string()
                         ),
                 }
@@ -197,20 +200,22 @@ fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Data 
             .clone(),
         target
     );
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let binding = scope
         .borrow()
-        .get_file_module()
-        .expect(
-            "Cannot import modules outside of a module. Are you using the interactive terminal?"
-        );
+        .get_file_module();
+	if binding.is_none() {
+		return Err(Error::new("Cannot import modules outside of a module. Are you using the interactive terminal?", ErrorSource::Builtin(String::from("use"))))
+	}
+	let binding = binding.unwrap();
+
     let borrowed = binding.borrow();
     let file_module = as_type!(borrowed => CustomModule, "Fail ??");
 
-    arg_check!(&args[0], Data::String(mod_id) => "Expected string for fn use, but instead got {}.");
+    arg_check!(&args[0] => Data::String(mod_id), "Expected string, but instead got {}.", "use");
     let (path_str, target) = {
         let mut iter = mod_id.split(":");
         (iter.next().expect("Tried to import from blank path."), iter.next())
@@ -227,7 +232,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
             }
             _ =>
                 panic!(
-                    "Expected name for fn use, but instead got {}.",
+                    "Expected name use, but instead got {}.",
                     &args[1].get_type().to_string()
                 ),
         }
@@ -236,7 +241,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
         name_str = target.unwrap_or(*path.last().unwrap());
     }
 
-    let module = loader::get(file_module, String::from(path_str)).expect("..."); // TODO: convert return value of fns to Result<Data, Error>
+    let module = loader::get(file_module, String::from(path_str))?;
 
     if target == Some("*") {
         let mut scope = RefCell::borrow_mut(&scope);
@@ -245,9 +250,9 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
             scope.set_function(&name, func.clone());
         }
 
-        Data::None
+        Ok(Data::None)
     } else if target == Some("") {
-        Data::Scope(module)
+        Ok(Data::Scope(module))
     } else if let Some(t) = target {
         name_scope
             .borrow_mut()
@@ -257,12 +262,12 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 					.get_function(t)
 					.unwrap_or_else(|| panic!("Tried to import non-existent function {} from module {}.", t, path_str))
 			);
-		Data::None
+		Ok(Data::None)
     } else {
 		name_scope
             .borrow_mut()
             .set_function(name_str, Function::Constant { value: Data::Scope(module) });
-        Data::None
+        Ok(Data::None)
 	}
 }
 
@@ -270,8 +275,8 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
 // SCOPE
 //
 
-fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(i) => "Expected integer for fn p, but instead got {}.");
+fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(i), "Expected integer, but instead got {}.", "get_argument");
     let arg_type = args
         .get(1)
         .map(|x| {
@@ -279,7 +284,7 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
                 Data::String(v) => DataType::from_string(v),
                 _ =>
                     panic!(
-                        "Expected type string for fn p, but instead got {}.",
+                        "Expected string, but instead got {}.",
                         x.get_type().to_string()
                     ),
             }
@@ -295,17 +300,17 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
     let arg = arguments.get(index).unwrap_or(&Data::None);
     if !arg_type.matches(&arg) {
         panic!(
-            "Expected argument of type {}, but instead got {}.",
+            "Expected {}, but instead got {}.",
             arg_type.to_string(),
             arg.to_string()
         )
     } else {
-        arg.clone()
+        Ok(arg.clone())
     }
 }
 
-fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::Scope(
+fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::Scope(
         Rc::new(
             RefCell::new(
                 List::new(
@@ -321,10 +326,10 @@ fn fn_args(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
                 )
             )
         )
-    )
+    ))
 }
 
-fn fn_body(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_body(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let call_scope = &scope
         .borrow()
         .get_call_scope()
@@ -335,301 +340,301 @@ fn fn_body(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data 
         .call(args, body_fn, call_scope.from_scope())
 }
 
-fn fn_return(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_return(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let value = args.get(0).cloned().unwrap_or(Data::None);
     RefCell::borrow_mut(&scope).set_return_value(value.clone());
     match RefCell::borrow_mut(&scope).as_mut().downcast_mut::<BlockScope>() {
         Some(block) => block.break_self(),
         None => (),
     }
-    value
+    Ok(value)
 }
 
-fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_pass(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let value = args.get(0).cloned().unwrap_or(Data::None);
     RefCell::borrow_mut(&scope).set_return_value(value.clone());
-    value
+    Ok(value)
 }
 
-fn fn_self(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::Scope(Rc::clone(&scope))
+fn fn_self(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::Scope(Rc::clone(&scope)))
 }
 
-fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    RefCell::borrow(&scope)
+fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    Ok(RefCell::borrow(&scope)
         .parent()
         .map(|s| Data::Scope(Rc::clone(&s)))
-        .unwrap_or(Data::None)
+        .unwrap_or(Data::None))
 }
 
-fn fn_include(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Scope(target) => "Expected scope for fn include, but instead got {}.");
+fn fn_include(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Scope(target), "Expected scope, but instead got {}.", "include");
     let mut scope = RefCell::borrow_mut(&scope);
 
     for (name, func) in RefCell::borrow(&target).get_function_list() {
         scope.set_function(&name, func.clone());
     }
 
-    Data::None
+    Ok(Data::None)
 }
 
 //
 // INTERFACE
 //
 
-fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     let mut string = Vec::new();
     for data in args {
         string.push(data.to_string());
     }
     println!("{}", string.join(" "));
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::String(msg) => "Expected string for fn error, but instead got {}.");
+fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::String(msg), "Expected string, but instead got {}.", "error");
     panic!("{}", msg)
 }
 
-fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(ms) => "Expected number for fn sleep, but instead got {}.");
+fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(ms), "Expected number of milliseconds, but instead got {}.", "sleep");
     thread::sleep(Duration::from_millis(*ms as u64));
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_debug(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     dbg!(scope);
-    Data::None
+    Ok(Data::None)
 }
 
 //
 // MATH
 //
 
-fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     match args[0].get_type() {
         DataType::String => {
             let mut string = String::new();
             for data in args {
-                arg_check!(data, Data::String(v) => "Expected argument to be string for fn add, but instead got {}.");
+                arg_check!(data => Data::String(v), "Expected string, but instead got {}.", "add");
                 string.push_str(&v);
             }
 
-            Data::String(string)
+            Ok(Data::String(string))
         }
         DataType::Number => {
             let mut n: f64 = 0.0;
             for data in args {
-                arg_check!(data, Data::Number(a) => "Expected argument to be number for fn add, but instead got {}.");
+                arg_check!(data => Data::Number(a), "Expected number, but instead got {}.", "add");
                 n += a;
             }
 
-            Data::Number(n)
+            Ok(Data::Number(n))
         }
         _ =>
-            panic!(
-                "Expected arguments of type string or number for fn add, but got {}.",
+            Err(Error::new(&format!(
+                "Expected arguments of type string or number, but got {}.",
                 args[0].get_type().to_string()
-            ),
+            ), ErrorSource::Builtin(String::from("add")))),
     }
 }
-fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn sub, but got {}.");
-    arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn sub, but got {}.");
-    Data::Number(a - b)
+fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {}.", "subtract");
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "subtract");
+    Ok(Data::Number(a - b))
 }
-fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn mul, but got {}.");
+fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "multiply");
     match &args[0] {
-        Data::Number(a) => Data::Number(a * b),
-        Data::String(s) => Data::String(s.repeat(*b as usize)),
+        Data::Number(a) => Ok(Data::Number(a * b)),
+        Data::String(s) => Ok(Data::String(s.repeat(*b as usize))),
         _ =>
-            panic!(
-                "Expected argument of type number or string for fn mul, but got {} instead.",
+            Err(Error::new(&format!(
+                "Expected number or string, but got {} instead.",
                 args[0].get_type().to_string()
-            ),
+            ), ErrorSource::Builtin(String::from("multiply")))),
     }
 }
-fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(a) => "Expected argument of type number for fn div, but got {}.");
-    arg_check!(&args[1], Data::Number(b) => "Expected argument of type number for fn div, but got {}.");
-    Data::Number(a / b)
+fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {}.", "divide");
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "divide");
+    Ok(Data::Number(a / b))
 }
 
-fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     match args.len() {
-        0 => Data::Number(rand::random()),
+        0 => Ok(Data::Number(rand::random())),
         1 => {
-            arg_check!(&args[0], Data::Number(max) => "Expected number for fn rand, but got {} instead.");
-            Data::Number((rand::random::<f64>() * max).floor())
+            arg_check!(&args[0] => Data::Number(max), "Expected number, but got {} instead.", "random");
+            Ok(Data::Number((rand::random::<f64>() * max).floor()))
         }
         2.. => {
-            arg_check!(&args[0], Data::Number(min) => "Expected number for fn rand, but got {} instead.");
-            arg_check!(&args[1], Data::Number(max) => "Expected number for fn rand, but got {} instead.");
-            Data::Number((rand::random::<f64>() * (max - min)).floor() + min)
+            arg_check!(&args[0] => Data::Number(min), "Expected number, but got {} instead.", "random");
+            arg_check!(&args[1] => Data::Number(max), "Expected number, but got {} instead.", "random");
+            Ok(Data::Number((rand::random::<f64>() * (max - min)).floor() + min))
         }
     }
 }
-fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn abs, but got {} instead.");
-    Data::Number(n.round())
+fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "absolute_value");
+    Ok(Data::Number(n.round()))
 }
 
-fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(a) => "Expected number for fn pow, but got {} instead.");
-    arg_check!(&args[1], Data::Number(b) => "Expected number for fn pow, but got {} instead.");
-    Data::Number(a.powf(*b))
+fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {} instead.", "power");
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {} instead.", "power");
+    Ok(Data::Number(a.powf(*b)))
 }
-fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn sqrt, but got {} instead.");
-    Data::Number(n.sqrt())
-}
-
-fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn sin, but got {} instead.");
-    Data::Number(n.sin())
-}
-fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn cos, but got {} instead.");
-    Data::Number(n.cos())
-}
-fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn tan, but got {} instead.");
-    Data::Number(n.tan())
-}
-fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn atan, but got {} instead.");
-    Data::Number(n.atan())
+fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "square_root");
+    Ok(Data::Number(n.sqrt()))
 }
 
-fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn round, but got {} instead.");
-    Data::Number(n.round())
+fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "sine");
+    Ok(Data::Number(n.sin()))
 }
-fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn floor, but got {} instead.");
-    Data::Number(n.floor())
+fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "cosine");
+    Ok(Data::Number(n.cos()))
 }
-fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected number for fn ceil, but got {} instead.");
-    Data::Number(n.ceil())
+fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "tangent");
+    Ok(Data::Number(n.tan()))
+}
+fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "arctangent");
+    Ok(Data::Number(n.atan()))
+}
+
+fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "round");
+    Ok(Data::Number(n.round()))
+}
+fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "floor");
+    Ok(Data::Number(n.floor()))
+}
+fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "ceiling");
+    Ok(Data::Number(n.ceil()))
 }
 
 //
 // STRING
 //
 
-fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::String(s) => "Expected string for fn size, but got {} instead.");
-    Data::Number(s.len() as f64)
+fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::String(s), "Expected string, but got {} instead. Use list.size to get the length of a list.", "string_size");
+    Ok(Data::Number(s.len() as f64))
 }
 
-fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::String(s) => "Expected string for fn split, but got {} instead.");
-    arg_check!(&args[1], Data::String(d) => "Expected delimiter string for fn split, but got {} instead.");
+fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::String(s), "Expected string, but got {} instead.", "split_string");
+    arg_check!(&args[1] => Data::String(d), "Expected delimiter string split, but got {} instead.", "split_string");
     let vec = s
         .split(d)
         .map(|c| Data::String(String::from(c)))
         .collect();
-    Data::Scope(Rc::new(RefCell::new(List::new(vec, None))))
+    Ok(Data::Scope(Rc::new(RefCell::new(List::new(vec, None)))))
 }
 
 //
 // TYPES
 //
 
-fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    Data::String(args.get(0).unwrap_or(&Data::None).to_string())
+fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::String(args.get(0).unwrap_or(&Data::None).to_string()))
 }
 
-fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
+fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     match &args[0] {
-        Data::Boolean(v) => Data::Number(if *v { 1.0 } else { 0.0 }),
-        Data::Number(v) => Data::Number(*v),
+        Data::Boolean(v) => Ok(Data::Number(if *v { 1.0 } else { 0.0 })),
+        Data::Number(v) => Ok(Data::Number(*v)),
         Data::String(s) =>
-            s
+            Ok(s
                 .parse()
                 .map(|v| Data::Number(v))
-                .unwrap_or(Data::None),
-        Data::Name { .. } => Data::None,
-        Data::Scope(_) => Data::None,
-        Data::None => Data::None,
+                .unwrap_or(Data::None)),
+        Data::Name { .. } => Ok(Data::None),
+        Data::Scope(_) => Ok(Data::None),
+        Data::None => Ok(Data::None),
     }
 }
-fn fn_name(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::String(name) => "Expected string for fn mem, but got {} instead.");
-    Data::Name {
+fn fn_name(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::String(name), "Expected string, but got {} instead.", "to_name");
+    Ok(Data::Name {
         scope,
         name: name.clone(),
-    }
+    })
 }
 
-fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    Data::String(args.get(0).unwrap_or(&Data::None).get_type().to_string())
+fn fn_type(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::String(args.get(0).unwrap_or(&Data::None).get_type().to_string()))
 }
 
 //
 // COLLECTIONS
 //
 
-fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope)))))
+fn fn_list(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::Scope(Rc::new(RefCell::new(List::new(args, Some(scope))))))
 }
 
-fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Data {
-    Data::Scope(Rc::new(RefCell::new(Map::new(args, Some(scope)))))
+fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::Scope(Rc::new(RefCell::new(Map::new(args, Some(scope))))))
 }
 
 //
 // LOGIC
 //
 
-fn fn_eq(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    Data::Boolean(&args[0] == &args[1])
+fn fn_eq(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    Ok(Data::Boolean(&args[0] == &args[1]))
 }
 
-fn fn_gt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(a) => "Expected number for fn gt, but instead got {}.");
-    arg_check!(&args[1], Data::Number(b) => "Expected number for fn gt, but instead got {}.");
-    Data::Boolean(a > b)
+fn fn_gt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(a), "Expected number, but instead got {}.", "greater_than");
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but instead got {}.", "greater_than");
+    Ok(Data::Boolean(a > b))
 }
 
-fn fn_lt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(a) => "Expected number for fn lt, but instead got {}.");
-    arg_check!(&args[1], Data::Number(b) => "Expected number for fn lt, but instead got {}.");
-    Data::Boolean(a < b)
+fn fn_lt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(a), "Expected number, but instead got {}.", "less_than");
+    arg_check!(&args[1] => Data::Number(b), "Expected number, but instead got {}.", "less_than");
+    Ok(Data::Boolean(a < b))
 }
 
-fn fn_not(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn not, but instead got {}.");
-    Data::Boolean(!v)
+fn fn_not(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "not");
+    Ok(Data::Boolean(!v))
 }
 
-fn fn_and(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(a) => "Expected boolean for fn and, but instead got {}.");
-    arg_check!(&args[1], Data::Boolean(b) => "Expected boolean for fn and, but instead got {}.");
-    Data::Boolean(*a && *b)
+fn fn_and(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(a), "Expected boolean, but instead got {}.", "and");
+    arg_check!(&args[1] => Data::Boolean(b), "Expected boolean, but instead got {}.", "and");
+    Ok(Data::Boolean(*a && *b))
 }
 
-fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(a) => "Expected boolean for fn or, but instead got {}.");
-    arg_check!(&args[1], Data::Boolean(b) => "Expected boolean for fn or, but instead got {}.");
-    Data::Boolean(*a || *b)
+fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(a), "Expected boolean, but instead got {}.", "or");
+    arg_check!(&args[1] => Data::Boolean(b), "Expected boolean, but instead got {}.", "or");
+    Ok(Data::Boolean(*a || *b))
 }
 
 //
 // CONDITIONS
 //
 
-fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn if, but instead got {}.");
+fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "if");
 
     let state: IfState = if *v {
         body_fn
             .expect("Expected body block for if statement")
-            .call_direct(Vec::new(), None, Rc::clone(&scope));
+            .call_direct(Vec::new(), None, Rc::clone(&scope))?;
         IfState::Captured
     } else {
         IfState::Started
@@ -639,11 +644,11 @@ fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
 		"Cannot use if conditionals on a non-block scope.").if_state =
         state;
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn else_if, but instead got {}.");
+fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "else_if");
 
     let mut binding = RefCell::borrow_mut(&scope);
     let block_scope =
@@ -657,7 +662,7 @@ fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Da
                 drop(binding);
                 body_fn
                     .unwrap_or_else(|| panic!("To define a variable, add a body block."))
-                    .call_direct(Vec::new(), None, Rc::clone(&scope));
+                    .call_direct(Vec::new(), None, Rc::clone(&scope))?;
             } else {
                 block_scope.if_state = IfState::Started;
             }
@@ -666,10 +671,10 @@ fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Da
         IfState::Finished => panic!("Tried to call else_if before calling if."),
     }
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let mut binding = RefCell::borrow_mut(&scope);
     let block_scope =
         as_mut_type!(binding => BlockScope, 
@@ -681,7 +686,7 @@ fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
             drop(binding);
             body_fn
                 .unwrap_or_else(|| panic!("To define a variable, add a body block."))
-                .call_direct(Vec::new(), None, Rc::clone(&scope));
+                .call_direct(Vec::new(), None, Rc::clone(&scope))?;
         }
         IfState::Captured => {
             block_scope.if_state = IfState::Finished;
@@ -689,41 +694,41 @@ fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
         IfState::Finished => panic!("Tried to call else before calling if."),
     }
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Boolean(v) => "Expected boolean for fn ifv, but instead got {}.");
+fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "ifv");
 
     if *v {
-        args[1].clone()
+        Ok(args[1].clone())
     } else {
-        args[2].clone()
+        Ok(args[2].clone())
     }
 }
 
-fn fn_repeat(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
-    arg_check!(&args[0], Data::Number(n) => "Expected integer for fn repeat, but instead got {}.");
+fn fn_repeat(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
+    arg_check!(&args[0] => Data::Number(n), "Expected integer, but instead got {}.", "repeat");
     let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
 
     for _ in 0..*n as usize {
-        body_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
+        body_fn.call_direct(Vec::new(), None, Rc::clone(&scope))?;
     }
 
-    Data::None
+    Ok(Data::None)
 }
 
-fn fn_while(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_while(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
 
     loop {
-        let v = body_fn.call_direct(Vec::new(), None, Rc::clone(&scope));
+        let v = body_fn.call_direct(Vec::new(), None, Rc::clone(&scope))?;
         if Data::Boolean(false) == v {
             break;
         }
     }
 
-    Data::None
+    Ok(Data::None)
 }
 
 #[derive(Debug)]
@@ -751,11 +756,11 @@ impl Scope for MatchScope {
                         scope_m.set_return_value(
                             body_fn
                                 .expect("Expected body block for function case.")
-                                .call(Vec::new(), None, Rc::clone(&scope))
+                                .call(Vec::new(), None, Rc::clone(&scope))?
                         );
                         as_mut_type!(scope_m => BlockScope, "Tried to call case in a non-block scope.").break_self();
                     }
-                    Data::None
+                    Ok(Data::None)
                 }),
             })
         } else if name == "default" {
@@ -764,9 +769,9 @@ impl Scope for MatchScope {
                     RefCell::borrow_mut(&scope).set_return_value(
                         body_fn
                             .expect("Expected body block for function default.")
-                            .call(Vec::new(), None, Rc::clone(&scope))
+                            .call(Vec::new(), None, Rc::clone(&scope))?
                     );
-                    Data::None
+                    Ok(Data::None)
                 }),
             })
         } else {
@@ -801,7 +806,7 @@ impl Scope for MatchScope {
     }
 }
 
-fn fn_match(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Data {
+fn fn_match(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     let match_scope = Rc::new(
         RefCell::new(MatchScope {
             parent: Rc::clone(&scope),

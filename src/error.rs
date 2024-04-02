@@ -1,22 +1,16 @@
-use std::{
-	fmt::{self, Display, Formatter},
-	path::PathBuf,
-};
+use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug)]
 pub enum ErrorSource {
-	Unknown,
-	Character(usize, usize),
-	Full {
-		line: usize,
-		col: usize,
-		path: PathBuf,
-	},
+	Internal,
+	Builtin(String),
+	Line(usize),
+	File(String),
 }
 
 #[derive(Debug)]
 pub struct Error {
-	source: ErrorSource,
+	trace: Vec<ErrorSource>,
 	msg: String,
 }
 
@@ -24,25 +18,72 @@ impl Error {
 	pub fn new(msg: &str, source: ErrorSource) -> Self {
 		Self {
 			msg: String::from(msg),
-			source,
+			trace: vec![source],
 		}
+	}
+
+	pub fn get_source(&self) -> String {
+		let mut ln = None;
+		let mut file = None;
+		for source in &self.trace {
+			match source {
+				ErrorSource::Line(line) => {
+					if ln.is_none() {
+						ln = Some(line)
+					}
+				}
+				ErrorSource::File(path) => {
+					if file.is_none() {
+						file = Some(path)
+					}
+				}
+				_ => (),
+			}
+			if ln.is_some() && file.is_some() {
+				break;
+			}
+		}
+		format!("{}:{}", file.unwrap(), ln.unwrap())
 	}
 }
 
 impl Display for Error {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		f.write_str(&self.msg)?;
-		f.write_str("\n\t")?;
-		match &self.source {
-			ErrorSource::Unknown => f.write_str("(unknown)")?,
-			ErrorSource::Character(l, c) => f.write_fmt(format_args!("({}:{})", l, c))?,
-			ErrorSource::Full { line, col, path } => f.write_fmt(format_args!(
-				"({}:{}:{})",
-				path.to_str().unwrap(),
-				line,
-				col
-			))?,
+		f.write_fmt(format_args!("\n-> {}", self.get_source()))?;
+		for source in &self.trace {
+			f.write_str("\n\t")?;
+			match source {
+				ErrorSource::Internal => (),
+				ErrorSource::Builtin(name) => {
+					f.write_fmt(format_args!("(builtin {})", name))?
+				}
+				ErrorSource::Line(ln) => f.write_fmt(format_args!("(line {})", ln))?,
+				ErrorSource::File(path) => {
+					f.write_fmt(format_args!("(file {})", path))?
+				}
+			}
 		}
 		Ok(())
+	}
+}
+
+pub trait BeanResult {
+	fn trace(self, source: ErrorSource) -> Self;
+}
+
+impl<T> BeanResult for Result<T, Error> {
+	fn trace(mut self, source: ErrorSource) -> Self {
+		if let Err(error) = &mut self {
+			error.trace.push(source)
+		}
+		self
+	}
+}
+
+impl BeanResult for Error {
+	fn trace(mut self, source: ErrorSource) -> Self {
+		self.trace.push(source);
+		self
 	}
 }

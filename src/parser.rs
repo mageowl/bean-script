@@ -1,26 +1,29 @@
 use std::cell::Cell;
 
-use crate::lexer::Token;
+use crate::{
+	error::{Error, ErrorSource},
+	lexer::Token,
+};
 
 #[derive(Debug, Clone)]
 pub enum Node {
 	FnCall {
 		name: String,
-		parameters: Vec<Box<Node>>,
-		body_fn: Option<Box<Node>>,
+		parameters: Vec<Box<PosNode>>,
+		body_fn: Option<Box<PosNode>>,
 	},
 	Scope {
-		body: Vec<Box<Node>>,
+		body: Vec<Box<PosNode>>,
 	},
 	ParameterBlock {
-		body: Vec<Box<Node>>,
+		body: Vec<Box<PosNode>>,
 	},
 	Program {
-		body: Vec<Box<Node>>,
+		body: Vec<Box<PosNode>>,
 	},
 	FnAccess {
-		target: Box<Node>,
-		call: Box<Node>,
+		target: Box<PosNode>,
+		call: Box<PosNode>,
 	},
 	Boolean(bool),
 	Number(f64),
@@ -29,18 +32,34 @@ pub enum Node {
 	None,
 }
 
-pub fn parse(tokens: Vec<Token>) -> Node {
-	let i = Cell::new(0);
+#[derive(Debug, Clone)]
+pub struct PosNode {
+	pub node: Node,
+	pub ln: usize,
+}
+
+pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
+	let i = Cell::new(0usize);
+	let line = Cell::new(1usize);
 	let mut body = Vec::new();
 
 	let next = || &tokens[i.replace(i.get() + 1)];
 	let peek = || &tokens[i.get()];
+	let get_ln = || line.get();
+	let new_ln = || line.replace(line.get() + 1);
 
 	fn parse_token<'a>(
-		token: &Token,
+		mut token: &'a Token,
 		next: &dyn Fn() -> &'a Token,
 		peek: &dyn Fn() -> &'a Token,
-	) -> Node {
+		get_ln: &dyn Fn() -> usize,
+		new_ln: &dyn Fn() -> usize,
+	) -> Result<PosNode, Error> {
+		if let Token::LineBreak = token {
+			new_ln();
+			token = next();
+		}
+
 		let node: Node = match token {
 			Token::FnName(name) => {
 				let mut parameters = Vec::new();
@@ -53,6 +72,12 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 						if let Token::ArgClose = peek() {
 							break;
 						}
+						if let Token::EOF = peek() {
+							return Err(Error::new(
+								"Unexpected end of file.",
+								ErrorSource::Line(get_ln()),
+							));
+						}
 
 						let mut body = Vec::new();
 
@@ -63,14 +88,23 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 								}
 								_ => (),
 							}
-							body.push(Box::new(parse_token(next(), &next, &peek)));
+							body.push(Box::new(parse_token(
+								next(),
+								&next,
+								&peek,
+								&get_ln,
+								&new_ln,
+							)?));
 						}
 
 						if let Token::ArgSeparator = peek() {
 							next();
 						}
 
-						parameters.push(Box::new(Node::ParameterBlock { body }));
+						parameters.push(Box::new(PosNode {
+							node: Node::ParameterBlock { body },
+							ln: get_ln(),
+						}));
 					}
 
 					if let Token::ArgClose = peek() {
@@ -80,19 +114,34 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 
 				if let Token::FnBody = peek() {
 					next();
-					body_fn = Some(Box::new(parse_token(next(), &next, &peek)));
+					body_fn = Some(Box::new(parse_token(
+						next(),
+						&next,
+						&peek,
+						&get_ln,
+						&new_ln,
+					)?));
 				}
 
 				if let Token::Accessor = peek() {
 					next();
 
 					Node::FnAccess {
-						target: Box::new(Node::FnCall {
-							name: name.clone(),
-							parameters,
-							body_fn,
+						target: Box::new(PosNode {
+							node: Node::FnCall {
+								name: name.clone(),
+								parameters,
+								body_fn,
+							},
+							ln: get_ln(),
 						}),
-						call: Box::new(parse_token(next(), &next, &peek)),
+						call: Box::new(parse_token(
+							next(),
+							&next,
+							&peek,
+							&get_ln,
+							&new_ln,
+						)?),
 					}
 				} else {
 					Node::FnCall {
@@ -102,9 +151,14 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					}
 				}
 			}
-			Token::FnBody => panic!("Unexpected body symbol. (':')"),
+			Token::FnBody => {
+				return Err(Error::new(
+					"Unexpected function body.",
+					ErrorSource::Line(get_ln()),
+				))
+			}
 			Token::ArgSeparator => {
-				panic!("Unexpected argument separator. (',')")
+				return Err(Error::new("Unexpected comma.", ErrorSource::Line(get_ln())));
 			}
 			Token::ArgOpen => {
 				let mut body = Vec::new();
@@ -115,13 +169,22 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					} else if let Token::EOF = peek() {
 						break;
 					}
-					body.push(Box::new(parse_token(next(), &next, &peek)));
+					body.push(Box::new(parse_token(
+						next(),
+						&next,
+						&peek,
+						&get_ln,
+						&new_ln,
+					)?));
 				}
 
 				Node::ParameterBlock { body }
 			}
 			Token::ArgClose => {
-				panic!("Unexpected argument close symbol. (')')")
+				return Err(Error::new(
+					"Unexpected closing parentheses.",
+					ErrorSource::Line(get_ln()),
+				))
 			}
 			Token::ScopeOpen => {
 				let mut body = Vec::new();
@@ -132,7 +195,13 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 					} else if let Token::EOF = peek() {
 						break;
 					}
-					body.push(Box::new(parse_token(next(), &next, &peek)));
+					body.push(Box::new(parse_token(
+						next(),
+						&next,
+						&peek,
+						&get_ln,
+						&new_ln,
+					)?));
 				}
 
 				if let Token::ScopeClose = peek() {
@@ -142,23 +211,51 @@ pub fn parse(tokens: Vec<Token>) -> Node {
 				Node::Scope { body }
 			}
 			Token::ScopeClose => {
-				panic!("Unexpected scope close symbol. ('}}')")
+				return Err(Error::new(
+					"Unexpected closing brace.",
+					ErrorSource::Line(get_ln()),
+				))
 			}
-			Token::Accessor => panic!("Unexpected access symbol. ('.')"),
+			Token::Accessor => {
+				return Err(Error::new(
+					"Unexpected dot operator.",
+					ErrorSource::Line(get_ln()),
+				))
+			}
 			Token::Boolean(v) => Node::Boolean(*v),
 			Token::Number(v) => Node::Number(*v),
 			Token::String(v) => Node::String(v.clone()),
 			Token::Name(v) => Node::Name(v.clone()),
 			Token::None => Node::None,
-			Token::EOF => panic!("Unexpected end of input."),
+			Token::EOF => {
+				return Err(Error::new(
+					"Unexpected end of input. (How did this happen?)",
+					ErrorSource::Line(get_ln()),
+				))
+			}
+			Token::LineBreak => {
+				return Err(Error::new(
+					"Unexpected line break. (How did this happen?)",
+					ErrorSource::Line(get_ln()),
+				))
+			}
 		};
 
-		return node;
+		return Ok(PosNode { node, ln: get_ln() });
 	}
 
 	while i.get() < tokens.len() - 1 {
-		body.push(Box::new(parse_token(next(), &next, &peek)));
+		body.push(Box::new(parse_token(
+			next(),
+			&next,
+			&peek,
+			&get_ln,
+			&new_ln,
+		)?));
 	}
 
-	Node::Program { body }
+	Ok(PosNode {
+		node: Node::Program { body },
+		ln: 0,
+	})
 }

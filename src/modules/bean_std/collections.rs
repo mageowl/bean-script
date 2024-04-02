@@ -1,12 +1,6 @@
-use std::any::Any;
-use std::collections::{ HashMap, VecDeque };
-use std::mem;
-use std::{ cell::RefCell, rc::Rc };
+use std::{any::Any, cell::RefCell, collections::{ HashMap, VecDeque }, mem, rc::Rc};
 
-use crate::data::{ Data, StaticData };
-use crate::scope::ScopeRef;
-use crate::{ arg_check, as_mut_type, as_type };
-use crate::scope::{ function::Function, Scope };
+use crate::{arg_check, as_mut_type, as_type, data::{ Data, StaticData }, error::{Error, ErrorSource}, scope::{function::Function, Scope, ScopeRef}};
 
 #[derive(Debug)]
 pub struct List {
@@ -29,39 +23,39 @@ impl List {
         make(
             "size",
             Rc::new(|_a, _y, list: ScopeRef| {
-                Data::Number(
+                Ok(Data::Number(
                     as_type!(RefCell::borrow(&list) => List, 
 					"Tried to call fn size on a non-list scope.").items.len() as f64
-                )
+                ))
             })
         );
         make(
             "empty",
             Rc::new(|_a, _y, list: ScopeRef| {
-                Data::Boolean(
+                Ok(Data::Boolean(
                     as_type!(RefCell::borrow(&list) => List, "Tried to call fn empty on a non-list scope.").items.is_empty()
-                )
+                ))
             })
         );
         make(
             "has",
             Rc::new(|args, _y, list: ScopeRef| {
-                Data::Boolean(
+                Ok(Data::Boolean(
                     as_type!(RefCell::borrow(&list) => List, 
 						"Tried to call fn has on a non-list scope.").items.contains(
                         &args[0]
                     )
-                )
+                ))
             })
         );
         make(
             "at",
             Rc::new(|args, _y, list: ScopeRef| {
-                arg_check!(&args[0], Data::Number(i) => "Expected a number for fn at, but instead got {}.");
-                as_type!(RefCell::borrow(&list) => List, 
+                arg_check!(&args[0] => Data::Number(i), "Expected a number, but instead got {}.", "list:at");
+                Ok(as_type!(RefCell::borrow(&list) => List, 
 						"Tried to call fn has on a non-list scope.").items[
                     *i as usize
-                ].clone()
+                ].clone())
             })
         );
         make(
@@ -71,50 +65,50 @@ impl List {
 						"Tried to call fn push on a non-list scope.").items.push_back(
                     args[0].clone()
                 );
-                Data::None
+                Ok(Data::None)
             })
         );
         make(
             "concat",
             Rc::new(|args, _y, list: ScopeRef| {
-                arg_check!(&args[0], Data::Scope(list2) => "Expected scope for fn concat, but instead got {}.");
+                arg_check!(&args[0] => Data::Scope(list2), "Expected scope, but instead got {}.", "list:concat");
                 as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn concat on a non-list scope.").items.append(
                     &mut as_type!(RefCell::borrow(&list2) => List,
 						"Tried to call fn concat with a non-list scope.").items.clone()
                 );
-                Data::None
+                Ok(Data::None)
             })
         );
         make(
             "pop",
             Rc::new(|_a, _y, list: ScopeRef| {
-                as_mut_type!(RefCell::borrow_mut(&list) => List,
+                Ok(as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn pop on a non-list scope.").items
                     .pop_back()
-                    .unwrap_or_default()
+                    .unwrap_or_default())
             })
         );
         make(
             "delete",
             Rc::new(|args, _y, list: ScopeRef| {
-                arg_check!(&args[0], Data::Number(i) => "Expected number for fn delete, but instead got {}.");
-                as_mut_type!(RefCell::borrow_mut(&list) => List,
+                arg_check!(&args[0] => Data::Number(i), "Expected number, but instead got {}.", "list:delete");
+                Ok(as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn delete on a non-list scope.").items
                     .remove(*i as usize)
-                    .unwrap_or_default()
+                    .unwrap_or_default())
             })
         );
         make(
             "insert",
             Rc::new(|args, _y, list: ScopeRef| {
-                arg_check!(&args[0], Data::Number(i) => "Expected number for fn insert, but instead got {}.");
+                arg_check!(&args[0] => Data::Number(i), "Expected number, but instead got {}.", "list:insert");
                 as_mut_type!(RefCell::borrow_mut(&list) => List,
 						"Tried to call fn delete on a non-list scope.").items.insert(
                     *i as usize,
                     args[1].clone()
                 );
-                Data::None
+                Ok(Data::None)
             })
         );
 
@@ -122,14 +116,15 @@ impl List {
             "for",
             Rc::new(|args, body_fn, list: ScopeRef| {
                 let body_fn = body_fn.expect("Expected body block for fn for.");
-                arg_check!(&args[0], Data::Name { scope: item_scope_ref, name: item_name } =>
-					"Expected name for fn for, but instead got {}.");
+                arg_check!(&args[0] => Data::Name { scope: item_scope_ref, name: item_name },
+					"Expected name, but instead got {}.",
+					"list:for");
 
                 let mut index_scope_ref: Option<&ScopeRef> = None;
                 let mut index_name: Option<&String> = None;
                 if args.len() > 1 {
-                    arg_check!(&args[1], Data::Name { scope: i_scope_ref, name: i_name } =>
-						"Expected name for fn for, but instead got {}.");
+                    arg_check!(&args[1] => Data::Name { scope: i_scope_ref, name: i_name },
+						"Expected name, but instead got {}.", "list:for");
                     index_scope_ref = Some(i_scope_ref);
                     index_name = Some(i_name);
                 }
@@ -152,10 +147,10 @@ impl List {
                         })
                     );
 
-                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&list)));
+                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&list))?);
                 }
 
-                Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))
+                Ok(Data::Scope(Rc::new(RefCell::new(List::new(mapped, None)))))
             })
         );
 
@@ -175,9 +170,9 @@ impl Scope for List {
                     let mut binding = RefCell::borrow_mut(&scope);
                     let list = as_mut_type!(binding => List, "Tried to index a non-list scope.");
                     if args.is_empty() {
-                        list.items.get(i).cloned().unwrap_or_default()
+                        Ok(list.items.get(i).cloned().unwrap_or_default())
                     } else {
-                        mem::replace(&mut list.items[i], args[0].clone())
+                        Ok(mem::replace(&mut list.items[i], args[0].clone()))
                     }
                 }),
             })
@@ -248,38 +243,38 @@ impl Map {
         make(
             "size",
             Rc::new(|_a, _y, map: ScopeRef| {
-                Data::Number(
+                Ok(Data::Number(
                     as_type!(RefCell::borrow(&map) => Map, 
 					"Tried to call fn size on a non-map scope.").hash.len() as f64
-                )
+                ))
             })
         );
         make(
             "empty",
             Rc::new(|_a, _y, map: ScopeRef| {
-                Data::Boolean(
+                Ok(Data::Boolean(
                     as_type!(RefCell::borrow(&map) => Map, 
 					"Tried to call fn size on a non-map scope.").hash.is_empty()
-                )
+                ))
             })
         );
         make(
             "has",
             Rc::new(|args, _y, map: ScopeRef| {
-                Data::Boolean(
+                Ok(Data::Boolean(
                     as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.contains_key(
                         &StaticData::from(args[0].clone())
                     )
-                )
+                ))
             })
         );
         make(
             "get",
             Rc::new(|args, _y, map: ScopeRef| {
-                as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash
+                Ok(as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash
                     .get(&StaticData::from(args[0].clone()))
                     .cloned()
-                    .unwrap_or_default()
+                    .unwrap_or_default())
             })
         );
         make(
@@ -289,9 +284,9 @@ impl Map {
                     StaticData::from(args[0].clone()),
                     body_fn
                         .expect("Expected body function for fn set.")
-                        .call(Vec::new(), None, Rc::clone(&map))
+                        .call(Vec::new(), None, Rc::clone(&map))?
                 );
-                Data::None
+                Ok(Data::None)
             })
         );
         make(
@@ -300,23 +295,23 @@ impl Map {
                 as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.").hash.remove(
                     &StaticData::from(args[0].clone())
                 );
-                Data::None
+                Ok(Data::None)
             })
         );
         make(
             "for",
             Rc::new(|args, body_fn, map: ScopeRef| {
                 let body_fn = body_fn.expect("Expected body block for fn for.");
-                arg_check!(&args[0], Data::Name { scope: key_scope_ref, name: key_name } =>
-					"Expected name for fn for, but instead got {}.");
-                arg_check!(&args[1], Data::Name { scope: value_scope_ref, name: value_name } =>
-					"Expected name for fn for, but instead got {}.");
+                arg_check!(&args[0] => Data::Name { scope: key_scope_ref, name: key_name },
+					"Expected name for fn for, but instead got {}.", "map:for");
+                arg_check!(&args[1] => Data::Name { scope: value_scope_ref, name: value_name },
+					"Expected name for fn for, but instead got {}.", "map:for");
 
                 let mut index_scope_ref: Option<&ScopeRef> = None;
                 let mut index_name: Option<&String> = None;
                 if args.len() > 2 {
-                    arg_check!(&args[2], Data::Name { scope: i_scope_ref, name: i_name } =>
-						"Expected name for fn for, but instead got {}.");
+                    arg_check!(&args[2] => Data::Name { scope: i_scope_ref, name: i_name },
+						"Expected name for fn for, but instead got {}.", "map:for");
                     index_scope_ref = Some(i_scope_ref);
                     index_name = Some(i_name);
                 }
@@ -336,10 +331,10 @@ impl Map {
                         s.borrow_mut().set_function(&index_name.unwrap(), Function::Constant { value: Data::Number(i as f64) })
                     );
 
-                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&map)));
+                    mapped.push(body_fn.call(Vec::new(), None, Rc::clone(&map))?);
                 }
 
-                Data::Scope(Rc::new(RefCell::new(List::new(mapped, None))))
+                Ok(Data::Scope(Rc::new(RefCell::new(List::new(mapped, None)))))
             })
         );
 
@@ -364,9 +359,9 @@ impl Scope for Map {
                     let mut binding = RefCell::borrow_mut(&scope);
                     let map = as_mut_type!(binding => Map, "Tried to index a non-list scope.");
                     if args.is_empty() {
-                        map.hash.get(&key).cloned().unwrap_or_default()
+                        Ok(map.hash.get(&key).cloned().unwrap_or_default())
                     } else {
-                        mem::replace(&mut map.hash.get_mut(&key).unwrap(), args[0].clone())
+                        Ok(mem::replace(&mut map.hash.get_mut(&key).unwrap(), args[0].clone()))
                     }
                 }),
             })
