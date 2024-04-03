@@ -100,6 +100,8 @@ impl Scope for BuiltinModule {
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
+
+	fn set_if_state(&mut self, _state: IfState) {}
 }
 
 impl Debug for BuiltinModule {
@@ -197,6 +199,10 @@ impl Scope for CustomModule {
 	}
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self
+	}
+
+	fn set_if_state(&mut self, state: IfState) {
+		self.if_state = state;
 	}
 }
 

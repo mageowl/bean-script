@@ -1,0 +1,5 @@
+if(lt(rand, 0.5)): {
+	error("my error #1")
+}
+
+use("./my_module/error")

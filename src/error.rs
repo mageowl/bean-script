@@ -50,7 +50,10 @@ impl Error {
 impl Display for Error {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 		f.write_str(&self.msg)?;
-		f.write_fmt(format_args!("\n-> {}", self.get_source()))?;
+		f.write_fmt(format_args!(
+			"\n\x1b[36m->\x1b[0m {}\x1b[3m",
+			self.get_source()
+		))?;
 		for source in &self.trace {
 			f.write_str("\n\t")?;
 			match source {
@@ -64,6 +67,7 @@ impl Display for Error {
 				}
 			}
 		}
+		f.write_str("\x1b[0m")?;
 		Ok(())
 	}
 }

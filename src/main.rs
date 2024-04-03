@@ -54,7 +54,7 @@ fn main() {
 		let tree = parser::parse(tokens);
 		if let Err(error) = tree {
 			println!(
-				"error: {}",
+				"\x1b[31;1merror\x1b[0m: {}",
 				error.trace(ErrorSource::File(path_str.clone()))
 			);
 			return;
@@ -74,7 +74,7 @@ fn main() {
 		let result = evaluator::evaluate(&tree, make_ref(program_scope));
 		if let Err(error) = result {
 			println!(
-				"error: {}",
+				"\x1b[31;1merror\x1b[0m: {}",
 				error.trace(ErrorSource::File(path_str.clone()))
 			);
 		}

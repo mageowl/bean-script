@@ -3,7 +3,7 @@ use std::{any::Any, collections::HashMap, fs, path::PathBuf, rc::Rc};
 
 use crate::{
 	data::Data,
-	error::{Error, ErrorSource},
+	error::{BeanResult, Error, ErrorSource},
 	evaluator, lexer, parser,
 	scope::{function::Function, Scope},
 	util::{make_ref, MutRc},
@@ -46,6 +46,8 @@ impl Scope for ModuleWrapper {
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
+
+	fn set_if_state(&mut self, _state: crate::scope::block_scope::IfState) {}
 }
 
 pub fn get(module: &CustomModule, path: String) -> Result<MutRc<ModuleWrapper>, Error> {
@@ -53,7 +55,8 @@ pub fn get(module: &CustomModule, path: String) -> Result<MutRc<ModuleWrapper>, 
 
 	if path.starts_with("./") {
 		let mut path_buf = module.file_path.clone();
-		path_buf.push(path.clone() + ".bean");
+		path_buf.push(path.clone().trim_start_matches("./"));
+		path_buf.set_extension("bean");
 
 		get_local(Rc::clone(&registry), path_buf).map(|m| make_ref(ModuleWrapper(m)))
 	} else {
@@ -110,7 +113,8 @@ fn get_local(
 		let module_ref = make_ref(module);
 		registry.borrow_mut().loading.push(path.clone());
 
-		evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)))?;
+		evaluator::evaluate(&tree, CustomModule::to_scope(Rc::clone(&module_ref)))
+			.trace(ErrorSource::File(path.to_str().unwrap().to_string()))?;
 
 		let mut registry_mut = registry.borrow_mut();
 		registry_mut.local.insert(path.clone(), module_ref);

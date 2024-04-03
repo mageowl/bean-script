@@ -394,7 +394,7 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data,
 
 fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     arg_check!(&args[0] => Data::String(msg), "Expected string, but instead got {}.", "error");
-    panic!("{}", msg)
+    Err(Error::new(&msg, ErrorSource::Builtin("error".to_string())))
 }
 
 fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
@@ -640,9 +640,7 @@ fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<
         IfState::Started
     };
 
-    as_mut_type!(RefCell::borrow_mut(&scope) => BlockScope, 
-		"Cannot use if conditionals on a non-block scope.").if_state =
-        state;
+    scope.borrow_mut().set_if_state(state);
 
     Ok(Data::None)
 }
@@ -804,6 +802,8 @@ impl Scope for MatchScope {
     fn as_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
+	
+	fn set_if_state(&mut self, _state: IfState) {}
 }
 
 fn fn_match(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {

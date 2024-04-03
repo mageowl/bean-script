@@ -212,6 +212,9 @@ impl Scope for List {
                 )
         )
     }
+	
+	fn set_if_state(&mut self, _state: crate::scope::block_scope::IfState) {
+	}
 }
 
 #[derive(Debug)]
@@ -403,4 +406,7 @@ impl Scope for Map {
                 )
         )
     }
+	
+	fn set_if_state(&mut self, _state: crate::scope::block_scope::IfState) {
+	}
 }

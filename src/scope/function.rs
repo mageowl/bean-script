@@ -68,6 +68,8 @@ impl Scope for CallScope {
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self
 	}
+
+	fn set_if_state(&mut self, _state: super::block_scope::IfState) {}
 }
 
 #[derive(Clone)]
