@@ -55,14 +55,18 @@ impl Display for Error {
 			self.get_source()
 		))?;
 		for source in &self.trace {
-			f.write_str("\n\t")?;
 			match source {
 				ErrorSource::Internal => (),
 				ErrorSource::Builtin(name) => {
+					f.write_str("\n\t")?;
 					f.write_fmt(format_args!("(builtin {})", name))?
 				}
-				ErrorSource::Line(ln) => f.write_fmt(format_args!("(line {})", ln))?,
+				ErrorSource::Line(ln) => {
+					f.write_str("\n\t")?;
+					f.write_fmt(format_args!("(line {})", ln))?;
+				}
 				ErrorSource::File(path) => {
+					f.write_str("\n\t")?;
 					f.write_fmt(format_args!("(file {})", path))?
 				}
 			}

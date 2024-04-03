@@ -394,7 +394,7 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data,
 
 fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
     arg_check!(&args[0] => Data::String(msg), "Expected string, but instead got {}.", "error");
-    Err(Error::new(&msg, ErrorSource::Builtin("error".to_string())))
+    Err(Error::new(&msg, ErrorSource::Internal))
 }
 
 fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
