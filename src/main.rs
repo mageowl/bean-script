@@ -2,6 +2,7 @@ use std::{
 	env::{self, Args},
 	fs,
 	path::PathBuf,
+	process::ExitCode,
 };
 
 use bean_script::{
@@ -35,14 +36,21 @@ struct CliArgs {
 	path: Option<String>,
 }
 
-fn main() {
+fn main() -> ExitCode {
 	let args = parse_args(env::args());
 	if args.no_args || args.f_help {
 		println!("{}", HELP_MSG);
+		ExitCode::SUCCESS
 	} else if args.f_stdin {
 		let result = interactive_terminal::open();
-		if let rustyline::Result::Err(err) = result {
-			panic!("Failed to parse stdin: {:?}", err)
+		if let rustyline::Result::Err(error) = result {
+			println!(
+				"\x1b[31;1merror\x1b[0m: Failed to parse stdin.\n\t{:?}",
+				error
+			);
+			ExitCode::FAILURE
+		} else {
+			ExitCode::SUCCESS
 		}
 	} else {
 		let path_str = args.path.expect("Expected path to file.");
@@ -51,7 +59,7 @@ fn main() {
 		let tokens = lexer::tokenize(file);
 		if args.f_tokenize {
 			dbg!(tokens);
-			return;
+			return ExitCode::SUCCESS;
 		}
 
 		let tree = parser::parse(tokens);
@@ -60,13 +68,13 @@ fn main() {
 				"\x1b[31;1merror\x1b[0m: {}",
 				error.trace(ErrorSource::File(path_str.clone()))
 			);
-			return;
+			return ExitCode::FAILURE;
 		}
 		let tree = tree.unwrap();
 
 		if args.f_parse {
 			dbg!(tree);
-			return;
+			return ExitCode::SUCCESS;
 		}
 
 		let mut dir_path = PathBuf::from(path_str.clone());
@@ -80,6 +88,9 @@ fn main() {
 				"\x1b[31;1merror\x1b[0m: {}",
 				error.trace(ErrorSource::File(path_str.clone()))
 			);
+			ExitCode::FAILURE
+		} else {
+			ExitCode::SUCCESS
 		}
 	}
 }
