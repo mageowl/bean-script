@@ -97,7 +97,7 @@ pub fn construct(module: &mut ModuleBuilder) {
 //
 
 fn fn_fn(args: Vec<Data>, body_fn: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name as name of function, but instead got {}.", "function");
     let body_fn = body_fn.unwrap_or_else(|| panic!("To define a function, add a body block."));
 
@@ -107,7 +107,7 @@ fn fn_fn(args: Vec<Data>, body_fn: Option<Function>, _s: ScopeRef) -> Result<Dat
 }
 
 fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name as name of variable, but instead got {}.", "let");
     let value = body_fn
         .unwrap_or_else(|| panic!("To define a variable, add a body block."))
@@ -123,7 +123,7 @@ fn fn_let(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Resu
 }
 
 fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name as name of constant, but instead got {}.", "constant");
     let value = body_fn
         .unwrap_or_else(|| panic!("To define a constant, add a body block."))
@@ -135,7 +135,7 @@ fn fn_const(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Re
 }
 
 fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name to delete, but instead got {}.", "delete");
     RefCell::borrow_mut(scope).delete_function(name);
 
@@ -143,7 +143,7 @@ fn fn_del(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
 }
 
 fn fn_call(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name to call, but instead got {}.", "call");
     let function = scope
         .borrow()
@@ -156,7 +156,7 @@ fn fn_call(args: Vec<Data>, body_fn: Option<Function>, o_scope: ScopeRef) -> Res
 }
 
 fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Name { scope, name },
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name },
 		"Expected name, but instead got {}.", "exists");
     Ok(Data::Boolean(scope.borrow().has_function(name)))
 }
@@ -164,7 +164,7 @@ fn fn_exists(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data
 fn fn_export(args: Vec<Data>, _y: Option<Function>, to_scope: ScopeRef) -> Result<Data, Error> {
     let mut binding = RefCell::borrow_mut(&to_scope);
     let module = as_mut_type!(binding => CustomModule, "Tried to export from a non-module scope.");
-    arg_check!(&args[0] => Data::Name { scope, name }, "Expected name, but instead got {}.", "export");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Name { scope, name }, "Expected name, but instead got {}.", "export");
 
     let target = scope.try_borrow().map_or_else(
         |_|
@@ -210,7 +210,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
     let borrowed = binding.borrow();
     let file_module = as_type!(borrowed => CustomModule, "Fail ??");
 
-    arg_check!(&args[0] => Data::String(mod_id), "Expected string, but instead got {}.", "use");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(mod_id), "Expected string, but instead got {}.", "use");
     let (path_str, target) = {
         let mut iter = mod_id.split(":");
         (iter.next().expect("Tried to import from blank path."), iter.next())
@@ -220,7 +220,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
     let name_str;
     let name_scope;
     if args.len() > 1 {
-        match &args[1] {
+        match args.get(1).unwrap_or(&Data::None) {
             Data::Name { name, scope } => {
                 name_str = name as &str;
                 name_scope = Rc::clone(scope);
@@ -228,7 +228,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
             _ =>
                 panic!(
                     "Expected name use, but instead got {}.",
-                    &args[1].get_type().to_string()
+                    args.get(1).unwrap_or(&Data::None).get_type().to_string()
                 ),
         }
     } else {
@@ -271,7 +271,7 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
 //
 
 fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(i), "Expected integer, but instead got {}.", "get_argument");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(i), "Expected integer, but instead got {}.", "get_argument");
     let arg_type = args
         .get(1)
         .map(|x| {
@@ -363,7 +363,7 @@ fn fn_super(_a: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
 }
 
 fn fn_include(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Scope(target), "Expected scope, but instead got {}.", "include");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Scope(target), "Expected scope, but instead got {}.", "include");
     let mut scope = RefCell::borrow_mut(&scope);
 
     for (name, func) in RefCell::borrow(&target).get_function_list() {
@@ -388,12 +388,12 @@ fn fn_print(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data,
 }
 
 fn fn_error(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::String(msg), "Expected string, but instead got {}.", "error");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(msg), "Expected string, but instead got {}.", "error");
     Err(Error::new(&msg, ErrorSource::Internal))
 }
 
 fn fn_sleep(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(ms), "Expected number of milliseconds, but instead got {}.", "sleep");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(ms), "Expected number of milliseconds, but instead got {}.", "sleep");
     thread::sleep(Duration::from_millis(*ms as u64));
 
     Ok(Data::None)
@@ -436,13 +436,13 @@ fn fn_add(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
     }
 }
 fn fn_sub(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {}.", "subtract");
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "subtract");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(a), "Expected number, but got {}.", "subtract");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but got {}.", "subtract");
     Ok(Data::Number(a - b))
 }
 fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "multiply");
-    match &args[0] {
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but got {}.", "multiply");
+    match args.get(0).unwrap_or(&Data::None) {
         Data::Number(a) => Ok(Data::Number(a * b)),
         Data::String(s) => Ok(Data::String(s.repeat(*b as usize))),
         _ =>
@@ -453,8 +453,8 @@ fn fn_mul(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
     }
 }
 fn fn_div(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {}.", "divide");
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {}.", "divide");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(a), "Expected number, but got {}.", "divide");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but got {}.", "divide");
     Ok(Data::Number(a / b))
 }
 
@@ -462,58 +462,58 @@ fn fn_rand(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, 
     match args.len() {
         0 => Ok(Data::Number(rand::random())),
         1 => {
-            arg_check!(&args[0] => Data::Number(max), "Expected number, but got {} instead.", "random");
+            arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(max), "Expected number, but got {} instead.", "random");
             Ok(Data::Number((rand::random::<f64>() * max).floor()))
         }
         2.. => {
-            arg_check!(&args[0] => Data::Number(min), "Expected number, but got {} instead.", "random");
-            arg_check!(&args[1] => Data::Number(max), "Expected number, but got {} instead.", "random");
+            arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(min), "Expected number, but got {} instead.", "random");
+            arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(max), "Expected number, but got {} instead.", "random");
             Ok(Data::Number((rand::random::<f64>() * (max - min)).floor() + min))
         }
     }
 }
 fn fn_abs(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "absolute_value");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "absolute_value");
     Ok(Data::Number(n.round()))
 }
 
 fn fn_pow(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(a), "Expected number, but got {} instead.", "power");
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but got {} instead.", "power");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(a), "Expected number, but got {} instead.", "power");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but got {} instead.", "power");
     Ok(Data::Number(a.powf(*b)))
 }
 fn fn_sqrt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "square_root");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "square_root");
     Ok(Data::Number(n.sqrt()))
 }
 
 fn fn_sin(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "sine");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "sine");
     Ok(Data::Number(n.sin()))
 }
 fn fn_cos(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "cosine");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "cosine");
     Ok(Data::Number(n.cos()))
 }
 fn fn_tan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "tangent");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "tangent");
     Ok(Data::Number(n.tan()))
 }
 fn fn_atan(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "arctangent");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "arctangent");
     Ok(Data::Number(n.atan()))
 }
 
 fn fn_round(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "round");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "round");
     Ok(Data::Number(n.round()))
 }
 fn fn_floor(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "floor");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "floor");
     Ok(Data::Number(n.floor()))
 }
 fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected number, but got {} instead.", "ceiling");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected number, but got {} instead.", "ceiling");
     Ok(Data::Number(n.ceil()))
 }
 
@@ -522,13 +522,13 @@ fn fn_ceil(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, 
 //
 
 fn fn_size(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::String(s), "Expected string, but got {} instead. Use list.size to get the length of a list.", "string_size");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(s), "Expected string, but got {} instead. Use list.size to get the length of a list.", "string_size");
     Ok(Data::Number(s.len() as f64))
 }
 
 fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::String(s), "Expected string, but got {} instead.", "split_string");
-    arg_check!(&args[1] => Data::String(d), "Expected delimiter string split, but got {} instead.", "split_string");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(s), "Expected string, but got {} instead.", "split_string");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::String(d), "Expected delimiter string split, but got {} instead.", "split_string");
     let vec = s
         .split(d)
         .map(|c| Data::String(String::from(c)))
@@ -545,7 +545,7 @@ fn fn_str(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
 }
 
 fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    match &args[0] {
+    match args.get(0).unwrap_or(&Data::None) {
         Data::Boolean(v) => Ok(Data::Number(if *v { 1.0 } else { 0.0 })),
         Data::Number(v) => Ok(Data::Number(*v)),
         Data::String(s) =>
@@ -559,7 +559,7 @@ fn fn_num(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
     }
 }
 fn fn_name(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::String(name), "Expected string, but got {} instead.", "to_name");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(name), "Expected string, but got {} instead.", "to_name");
     Ok(Data::Name {
         scope,
         name: name.clone(),
@@ -587,35 +587,35 @@ fn fn_map(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
 //
 
 fn fn_eq(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    Ok(Data::Boolean(&args[0] == &args[1]))
+    Ok(Data::Boolean(args.get(0).unwrap_or(&Data::None) == args.get(1).unwrap_or(&Data::None)))
 }
 
 fn fn_gt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(a), "Expected number, but instead got {}.", "greater_than");
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but instead got {}.", "greater_than");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(a), "Expected number, but instead got {}.", "greater_than");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but instead got {}.", "greater_than");
     Ok(Data::Boolean(a > b))
 }
 
 fn fn_lt(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(a), "Expected number, but instead got {}.", "less_than");
-    arg_check!(&args[1] => Data::Number(b), "Expected number, but instead got {}.", "less_than");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(a), "Expected number, but instead got {}.", "less_than");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Number(b), "Expected number, but instead got {}.", "less_than");
     Ok(Data::Boolean(a < b))
 }
 
 fn fn_not(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "not");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(v), "Expected boolean, but instead got {}.", "not");
     Ok(Data::Boolean(!v))
 }
 
 fn fn_and(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(a), "Expected boolean, but instead got {}.", "and");
-    arg_check!(&args[1] => Data::Boolean(b), "Expected boolean, but instead got {}.", "and");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(a), "Expected boolean, but instead got {}.", "and");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Boolean(b), "Expected boolean, but instead got {}.", "and");
     Ok(Data::Boolean(*a && *b))
 }
 
 fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(a), "Expected boolean, but instead got {}.", "or");
-    arg_check!(&args[1] => Data::Boolean(b), "Expected boolean, but instead got {}.", "or");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(a), "Expected boolean, but instead got {}.", "or");
+    arg_check!(args.get(1).unwrap_or(&Data::None) => Data::Boolean(b), "Expected boolean, but instead got {}.", "or");
     Ok(Data::Boolean(*a || *b))
 }
 
@@ -624,7 +624,7 @@ fn fn_or(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Er
 //
 
 fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "if");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(v), "Expected boolean, but instead got {}.", "if");
 
     let state: IfState = if *v {
         body_fn
@@ -641,7 +641,7 @@ fn fn_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<
 }
 
 fn fn_else_if(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "else_if");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(v), "Expected boolean, but instead got {}.", "else_if");
 
     let mut binding = RefCell::borrow_mut(&scope);
     let block_scope =
@@ -691,7 +691,7 @@ fn fn_else(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<
 }
 
 fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Boolean(v), "Expected boolean, but instead got {}.", "ifv");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Boolean(v), "Expected boolean, but instead got {}.", "ifv");
 
     if *v {
         Ok(args[1].clone())
@@ -701,7 +701,7 @@ fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
 }
 
 fn fn_repeat(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    arg_check!(&args[0] => Data::Number(n), "Expected integer, but instead got {}.", "repeat");
+    arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected integer, but instead got {}.", "repeat");
     let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
 
     for _ in 0..*n as usize {
