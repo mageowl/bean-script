@@ -36,7 +36,7 @@ pub fn open() -> rustyline::Result<()> {
 
 				let tree = parser::parse(lexer::tokenize(line));
 				if let Err(error) = tree {
-					println!("error: {}", error);
+					println!("\x1b[31;1merror\x1b[0m: {}", error);
 					continue;
 				}
 				let mut tree = tree.unwrap();
@@ -63,6 +63,8 @@ pub fn open() -> rustyline::Result<()> {
 						Data::None => (),
 						_ => println!("{:?}", data),
 					}
+				} else if let Err(error) = result {
+					println!("\x1b[31;1merror\x1b[0m: {}", error);
 				}
 			}
 			Err(ReadlineError::Interrupted | ReadlineError::Eof) => {

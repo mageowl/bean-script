@@ -43,7 +43,7 @@ impl Error {
 				break;
 			}
 		}
-		format!("{}:{}", file.unwrap(), ln.unwrap())
+		format!("{}:{}", file.unwrap_or(&String::from("input")), ln.unwrap())
 	}
 }
 
