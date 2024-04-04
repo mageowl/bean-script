@@ -3,7 +3,7 @@ use std::{rc::Rc, sync::Mutex};
 use bean_script::{
 	data::Data,
 	evaluator, lexer,
-	modules::registry::ModuleRegistry,
+	modules::registry::{ModuleRegistry, RegistryFeatures},
 	parser::{self, Node, PosNode},
 	scope::{block_scope::BlockScope, ScopeRef},
 	util::make_ref,
@@ -11,7 +11,11 @@ use bean_script::{
 use rustyline::{error::ReadlineError, DefaultEditor};
 
 pub fn open() -> rustyline::Result<()> {
-	let registry = make_ref(ModuleRegistry::new());
+	let registry = make_ref(ModuleRegistry::new(RegistryFeatures {
+		custom_modules: false,
+		import: false,
+		lang_debug: false,
+	}));
 	let program_scope: ScopeRef =
 		make_ref(BlockScope::new(Some(registry.borrow().runtime())));
 	let mutex = Mutex::new(program_scope);

@@ -1,8 +1,8 @@
-use super::BuiltinModule;
+use super::ModuleBuilder;
 
-mod runtime;
 mod collections;
+mod runtime;
 
-pub(super) fn construct(module: &mut BuiltinModule) {
-    module.submodule("runtime", runtime::construct);
+pub(super) fn construct(module: &mut ModuleBuilder) {
+	module.submodule("runtime", runtime::construct);
 }

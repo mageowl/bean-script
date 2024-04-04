@@ -9,7 +9,7 @@ use crate::{
 	util::{make_ref, MutRc},
 };
 
-use self::registry::ModuleRegistry;
+use self::registry::{ModuleRegistry, RegistryFeatures};
 
 pub mod bean_std;
 pub mod loader;
@@ -22,25 +22,16 @@ pub trait Module: Scope {
 	fn get_pub_function(&self, name: &str) -> Option<Function>;
 }
 
-#[derive(Clone)]
-pub struct BuiltinModule {
+pub struct ModuleBuilder {
 	functions: HashMap<
 		String,
 		Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error>>,
 	>,
 	submodules: HashMap<String, Rc<RefCell<BuiltinModule>>>,
+	features: RegistryFeatures,
 }
 
-impl BuiltinModule {
-	pub fn new(constructor: fn(&mut BuiltinModule)) -> Self {
-		let mut module = BuiltinModule {
-			functions: HashMap::new(),
-			submodules: HashMap::new(),
-		};
-		constructor(&mut module);
-		module
-	}
-
+impl ModuleBuilder {
 	pub fn function<F>(&mut self, name: &str, function: F) -> &mut Self
 	where
 		F: Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error> + 'static,
@@ -51,16 +42,46 @@ impl BuiltinModule {
 
 	pub fn submodule<F>(&mut self, name: &str, constructor: F) -> &mut Self
 	where
-		F: FnOnce(&mut BuiltinModule),
+		F: FnOnce(&mut ModuleBuilder),
 	{
-		let mut module = BuiltinModule {
+		let mut module = ModuleBuilder {
 			functions: HashMap::new(),
 			submodules: HashMap::new(),
+			features: self.features,
 		};
 		constructor(&mut module);
-		self.submodules
-			.insert(String::from(name), Rc::new(RefCell::new(module)));
+		self.submodules.insert(
+			String::from(name),
+			Rc::new(RefCell::new(BuiltinModule {
+				functions: module.functions,
+				submodules: module.submodules,
+			})),
+		);
 		self
+	}
+}
+
+#[derive(Clone)]
+pub struct BuiltinModule {
+	functions: HashMap<
+		String,
+		Rc<dyn Fn(Vec<Data>, Option<Function>, ScopeRef) -> Result<Data, Error>>,
+	>,
+	submodules: HashMap<String, Rc<RefCell<BuiltinModule>>>,
+}
+
+impl BuiltinModule {
+	pub fn new(constructor: fn(&mut ModuleBuilder), features: RegistryFeatures) -> Self {
+		let mut module = ModuleBuilder {
+			functions: HashMap::new(),
+			submodules: HashMap::new(),
+			features,
+		};
+		constructor(&mut module);
+		Self {
+			functions: module.functions,
+			submodules: module.submodules,
+		}
 	}
 }
 

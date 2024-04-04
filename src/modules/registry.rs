@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 
 use crate::util::{make_ref, MutRc};
 
-use super::{bean_std, BuiltinModule, CustomModule, Module};
+use super::{bean_std, BuiltinModule, CustomModule, Module, ModuleBuilder};
 
 pub(super) enum RegistryEntry {
 	Uninitialized(Box<dyn FnOnce() -> MutRc<dyn Module>>),
@@ -18,11 +18,29 @@ impl RegistryEntry {
 	}
 }
 
+#[derive(Clone, Copy)]
+pub struct RegistryFeatures {
+	pub custom_modules: bool,
+	pub import: bool,
+	pub lang_debug: bool,
+}
+
+impl Default for RegistryFeatures {
+	fn default() -> Self {
+		Self {
+			custom_modules: true,
+			import: true,
+			lang_debug: false,
+		}
+	}
+}
+
 pub struct ModuleRegistry {
 	pub(super) registered: HashMap<String, RegistryEntry>,
 	pub(super) local: HashMap<PathBuf, MutRc<CustomModule>>,
 	pub(super) loading: Vec<PathBuf>,
 	runtime: MutRc<BuiltinModule>,
+	pub features: RegistryFeatures,
 }
 
 impl std::fmt::Debug for ModuleRegistry {
@@ -32,8 +50,8 @@ impl std::fmt::Debug for ModuleRegistry {
 }
 
 impl ModuleRegistry {
-	pub fn new() -> Self {
-		let standard_lib = BuiltinModule::new(bean_std::construct);
+	pub fn new(features: RegistryFeatures) -> Self {
+		let standard_lib = BuiltinModule::new(bean_std::construct, features);
 		let mut s = Self {
 			registered: HashMap::new(),
 			local: HashMap::new(),
@@ -47,6 +65,7 @@ impl ModuleRegistry {
 				Some(r) => Rc::new(RefCell::new(r.clone())),
 				None => panic!("Runtime module is custom?"),
 			},
+			features: RegistryFeatures::default(),
 		};
 		s.registered.insert(
 			String::from("std"),
@@ -58,13 +77,14 @@ impl ModuleRegistry {
 	pub fn register_builtin(
 		&mut self,
 		name: String,
-		constructor: fn(&mut BuiltinModule),
+		constructor: fn(&mut ModuleBuilder),
 	) {
 		if !self.registered.contains_key(&name) {
+			let features = self.features.clone();
 			self.registered.insert(
 				name,
 				RegistryEntry::Uninitialized(Box::new(move || {
-					make_ref(BuiltinModule::new(constructor))
+					make_ref(BuiltinModule::new(constructor, features))
 				})),
 			);
 		} else {

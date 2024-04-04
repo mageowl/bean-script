@@ -7,7 +7,10 @@ use std::{
 use bean_script::{
 	error::{BeanResult, ErrorSource},
 	evaluator, lexer,
-	modules::{registry::ModuleRegistry, CustomModule},
+	modules::{
+		registry::{ModuleRegistry, RegistryFeatures},
+		CustomModule,
+	},
 	parser,
 	util::make_ref,
 };
@@ -21,7 +24,7 @@ Options:
 	-p, --parse     Parse file without evaluating it.
 	-l, --tokenize  Tokenize file without parsing it.
 	-h, --help      Print this message and exit.
-	-i, --stdin     Interpret input from stdin";
+	-i, --stdin     Interpret input from stdin.";
 
 struct CliArgs {
 	no_args: bool,
@@ -69,7 +72,7 @@ fn main() {
 		let mut dir_path = PathBuf::from(path_str.clone());
 		dir_path.pop();
 
-		let registry = make_ref(ModuleRegistry::new());
+		let registry = make_ref(ModuleRegistry::new(RegistryFeatures::default()));
 		let program_scope = CustomModule::new(registry, dir_path);
 		let result = evaluator::evaluate(&tree, make_ref(program_scope));
 		if let Err(error) = result {

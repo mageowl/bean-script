@@ -89,6 +89,13 @@ fn get_local(
 	registry: MutRc<ModuleRegistry>,
 	path: PathBuf,
 ) -> Result<MutRc<CustomModule>, Error> {
+	if !registry.borrow().features.custom_modules {
+		return Err(Error::new(
+			"Cannot load custom files.",
+			ErrorSource::Internal,
+		));
+	}
+
 	if registry.borrow().loading.contains(&path) {
 		return Err(Error::new(
 			"Trying to load from a file that is currently being loaded.",

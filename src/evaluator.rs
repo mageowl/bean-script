@@ -21,9 +21,16 @@ pub fn evaluate_verbose(
 			parameters,
 			body_fn,
 		} => {
-			let function = scope
-				.get_function(&name)
-				.unwrap_or_else(|| panic!("Unknown value or function '{}'.", &name));
+			let function = scope.get_function(&name);
+
+			if function.is_none() {
+				return Err(Error::new(
+					&format!("Unknown value or function {}.", name),
+					ErrorSource::Line(pos_node.ln),
+				));
+			}
+			let function = function.unwrap();
+
 			drop(scope);
 
 			let mut args: Vec<Data> = Vec::new();

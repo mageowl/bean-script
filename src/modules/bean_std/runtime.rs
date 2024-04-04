@@ -1,18 +1,12 @@
 use std::{ cell::RefCell, rc::Rc, thread, time::Duration };
 
 use crate::{
-    arg_check,
-    as_mut_type,
-    as_type,
-    data::{ Data, DataType },
-    modules::{ loader, CustomModule },
-    scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef },
-	error::{Error, ErrorSource}
+    arg_check, as_mut_type, as_type, data::{ Data, DataType }, error::{Error, ErrorSource}, modules::{ loader, CustomModule, ModuleBuilder }, scope::{ block_scope::{ BlockScope, IfState }, function::Function, Scope, ScopeRef }
 };
 
-use super::{ collections::{ List, Map }, super::BuiltinModule };
+use super::collections::{ List, Map };
 
-pub fn construct(module: &mut BuiltinModule) {
+pub fn construct(module: &mut ModuleBuilder) {
     /* NAME */
     module
         .function("fn", fn_fn)
@@ -20,9 +14,10 @@ pub fn construct(module: &mut BuiltinModule) {
         .function("const", fn_const)
         .function("del", fn_del)
         .function("call", fn_call)
-        .function("exists", fn_exists)
-        .function("export", fn_export)
-        .function("use", fn_use);
+        .function("exists", fn_exists);
+	if module.features.import {
+		module.function("export", fn_export).function("use", fn_use);
+	}
 
     /* SCOPE */
     module
@@ -37,7 +32,7 @@ pub fn construct(module: &mut BuiltinModule) {
 
     /* INTERFACE */
     module.function("print", fn_print).function("error", fn_error).function("sleep", fn_sleep);
-    if cfg!(debug_assertions) {
+    if module.features.lang_debug {
         module.function("__debug", fn_debug);
     }
 
