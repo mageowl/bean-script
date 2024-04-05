@@ -1,6 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 
-use crate::util::{make_ref, MutRc};
+use crate::{
+	logger::Logger,
+	util::{make_ref, MutRc},
+};
 
 use super::{bean_std, BuiltinModule, CustomModule, Module, ModuleBuilder};
 
@@ -41,6 +44,7 @@ pub struct ModuleRegistry {
 	pub(super) loading: Vec<PathBuf>,
 	runtime: MutRc<BuiltinModule>,
 	pub features: RegistryFeatures,
+	pub logger: Logger,
 }
 
 impl std::fmt::Debug for ModuleRegistry {
@@ -66,6 +70,7 @@ impl ModuleRegistry {
 				None => panic!("Runtime module is custom?"),
 			},
 			features: RegistryFeatures::default(),
+			logger: Logger::Stdout,
 		};
 		s.registered.insert(
 			String::from("std"),
@@ -90,6 +95,10 @@ impl ModuleRegistry {
 		} else {
 			panic!("Trying to register a builtin module under a used name.")
 		}
+	}
+
+	pub fn set_logger(&mut self, logger: Logger) {
+		self.logger = logger;
 	}
 
 	pub fn runtime(&self) -> MutRc<BuiltinModule> {

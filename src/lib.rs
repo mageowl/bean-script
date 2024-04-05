@@ -1,5 +1,6 @@
 pub mod data;
 pub mod error;
+pub mod logger;
 pub mod modules;
 pub mod scope;
 pub mod util;
