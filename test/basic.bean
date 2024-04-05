@@ -1,2 +1,2 @@
-print("Hello from f-script!")
+print("Hello from BeanScript!")
 print("0.5 + 2 is", +(0.5, 2))
