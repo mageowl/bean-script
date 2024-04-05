@@ -1,3 +1,7 @@
+use error::Error;
+use modules::CustomModule;
+use util::make_ref;
+
 pub mod data;
 pub mod error;
 pub mod logger;
@@ -9,6 +13,9 @@ pub mod evaluator;
 pub mod lexer;
 pub mod parser;
 
-pub fn interpret() {
-	todo!()
+pub fn interpret(code: String, program_scope: CustomModule) -> Result<(), Error> {
+	let tokens = lexer::tokenize(code);
+	let tree = parser::parse(tokens)?;
+	evaluator::evaluate(&tree, make_ref(program_scope))?;
+	Ok(())
 }
