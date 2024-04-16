@@ -1,6 +1,6 @@
 use error::Error;
 use modules::CustomModule;
-use util::make_ref;
+use util::MutRc;
 
 pub mod data;
 pub mod error;
@@ -13,9 +13,9 @@ pub mod evaluator;
 pub mod lexer;
 pub mod parser;
 
-pub fn interpret(code: String, program_scope: CustomModule) -> Result<(), Error> {
+pub fn interpret(code: String, program_scope: MutRc<CustomModule>) -> Result<(), Error> {
 	let tokens = lexer::tokenize(code);
 	let tree = parser::parse(tokens)?;
-	evaluator::evaluate(&tree, make_ref(program_scope))?;
+	evaluator::evaluate(&tree, program_scope)?;
 	Ok(())
 }
