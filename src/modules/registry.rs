@@ -97,6 +97,15 @@ impl ModuleRegistry {
 		}
 	}
 
+	pub fn register_initialized_builtin(&mut self, name: String, module: BuiltinModule) {
+		if !self.registered.contains_key(&name) {
+			self.registered
+				.insert(name, RegistryEntry::Available(make_ref(module)));
+		} else {
+			panic!("Trying to register a builtin module under a used name.")
+		}
+	}
+
 	pub fn set_logger(&mut self, logger: Logger) {
 		self.logger = logger;
 	}
