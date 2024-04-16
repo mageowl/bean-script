@@ -71,7 +71,10 @@ pub struct BuiltinModule {
 }
 
 impl BuiltinModule {
-	pub fn new(constructor: fn(&mut ModuleBuilder), features: RegistryFeatures) -> Self {
+	pub fn new(
+		constructor: impl FnOnce(&mut ModuleBuilder),
+		features: RegistryFeatures,
+	) -> Self {
 		let mut module = ModuleBuilder {
 			functions: HashMap::new(),
 			submodules: HashMap::new(),
