@@ -1,0 +1,11 @@
+//: enum("red", "green", "blue")
+//: creates an enum object
+fn(<enum>): {
+	let(<obj>): {}
+	args.for(<val>): {
+		let(obj.name(val)): {}
+	}
+	return(obj)
+}
+
+export(<enum>)
