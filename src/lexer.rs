@@ -159,6 +159,9 @@ pub fn tokenize(code: String) -> Vec<Token> {
 		});
 	}
 
+	while let Some(Token::LineBreak) = tokens.last() {
+		tokens.pop();
+	}
 	tokens.push(Token::EOF);
 
 	return tokens;

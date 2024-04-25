@@ -1,3 +1,11 @@
 print(eq(5, 5))
 print(lt(2, 4))
 print(or(eq("yes", "yes"), false))
+
+const(<color>): {
+	const(<red>): {}
+	const(<green>): {}
+	const(<blue>): {}
+}
+print("red = green", eq(color.red, color.green))
+print("blue = blue", eq(color.blue, color.blue))
