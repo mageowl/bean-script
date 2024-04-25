@@ -1,4 +1,4 @@
-use std::{cell::RefCell, hash::Hash};
+use std::{cell::RefCell, hash::Hash, rc::Rc};
 
 use crate::{pat_check, scope::ScopeRef};
 
@@ -87,10 +87,18 @@ impl Data {
 impl PartialEq for Data {
 	fn eq(&self, other: &Self) -> bool {
 		match (self, other) {
-			(Self::Boolean(l0), Self::Boolean(r0)) => l0 == r0,
-			(Self::Number(l0), Self::Number(r0)) => l0 == r0,
-			(Self::String(l0), Self::String(r0)) => l0 == r0,
+			(Self::Boolean(l), Self::Boolean(r)) => l == r,
+			(Self::Number(l), Self::Number(r)) => l == r,
+			(Self::String(l), Self::String(r)) => l == r,
 			(Self::None, Self::None) => true,
+			(
+				Self::Name { scope, name },
+				Self::Name {
+					scope: r_scope,
+					name: r_name,
+				},
+			) => Rc::ptr_eq(scope, r_scope) && name == r_name,
+			(Self::Scope(l), Self::Scope(r)) => Rc::ptr_eq(l, r),
 			_ => false,
 		}
 	}
