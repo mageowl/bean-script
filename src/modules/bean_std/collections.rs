@@ -1,6 +1,6 @@
 use std::{any::Any, cell::RefCell, collections::{ HashMap, VecDeque }, mem, rc::Rc};
 
-use crate::{arg_check, as_mut_type, as_type, data::{ Data, StaticData }, error::{Error, ErrorSource}, scope::{function::Function, Scope, ScopeRef}};
+use crate::{arg_check, as_mut_type, as_type, data::Data, error::{Error, ErrorSource}, scope::{function::Function, Scope, ScopeRef}};
 
 #[derive(Debug)]
 pub struct List {
@@ -221,7 +221,7 @@ impl Scope for List {
 pub struct Map {
     parent: Option<ScopeRef>,
     fns: HashMap<String, Function>,
-    pub hash: HashMap<StaticData, Data>,
+    pub hash: HashMap<Data, Data>,
 }
 
 impl Map {
@@ -232,12 +232,12 @@ impl Map {
             hash: kv_pairs
                 .chunks(2)
                 .map(|pair| (
-                    StaticData::from(
+                    
                         pair.get(0).expect("Number of arguments must be even for fn map.").clone()
-                    ),
+                    ,
                     pair.get(1).expect("Number of arguments must be even for fn map.").clone(),
                 ))
-                .collect::<HashMap<StaticData, Data>>(),
+                .collect::<HashMap<Data, Data>>(),
         };
         let mut make = |name: &str, closure| {
             map.fns.insert(String::from(name), Function::BuiltIn { callback: closure })
@@ -266,7 +266,7 @@ impl Map {
             Rc::new(|args, _y, map: ScopeRef| {
                 Ok(Data::Boolean(
                     as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash.contains_key(
-                        &StaticData::from(args[0].clone())
+                        &args[0]
                     )
                 ))
             })
@@ -275,7 +275,7 @@ impl Map {
             "get",
             Rc::new(|args, _y, map: ScopeRef| {
                 Ok(as_type!(RefCell::borrow(&map) => Map, "Tried to call fn has on a non-map scope.").hash
-                    .get(&StaticData::from(args[0].clone()))
+                    .get(&args[0])
                     .cloned()
                     .unwrap_or_default())
             })
@@ -284,7 +284,7 @@ impl Map {
             "set",
             Rc::new(|args, body_fn, map: ScopeRef| {
                 as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.").hash.insert(
-                    StaticData::from(args[0].clone()),
+                    args[0].clone(),
                     body_fn
                         .expect("Expected body function for fn set.")
                         .call(Vec::new(), None, Rc::clone(&map))?
@@ -296,7 +296,7 @@ impl Map {
             "del",
             Rc::new(|args, _y, map: ScopeRef| {
                 as_mut_type!(map.borrow_mut() => Map, "Tried to call fn set on a non-map scope.").hash.remove(
-                    &StaticData::from(args[0].clone())
+                    &args[0].clone()
                 );
                 Ok(Data::None)
             })
@@ -328,7 +328,7 @@ impl Map {
 						"Tried to call fn for on a non-list scope.").hash
                     .iter()
                     .enumerate() {
-                    key_scope_ref.borrow_mut().set_function(&key_name, Function::Constant { value: key.inner().clone() });
+                    key_scope_ref.borrow_mut().set_function(&key_name, Function::Constant { value: key.clone() });
                     value_scope_ref.borrow_mut().set_function(&value_name, Function::Constant { value: value.clone() });
                     index_scope_ref.map(|s|
                         s.borrow_mut().set_function(&index_name.unwrap(), Function::Constant { value: Data::Number(i as f64) })
@@ -348,7 +348,7 @@ impl Map {
 impl Scope for Map {
     fn has_function(&self, name: &str) -> bool {
         self.fns.contains_key(name) ||
-            self.hash.contains_key(&StaticData::from(Data::String(String::from(name))))
+            self.hash.contains_key(&Data::String(String::from(name)))
     }
 
     fn get_function(&self, name: &str) -> Option<Function> {
@@ -356,7 +356,7 @@ impl Scope for Map {
         if builtin.is_some() {
             builtin.cloned()
         } else {
-            let key = StaticData::from(Data::String(String::from(name)));
+            let key = Data::String(String::from(name));
             Some(Function::BuiltIn {
                 callback: Rc::new(move |args, _y, scope: ScopeRef| {
                     let mut binding = RefCell::borrow_mut(&scope);
@@ -400,7 +400,7 @@ impl Scope for Map {
                     String::new(),
                     |s, e|
                         (if s.is_empty() { String::new() } else { s + ", " }) +
-                        &e.0.inner().to_string() +
+                        &e.0.to_string() +
                         ": " +
                         &e.1.to_string()
                 )

@@ -104,6 +104,14 @@ impl PartialEq for Data {
 	}
 }
 
+impl Eq for Data {}
+
+impl Hash for Data {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		core::mem::discriminant(self).hash(state);
+	}
+}
+
 impl Default for Data {
 	fn default() -> Self {
 		Data::None
@@ -126,36 +134,5 @@ impl ToString for Data {
 			Data::Scope(scope) => RefCell::borrow(&scope).to_string(),
 			Data::None => String::from("[none]"),
 		}
-	}
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct StaticData(Data);
-
-impl StaticData {
-	pub fn from(data: Data) -> Self {
-		match data {
-			Data::Name { .. } => panic!("Tried to cast type name as static."),
-			Data::Scope(_) => panic!("Tried to cast type scope as static."),
-			_ => Self(data),
-		}
-	}
-
-	pub fn inner(&self) -> &Data {
-		&self.0
-	}
-}
-
-impl Eq for StaticData {}
-
-impl Hash for StaticData {
-	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-		self.0.get_type().to_string().hash(state);
-		match &self.0 {
-			Data::Boolean(v) => v.hash(state),
-			Data::Number(v) => v.to_string().hash(state),
-			Data::String(v) => v.hash(state),
-			_ => (),
-		};
 	}
 }
