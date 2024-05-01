@@ -6,6 +6,7 @@ use crate::{
 	error::{Error, ErrorSource},
 	evaluator,
 	parser::PosNode,
+	util::make_ref,
 };
 
 use super::{Scope, ScopeRef};
@@ -103,25 +104,21 @@ impl Function {
 		from_scope: Option<ScopeRef>,
 	) -> Result<Data, Error> {
 		match self {
-			Function::Custom { body, scope_ref } => {
-				let call_scope = CallScope {
-					parent: Rc::clone(&scope_ref),
-					arguments: Rc::new(args),
-					body_fn: Rc::new(body_fn),
-					from_scope: Rc::clone(from_scope.as_ref().unwrap_or(&scope)),
-				};
-
-				evaluator::evaluate_verbose(
-					body,
-					if abstract_call_scope {
-						Rc::new(RefCell::new(call_scope))
-					} else {
-						scope
-					},
-					return_scope,
-					None,
-				)
-			}
+			Function::Custom { body, scope_ref } => evaluator::evaluate_verbose(
+				body,
+				if abstract_call_scope {
+					make_ref(CallScope {
+						parent: Rc::clone(&scope_ref),
+						arguments: Rc::new(args),
+						body_fn: Rc::new(body_fn),
+						from_scope: Rc::clone(from_scope.as_ref().unwrap_or(&scope)),
+					})
+				} else {
+					scope
+				},
+				return_scope,
+				None,
+			),
 			Function::BuiltIn { callback } => callback(args, body_fn, scope),
 			Function::Variable {
 				value,
