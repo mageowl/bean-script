@@ -70,9 +70,7 @@ pub fn open() -> rustyline::Result<()> {
 			Err(ReadlineError::Interrupted | ReadlineError::Eof) => {
 				break;
 			}
-			Err(_) => {
-				panic!("Error reading input.");
-			}
+			Err(_) => return input.map(|_| ()),
 		}
 	}
 

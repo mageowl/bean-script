@@ -1,6 +1,10 @@
 use std::{cell::RefCell, hash::Hash, rc::Rc};
 
-use crate::{pat_check, scope::ScopeRef};
+use crate::{
+	error::{Error, ErrorSource},
+	pat_check,
+	scope::ScopeRef,
+};
 
 pub enum DataType {
 	Boolean,
@@ -14,23 +18,26 @@ pub enum DataType {
 }
 
 impl DataType {
-	pub fn from_string(string: &String) -> DataType {
+	pub fn from_string(string: &String) -> Result<DataType, Error> {
 		if string == "boolean" {
-			DataType::Boolean
+			Ok(DataType::Boolean)
 		} else if string == "number" {
-			DataType::Number
+			Ok(DataType::Number)
 		} else if string == "string" {
-			DataType::String
+			Ok(DataType::String)
 		} else if string == "name" {
-			DataType::Name
+			Ok(DataType::Name)
 		} else if string == "scope" {
-			DataType::Scope
+			Ok(DataType::Scope)
 		} else if string == "none" {
-			DataType::None
+			Ok(DataType::None)
 		} else if string == "any" {
-			DataType::Any
+			Ok(DataType::Any)
 		} else {
-			panic!("Invalid type string '{}'.", string)
+			Err(Error::new(
+				&format!("Invalid type string {}.", string),
+				ErrorSource::Internal,
+			))
 		}
 	}
 

@@ -41,7 +41,7 @@ impl Scope for ModuleWrapper {
 	}
 
 	fn as_any(&self) -> &dyn Any {
-		panic!("INTERNAL! tried to cast ModuleWrapper")
+		self
 	}
 	fn as_mut(&mut self) -> &mut dyn Any {
 		self

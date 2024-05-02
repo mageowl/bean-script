@@ -284,7 +284,7 @@ fn fn_p(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, 
                     ),
             }
         })
-        .unwrap_or(DataType::Any);
+        .unwrap_or(Ok(DataType::Any))?;
     let index = *i as usize;
     let arguments = scope
         .borrow()
