@@ -1,10 +1,5 @@
 use core::fmt::Debug;
-use std::{
-	any::{Any, TypeId},
-	cell::RefCell,
-	collections::HashMap,
-	rc::Rc,
-};
+use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{
 	data::Data,
@@ -12,7 +7,7 @@ use crate::{
 	evaluator,
 	modules::loader::ModuleWrapper,
 	parser::PosNode,
-	util::{make_ref, MutRc},
+	util::make_ref,
 };
 
 use super::{Scope, ScopeRef};
