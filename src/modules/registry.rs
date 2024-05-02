@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, path::PathBuf, rc::Rc};
 
 use crate::{
 	logger::Logger,
@@ -45,6 +45,7 @@ pub struct ModuleRegistry {
 	runtime: MutRc<BuiltinModule>,
 	pub features: RegistryFeatures,
 	pub logger: Logger,
+	pub metadata: HashMap<String, Box<dyn Any>>,
 }
 
 impl std::fmt::Debug for ModuleRegistry {
@@ -71,6 +72,7 @@ impl ModuleRegistry {
 			},
 			features: RegistryFeatures::default(),
 			logger: Logger::Stdout,
+			metadata: HashMap::new(),
 		};
 		s.registered.insert(
 			String::from("std"),
