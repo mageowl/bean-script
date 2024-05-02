@@ -203,9 +203,9 @@ fn fn_use(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data
         .borrow()
         .get_file_module()
 		.ok_or(Error::new(
-				"Cannot import modules outside of a module. Are you using the interactive terminal?",
-				ErrorSource::Builtin(String::from("use"))
-			))?;
+			"Cannot import modules outside of a module. Are you using the interactive terminal?",
+			ErrorSource::Builtin(String::from("use"))
+		))?;
 
     let borrowed = binding.borrow();
     let file_module = as_type!(borrowed => CustomModule, "Fail ??");

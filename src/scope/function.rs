@@ -1,12 +1,18 @@
 use core::fmt::Debug;
-use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+	any::{Any, TypeId},
+	cell::RefCell,
+	collections::HashMap,
+	rc::Rc,
+};
 
 use crate::{
 	data::Data,
 	error::{Error, ErrorSource},
 	evaluator,
+	modules::loader::ModuleWrapper,
 	parser::PosNode,
-	util::make_ref,
+	util::{make_ref, MutRc},
 };
 
 use super::{Scope, ScopeRef};
@@ -119,7 +125,13 @@ impl Function {
 				return_scope,
 				None,
 			),
-			Function::BuiltIn { callback } => callback(args, body_fn, scope),
+			Function::BuiltIn { callback } => {
+				if from_scope.is_some() && scope.borrow().as_any().is::<ModuleWrapper>() {
+					callback(args, body_fn, from_scope.unwrap())
+				} else {
+					callback(args, body_fn, scope)
+				}
+			}
 			Function::Variable {
 				value,
 				name,
