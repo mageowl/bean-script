@@ -156,7 +156,7 @@ impl Module for BuiltinModule {
 #[derive(Debug, Clone)]
 pub struct CustomModule {
 	local_functions: MutRc<HashMap<String, Function>>,
-	registry: MutRc<ModuleRegistry>,
+	pub registry: MutRc<ModuleRegistry>,
 	pub file_path: PathBuf,
 	pub if_state: IfState,
 	pub exported_functions: MutRc<HashMap<String, Function>>,
