@@ -1,7 +1,6 @@
 let(<my_variable>): 4
+let(<six>): 6
 
-{
-    my_variable: 6
-}
+my_variable: six
 
 print(my_variable)

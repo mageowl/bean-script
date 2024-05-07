@@ -134,10 +134,11 @@ impl Function {
 			} => {
 				if let Some(v) = body_fn {
 					let pass = value.clone();
+					let value = v.call(Vec::new(), None, Rc::clone(&scope))?;
 					scope_ref.borrow_mut().set_function(
 						name,
 						Function::Variable {
-							value: v.call(Vec::new(), None, Rc::clone(&scope))?,
+							value,
 							scope_ref: Rc::clone(scope_ref),
 							name: String::from(name),
 						},
