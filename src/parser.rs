@@ -116,6 +116,11 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 					}
 				}
 
+				while let Token::LineBreak = peek() {
+					new_ln();
+					next();
+				}
+
 				if let Token::FnBody = peek() {
 					next();
 					body_fn = Some(Box::new(parse_token(
@@ -125,6 +130,11 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						&get_ln,
 						&new_ln,
 					)?));
+				}
+
+				while let Token::LineBreak = peek() {
+					new_ln();
+					next();
 				}
 
 				if let Token::Accessor = peek() {
@@ -177,7 +187,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						break;
 					} else if let Token::EOF = peek() {
 						return Err(Error::new(
-							"Unexpected end of file. (expected '}')",
+							"Unexpected end of file. (expected ')')",
 							ErrorSource::Line(get_ln()),
 						));
 					}
@@ -188,6 +198,14 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						&get_ln,
 						&new_ln,
 					)?));
+				}
+
+				while let Token::LineBreak = peek() {
+					new_ln();
+					next();
+				}
+				if let Token::ArgClose = peek() {
+					next();
 				}
 
 				Node::ParameterBlock { body }
@@ -210,7 +228,10 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 					if let Token::ScopeClose = peek() {
 						break;
 					} else if let Token::EOF = peek() {
-						break;
+						return Err(Error::new(
+							"Unexpected end of file. (expected '}')",
+							ErrorSource::Line(get_ln()),
+						));
 					}
 					body.push(Box::new(parse_token(
 						next(),
