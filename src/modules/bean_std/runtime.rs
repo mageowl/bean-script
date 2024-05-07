@@ -332,7 +332,7 @@ fn fn_body(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Resul
     let call_scope = RefCell::borrow(&call_scope);
     Option::as_ref(call_scope.body_fn().as_ref())
         .expect("Expected body function.")
-        .call(args, body_fn, call_scope.from_scope())
+        .call_direct(args, body_fn, call_scope.from_scope())
 }
 
 fn fn_return(args: Vec<Data>, _y: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
@@ -702,17 +702,20 @@ fn fn_ifv(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, E
 
 fn fn_repeat(args: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
     arg_check!(args.get(0).unwrap_or(&Data::None) => Data::Number(n), "Expected integer, but instead got {}.", "repeat");
-    let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
+    let body_fn = body_fn.ok_or(Error::new("Expected body fn.", ErrorSource::Builtin(String::from("repeat"))))?;
 
     for _ in 0..*n as usize {
-        body_fn.call_direct(Vec::new(), None, Rc::clone(&scope))?;
+        let v = body_fn.call_direct(Vec::new(), None, Rc::clone(&scope))?;
+        if Data::Boolean(false) == v {
+            break;
+        }
     }
 
     Ok(Data::None)
 }
 
 fn fn_while(_a: Vec<Data>, body_fn: Option<Function>, scope: ScopeRef) -> Result<Data, Error> {
-    let body_fn = body_fn.unwrap_or_else(|| panic!("Expected body block for fn repeat."));
+    let body_fn = body_fn.ok_or(Error::new("Expected body fn.", ErrorSource::Builtin(String::from("while"))))?;
 
     loop {
         let v = body_fn.call_direct(Vec::new(), None, Rc::clone(&scope))?;

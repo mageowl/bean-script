@@ -13,14 +13,13 @@ pub fn evaluate_verbose(
 	return_scope: bool,
 	access_scope_ref: Option<ScopeRef>,
 ) -> Result<Data, Error> {
-	let scope = RefCell::borrow(&scope_ref);
-
 	match &pos_node.node {
 		Node::FnCall {
 			name,
 			parameters,
 			body_fn,
 		} => {
+			let scope = RefCell::borrow(&scope_ref);
 			let function = scope.get_function(&name).ok_or_else(|| {
 				Error::new(
 					&format!("Unknown value or function {}.", name),
@@ -77,7 +76,6 @@ pub fn evaluate_verbose(
 			};
 		}
 		Node::ParameterBlock { body } => {
-			drop(scope);
 			let mut return_value: Data = Data::None;
 			for n in body {
 				return_value = evaluate(n, Rc::clone(&scope_ref))?;
@@ -86,7 +84,6 @@ pub fn evaluate_verbose(
 			return Ok(return_value);
 		}
 		Node::Program { body } => {
-			drop(scope);
 			for n in body {
 				evaluate(n, Rc::clone(&scope_ref))?;
 			}
@@ -96,7 +93,6 @@ pub fn evaluate_verbose(
 			let target = evaluate(target, Rc::clone(&scope_ref))?;
 
 			if let Data::Scope(target_scope) = target {
-				drop(scope);
 				evaluate_verbose(
 					&call,
 					Rc::clone(&target_scope),

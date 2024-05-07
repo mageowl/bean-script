@@ -1,0 +1,7 @@
+let(<my_variable>): 4
+
+{
+    my_variable: 6
+}
+
+print(my_variable)
