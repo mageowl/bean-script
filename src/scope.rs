@@ -28,6 +28,9 @@ pub trait Scope: Debug {
 	}
 	fn set_return_value(&mut self, value: Data);
 	fn set_if_state(&mut self, state: IfState);
+	fn get_if_state(&self) -> Option<IfState> {
+		None
+	}
 	fn get_function_list(&self) -> HashMap<String, Function>;
 
 	fn as_any(&self) -> &dyn Any;

@@ -228,6 +228,10 @@ impl Scope for CustomModule {
 	fn set_if_state(&mut self, state: IfState) {
 		self.if_state = state;
 	}
+
+	fn get_if_state(&self) -> Option<IfState> {
+		Some(self.if_state)
+	}
 }
 
 impl Module for CustomModule {

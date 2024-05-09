@@ -101,6 +101,10 @@ impl Scope for BlockScope {
 		self.local_functions.clone()
 	}
 
+	fn get_if_state(&self) -> Option<IfState> {
+		Some(self.if_state)
+	}
+
 	fn as_any(&self) -> &dyn Any {
 		self
 	}
