@@ -13,6 +13,10 @@ enum Context {
 }
 
 fn chunk(code: String) -> Vec<String> {
+	if code.contains('\r') {
+		println!("\x1b[33;1mwarn\x1b[0m: file contains CRLF line endings, which are not supported.")
+	}
+
 	let mut chunks: Vec<String> = Vec::new();
 	let current_chunk = RefCell::from(String::new());
 	let mut context = Context::Program;
