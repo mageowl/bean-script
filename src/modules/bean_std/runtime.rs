@@ -86,11 +86,15 @@ pub fn construct(module: &mut ModuleBuilder) {
 	/* LOGIC */
 	module
 		.function("eq", fn_eq)
+		.function("=", fn_eq)
 		.function("lt", fn_lt)
 		.function("gt", fn_gt)
 		.function("not", fn_not)
+		.function("!", fn_not)
 		.function("and", fn_and)
-		.function("or", fn_or);
+		.function("&&", fn_and)
+		.function("or", fn_or)
+		.function("||", fn_or);
 
 	/* CONTROL BLOCKS */
 	module
