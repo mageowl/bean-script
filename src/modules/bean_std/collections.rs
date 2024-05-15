@@ -104,11 +104,25 @@ impl List {
             Rc::new(|args, _y, list: ScopeRef| {
                 arg_check!(&args[0] => Data::Number(i), "Expected number, but instead got {}.", "list:insert");
                 as_mut_type!(RefCell::borrow_mut(&list) => List,
-						"Tried to call fn delete on a non-list scope.").items.insert(
+						"Tried to call fn insert on a non-list scope.").items.insert(
                     *i as usize,
                     args[1].clone()
                 );
                 Ok(Data::None)
+            })
+        );
+        make(
+            "set",
+            Rc::new(|mut args, _y, list: ScopeRef| {
+                arg_check!(&args[0] => Data::Number(i), "Expected number, but instead got {}.", "list:insert");
+                Ok(
+                    mem::replace(
+                        as_mut_type!(RefCell::borrow_mut(&list) => List,
+                            "Tried to call fn set on a non-list scope.").items.get_mut(*i as usize)
+                        .ok_or(Error::new("Index not inside list bounds.", ErrorSource::Builtin(String::from("list"))))?,
+                        args.remove(1)
+                    )
+                )
             })
         );
 

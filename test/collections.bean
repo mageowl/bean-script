@@ -1,5 +1,6 @@
 let(<my_list>): list("car", "bus", "tree")
 my_list.2("train")
+my_list.set(1, "bous")
 print(my_list)
 
 print(my_list.for(<transit>, <i>): {
