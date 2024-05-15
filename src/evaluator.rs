@@ -97,7 +97,7 @@ pub fn evaluate_verbose(
 					&call,
 					Rc::clone(&target_scope),
 					false,
-					Some(Rc::clone(&scope_ref)),
+					Some(Rc::clone(access_scope_ref.as_ref().unwrap_or(&scope_ref))),
 				)
 			} else {
 				return Err(Error::new(

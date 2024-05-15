@@ -1,0 +1,10 @@
+
+let(<l>): list(1)
+
+fn(<y>): {
+    if(true): {
+        let(<x>): 0
+        if(eq(l.at(x), 1)): print("yes")
+    }
+}
+y

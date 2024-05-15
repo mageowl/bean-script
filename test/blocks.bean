@@ -10,7 +10,7 @@ const(<block>): {
 {
 	let(<x>): 2
 	print("Getting value:", block.value)
-	block.function("test"): {
+	block.function(x): {
 		// __debug
 		print("from a body", x)
 	}
