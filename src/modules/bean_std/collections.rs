@@ -53,9 +53,7 @@ impl List {
             Rc::new(|args, _y, list: ScopeRef| {
                 arg_check!(&args[0] => Data::Number(i), "Expected a number, but instead got {}.", "list:at");
                 Ok(as_type!(RefCell::borrow(&list) => List, 
-						"Tried to call fn has on a non-list scope.").items[
-                    *i as usize
-                ].clone())
+						"Tried to call fn has on a non-list scope.").items.get(*i as usize).cloned().unwrap_or(Data::None))
             })
         );
         make(
