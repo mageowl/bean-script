@@ -54,6 +54,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 		peek: &dyn Fn() -> &'a Token,
 		get_ln: &dyn Fn() -> usize,
 		new_ln: &dyn Fn() -> usize,
+		prevent_accessor: bool,
 	) -> Result<PosNode, Error> {
 		while let Token::LineBreak = token {
 			new_ln();
@@ -98,6 +99,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 								&peek,
 								&get_ln,
 								&new_ln,
+								false,
 							)?));
 						}
 
@@ -129,6 +131,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						&peek,
 						&get_ln,
 						&new_ln,
+						false,
 					)?));
 				}
 
@@ -137,26 +140,46 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 					next();
 				}
 
-				if let Token::Accessor = peek() {
-					next();
+				if (if let Token::Accessor = peek() {
+					true
+				} else {
+					false
+				}) && !prevent_accessor
+				{
+					let mut node = PosNode {
+						node: Node::FnCall {
+							name: name.clone(),
+							parameters,
+							body_fn,
+						},
+						ln: get_ln(),
+					};
 
-					Node::FnAccess {
-						target: Box::new(PosNode {
-							node: Node::FnCall {
-								name: name.clone(),
-								parameters,
-								body_fn,
+					while let Token::Accessor = peek() {
+						next();
+
+						while let Token::LineBreak = peek() {
+							new_ln();
+							next();
+						}
+
+						node = PosNode {
+							node: Node::FnAccess {
+								target: Box::new(node),
+								call: Box::new(parse_token(
+									next(),
+									&next,
+									&peek,
+									&get_ln,
+									&new_ln,
+									true,
+								)?),
 							},
 							ln: get_ln(),
-						}),
-						call: Box::new(parse_token(
-							next(),
-							&next,
-							&peek,
-							&get_ln,
-							&new_ln,
-						)?),
+						};
 					}
+
+					node.node
 				} else {
 					Node::FnCall {
 						name: name.clone(),
@@ -197,6 +220,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						&peek,
 						&get_ln,
 						&new_ln,
+						false,
 					)?));
 				}
 
@@ -239,6 +263,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 						&peek,
 						&get_ln,
 						&new_ln,
+						false,
 					)?));
 				}
 
@@ -289,6 +314,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<PosNode, Error> {
 			&peek,
 			&get_ln,
 			&new_ln,
+			false,
 		)?));
 	}
 
