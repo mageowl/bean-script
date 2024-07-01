@@ -10,6 +10,7 @@ use crate::{
 		function::Function,
 		Scope, ScopeRef,
 	},
+	util::make_ref,
 };
 
 use super::collections::{List, Map};
@@ -71,7 +72,10 @@ pub fn construct(module: &mut ModuleBuilder) {
 		.function("ceil", fn_ceil);
 
 	/* STRINGS */
-	module.function("size", fn_size).function("split", fn_split);
+	module
+		.function("size", fn_size)
+		.function("split", fn_split)
+		.function("chars", fn_chars);
 
 	/* TYPES */
 	module
@@ -597,6 +601,12 @@ fn fn_split(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data,
 	arg_check!(args.get(1).unwrap_or(&Data::None) => Data::String(d), "Expected delimiter string split, but got {} instead.", "split_string");
 	let vec = s.split(d).map(|c| Data::String(String::from(c))).collect();
 	Ok(Data::Scope(Rc::new(RefCell::new(List::new(vec, None)))))
+}
+
+fn fn_chars(args: Vec<Data>, _y: Option<Function>, _s: ScopeRef) -> Result<Data, Error> {
+	arg_check!(args.get(0).unwrap_or(&Data::None) => Data::String(s), "Expected string, but got {} instead.", "chars_string");
+	let vec = s.chars().map(|c| Data::String(String::from(c))).collect();
+	Ok(Data::Scope(make_ref(List::new(vec, None))))
 }
 
 //
