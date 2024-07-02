@@ -1,0 +1,4 @@
+use("std/strings")
+
+print(strings.substr("Hello World!", 6))
+print(strings.substr("Hello World!", -10, -2))
